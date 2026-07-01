@@ -1,16 +1,21 @@
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import Stats from "@/components/Stats";
+import Universities from "@/components/Universities";
+import Programs from "@/components/Programs";
+import Mentors from "@/components/Mentors";
+import Footer from "@/components/Footer";
+
 export default function Home() {
   return (
-    <main
-      style={{
-        display: "flex",
-        height: "100vh",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-      }}
-    >
-      <h1>Dokter Ambis V2</h1>
-      <p>Deploy Test Berhasil 🚀</p>
-    </main>
+    <>
+      <Navbar />
+      <Hero />
+      <Stats />
+      <Universities />
+      <Programs />
+      <Mentors />
+      <Footer />
+    </>
   );
 }
