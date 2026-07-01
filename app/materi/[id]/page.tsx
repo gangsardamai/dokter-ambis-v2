@@ -1,98 +1,70 @@
-    export default function MateriDetailPage({ params }: { params: { id: string } }) {
+export default function MateriDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { blok?: string };
+}) {
   const materiData: Record<string, any> = {
-    "1": {
+    "1-1": {
       judul: "Anatomi Jantung",
-      blok: "Blok Kardiovaskular",
       tipe: "Video",
-      deskripsi: "Pembahasan struktur jantung, atrium, ventrikel, dan aliran darah.",
-      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      deskripsi: "Struktur jantung dan aliran darah",
     },
-    "2": {
+    "1-2": {
       judul: "Fisiologi Jantung",
-      blok: "Blok Kardiovaskular",
       tipe: "PDF",
-      deskripsi: "Mekanisme kerja jantung dan siklus kardiak.",
+      deskripsi: "Cara kerja siklus jantung",
     },
-    "3": {
+    "1-3": {
       judul: "EKG Dasar",
-      blok: "Blok Kardiovaskular",
       tipe: "Video",
-      deskripsi: "Interpretasi dasar EKG 12 lead.",
-      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      deskripsi: "Interpretasi EKG dasar",
+    },
+    "2-1": {
+      judul: "Anatomi Paru",
+      tipe: "Video",
+      deskripsi: "Struktur sistem respirasi",
     },
   };
 
   const materi = materiData[params.id];
 
   if (!materi) {
-    return (
-      <div style={{ padding: 24 }}>
-        <h1>Materi tidak ditemukan</h1>
-      </div>
-    );
+    return <div style={{ padding: 24 }}>Materi tidak ditemukan</div>;
   }
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+      <p style={{ color: "#666" }}>
+        Blok ID: {searchParams.blok}
+      </p>
+
       <h1 style={{ fontSize: 28, fontWeight: "bold" }}>
         {materi.judul}
       </h1>
 
-      <p style={{ color: "#666", marginTop: 6 }}>
-        {materi.blok}
-      </p>
-
-      <p style={{ marginTop: 10 }}>
-        {materi.deskripsi}
-      </p>
+      <p style={{ marginTop: 10 }}>{materi.deskripsi}</p>
 
       <hr style={{ margin: "20px 0" }} />
 
-      {/* CONTENT AREA */}
       {materi.tipe === "Video" && (
         <div>
           <iframe
             width="100%"
             height="400"
-            src={materi.videoUrl}
-            title="video"
+            src="https://www.youtube.com/embed/dQw4w9WgXcQ"
             style={{ borderRadius: 12 }}
-            allowFullScreen
           />
         </div>
       )}
 
       {materi.tipe === "PDF" && (
-        <div
-          style={{
-            border: "1px solid #ddd",
-            padding: 20,
-            borderRadius: 12,
-            textAlign: "center",
-          }}
-        >
-          <p>PDF Module</p>
-          <button style={{ marginTop: 10, padding: "8px 12px" }}>
-            Download / Buka PDF
-          </button>
+        <div style={{ padding: 20, border: "1px solid #ddd" }}>
+          <p>PDF Material</p>
+          <button>Buka PDF</button>
         </div>
       )}
-
-      {/* ACTION BUTTON */}
-      <div style={{ marginTop: 24 }}>
-        <button
-          style={{
-            padding: "10px 16px",
-            borderRadius: 8,
-            border: "none",
-            background: "#111",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          Tandai Selesai
-        </button>
-      </div>
     </div>
   );
 }
