@@ -1,10 +1,10 @@
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import Stats from "@/components/Stats";
-import Universities from "@/components/Universities";
-import Programs from "@/components/Programs";
-import Mentors from "@/components/Mentors";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/layout/Navbar";
+import Hero from "@/components/home/Hero";
+import Stats from "@/components/home/Stats";
+import Universities from "@/components/home/Universities";
+import Programs from "@/components/home/Programs";
+import Mentors from "@/components/home/Mentors";
+import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
