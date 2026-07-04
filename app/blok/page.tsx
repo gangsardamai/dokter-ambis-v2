@@ -1,31 +1,31 @@
 export default function BlokPage() {
-  const blokList = [
+  const courseList = [
     {
       id: 1,
-      nama: "Blok Kardiovaskular",
-      universitas: "Universitas Indonesia",
+      title: "Blok Kardiovaskular",
+      organization: "Universitas Indonesia",
       mentor: "Dr. A",
-      materi: 32,
-      status: "Aktif",
-      harga: "Rp 499.000",
+      totalLessons: 32,
+      status: "active",
+      price: "Rp 499.000",
     },
     {
       id: 2,
-      nama: "Blok Respirasi",
-      universitas: "Universitas Gadjah Mada",
+      title: "Blok Respirasi",
+      organization: "Universitas Gadjah Mada",
       mentor: "Dr. B",
-      materi: 28,
-      status: "Aktif",
-      harga: "Rp 399.000",
+      totalLessons: 28,
+      status: "active",
+      price: "Rp 399.000",
     },
     {
       id: 3,
-      nama: "Blok Neurologi",
-      universitas: "Universitas Airlangga",
+      title: "Blok Neurologi",
+      organization: "Universitas Airlangga",
       mentor: "Dr. C",
-      materi: 35,
-      status: "Segera",
-      harga: "Rp 599.000",
+      totalLessons: 35,
+      status: "coming_soon",
+      price: "Rp 599.000",
     },
   ];
 
@@ -40,9 +40,9 @@ export default function BlokPage() {
       </p>
 
       <div style={{ marginTop: 24, display: "grid", gap: 16 }}>
-        {blokList.map((blok) => (
+        {courseList.map((course) => (
           <div
-            key={blok.id}
+            key={course.id}
             style={{
               border: "1px solid #ddd",
               borderRadius: 12,
@@ -50,23 +50,23 @@ export default function BlokPage() {
             }}
           >
             <h2 style={{ fontSize: 18, fontWeight: 600 }}>
-              {blok.nama}
+              {course.title}
             </h2>
 
             <p style={{ marginTop: 6, color: "#555" }}>
-              {blok.universitas}
+              {course.organization}
             </p>
 
             <p style={{ marginTop: 6, color: "#555" }}>
-              Mentor: {blok.mentor}
+              Mentor: {course.mentor}
             </p>
 
             <p style={{ marginTop: 6, color: "#555" }}>
-              {blok.materi} materi
+              {course.totalLessons} materi
             </p>
 
             <div style={{ marginTop: 10, fontWeight: "bold" }}>
-              {blok.harga}
+              {course.price}
             </div>
 
             <span
@@ -77,12 +77,18 @@ export default function BlokPage() {
                 borderRadius: 8,
                 fontSize: 12,
                 background:
-                  blok.status === "Aktif" ? "#d1fae5" : "#fef3c7",
+                  course.status === "active"
+                    ? "#d1fae5"
+                    : "#fef3c7",
                 color:
-                  blok.status === "Aktif" ? "#065f46" : "#92400e",
+                  course.status === "active"
+                    ? "#065f46"
+                    : "#92400e",
               }}
             >
-              {blok.status}
+              {course.status === "active"
+                ? "Aktif"
+                : "Segera Hadir"}
             </span>
           </div>
         ))}

@@ -1,19 +1,19 @@
 import Link from "next/link";
 
-const blokData: Record<string, any> = {
+const courseData: Record<string, any> = {
   "1": {
-    nama: "Blok Kardiovaskular",
-    materi: [
-      { id: "1-1", judul: "Anatomi Jantung" },
-      { id: "1-2", judul: "Fisiologi Jantung" },
-      { id: "1-3", judul: "EKG Dasar" },
+    title: "Blok Kardiovaskular",
+    lessons: [
+      { id: "1-1", title: "Anatomi Jantung" },
+      { id: "1-2", title: "Fisiologi Jantung" },
+      { id: "1-3", title: "EKG Dasar" },
     ],
   },
   "2": {
-    nama: "Blok Respirasi",
-    materi: [
-      { id: "2-1", judul: "Anatomi Paru" },
-      { id: "2-2", judul: "Ventilasi & Perfusi" },
+    title: "Blok Respirasi",
+    lessons: [
+      { id: "2-1", title: "Anatomi Paru" },
+      { id: "2-2", title: "Ventilasi & Perfusi" },
     ],
   },
 };
@@ -23,16 +23,20 @@ export default function BlokDetailPage({
 }: {
   params: { id: string };
 }) {
-  const blok = blokData[params.id];
+  const course = courseData[params.id];
 
-  if (!blok) {
-    return <div style={{ padding: 24 }}>Blok tidak ditemukan</div>;
+  if (!course) {
+    return (
+      <div style={{ padding: 24 }}>
+        Blok tidak ditemukan
+      </div>
+    );
   }
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <h1 style={{ fontSize: 28, fontWeight: "bold" }}>
-        {blok.nama}
+        {course.title}
       </h1>
 
       <p style={{ color: "#666", marginTop: 6 }}>
@@ -40,10 +44,10 @@ export default function BlokDetailPage({
       </p>
 
       <div style={{ marginTop: 24, display: "grid", gap: 12 }}>
-        {blok.materi.map((m: any) => (
+        {course.lessons.map((lesson: any) => (
           <Link
-            key={m.id}
-            href={`/materi/${m.id}?blok=${params.id}`}
+            key={lesson.id}
+            href={`/materi/${lesson.id}?course=${params.id}`}
             style={{
               border: "1px solid #ddd",
               padding: 14,
@@ -53,7 +57,7 @@ export default function BlokDetailPage({
               color: "inherit",
             }}
           >
-            {m.judul}
+            {lesson.title}
           </Link>
         ))}
       </div>

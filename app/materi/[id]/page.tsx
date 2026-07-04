@@ -3,65 +3,78 @@ export default function MateriDetailPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { blok?: string };
+  searchParams: { course?: string };
 }) {
-  const materiData: Record<string, any> = {
+  const lessonData: Record<string, any> = {
     "1-1": {
-      judul: "Anatomi Jantung",
-      tipe: "Video",
-      deskripsi: "Struktur jantung dan aliran darah",
+      title: "Anatomi Jantung",
+      type: "video",
+      description: "Struktur jantung dan aliran darah",
     },
     "1-2": {
-      judul: "Fisiologi Jantung",
-      tipe: "PDF",
-      deskripsi: "Cara kerja siklus jantung",
+      title: "Fisiologi Jantung",
+      type: "pdf",
+      description: "Cara kerja siklus jantung",
     },
     "1-3": {
-      judul: "EKG Dasar",
-      tipe: "Video",
-      deskripsi: "Interpretasi EKG dasar",
+      title: "EKG Dasar",
+      type: "video",
+      description: "Interpretasi EKG dasar",
     },
     "2-1": {
-      judul: "Anatomi Paru",
-      tipe: "Video",
-      deskripsi: "Struktur sistem respirasi",
+      title: "Anatomi Paru",
+      type: "video",
+      description: "Struktur sistem respirasi",
     },
   };
 
-  const materi = materiData[params.id];
+  const lesson = lessonData[params.id];
 
-  if (!materi) {
-    return <div style={{ padding: 24 }}>Materi tidak ditemukan</div>;
+  if (!lesson) {
+    return (
+      <div style={{ padding: 24 }}>
+        Materi tidak ditemukan
+      </div>
+    );
   }
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
       <p style={{ color: "#666" }}>
-        Blok ID: {searchParams.blok}
+        Course ID: {searchParams.course}
       </p>
 
       <h1 style={{ fontSize: 28, fontWeight: "bold" }}>
-        {materi.judul}
+        {lesson.title}
       </h1>
 
-      <p style={{ marginTop: 10 }}>{materi.deskripsi}</p>
+      <p style={{ marginTop: 10 }}>
+        {lesson.description}
+      </p>
 
       <hr style={{ margin: "20px 0" }} />
 
-      {materi.tipe === "Video" && (
+      {lesson.type === "video" && (
         <div>
           <iframe
             width="100%"
             height="400"
             src="https://www.youtube.com/embed/dQw4w9WgXcQ"
             style={{ borderRadius: 12 }}
+            allowFullScreen
           />
         </div>
       )}
 
-      {materi.tipe === "PDF" && (
-        <div style={{ padding: 20, border: "1px solid #ddd" }}>
-          <p>PDF Material</p>
+      {lesson.type === "pdf" && (
+        <div
+          style={{
+            padding: 20,
+            border: "1px solid #ddd",
+            borderRadius: 12,
+          }}
+        >
+          <p>PDF Materi</p>
           <button>Buka PDF</button>
         </div>
       )}
