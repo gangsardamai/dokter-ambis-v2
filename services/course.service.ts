@@ -1,33 +1,47 @@
-import { Course } from "@/types";
+import { courseRepository } from "@/repositories";
 
-import { courseRepository } from "@/lib/repositories/course.repository";
+export class CourseService {
 
-export const courseService = {
-  getCourses(): Course[] {
-    return courseRepository.findAll();
-  },
+  /**
+   * Get all active courses
+   */
+  async getCourses() {
+    return await courseRepository.getAll();
+  }
 
-  getActiveCourses(): Course[] {
-    return courseRepository.findActive();
-  },
+  /**
+   * Get course by ID
+   */
+  async getCourseById(id: string) {
+    return await courseRepository.getById(id);
+  }
 
-  getCourseById(
-    id: string
-  ): Course | undefined {
-    return courseRepository.findById(id);
-  },
+  /**
+   * Get course by slug
+   */
+  async getCourseBySlug(slug: string) {
+    return await courseRepository.getBySlug(slug);
+  }
 
-  getCoursesByOrganization(
+  /**
+   * Get courses by organization
+   */
+  async getCoursesByOrganization(
     organizationId: string
-  ): Course[] {
-    return courseRepository.findByOrganization(
+  ) {
+    return await courseRepository.getByOrganization(
       organizationId
     );
-  },
+  }
 
-  getCoursesByProgram(
-    programId: string
-  ): Course[] {
-    return courseRepository.findByProgram(programId);
-  },
-};
+  /**
+   * Count all courses
+   */
+  async countCourses() {
+    return await courseRepository.count();
+  }
+
+}
+
+export const courseService =
+  new CourseService();

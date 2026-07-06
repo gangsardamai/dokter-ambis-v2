@@ -1,18 +1,22 @@
-import { Organization } from "@/types";
-import { organizationRepository } from "@/lib/repositories/organization.repository";
+import { organizationRepository } from "@/repositories";
 
-export const organizationService = {
-  getOrganizations(): Organization[] {
-    return organizationRepository.findAll();
-  },
+export class OrganizationService {
 
-  getActiveOrganizations(): Organization[] {
-    return organizationRepository.findActive();
-  },
+  async getOrganizations() {
+    return await organizationRepository.getAll();
+  }
 
-  getOrganizationById(
-    id: string
-  ): Organization | undefined {
-    return organizationRepository.findById(id);
-  },
-};
+  async getOrganization(id: string) {
+    return await organizationRepository.getById(id);
+  }
+
+  async getOrganizationBySlug(
+    slug: string
+  ) {
+    return await organizationRepository.getBySlug(slug);
+  }
+
+}
+
+export const organizationService =
+  new OrganizationService();

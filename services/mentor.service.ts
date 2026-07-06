@@ -1,15 +1,19 @@
 import { Mentor } from "@/types";
+import { mentorRepository } from "@/repositories";
 
-import { mentorRepository } from "@/lib/repositories/mentor.repository";
+export class MentorService {
 
-export const mentorService = {
   getMentors(): Mentor[] {
     return mentorRepository.findAll();
-  },
+  }
 
   getMentorById(
     id: string
   ): Mentor | undefined {
     return mentorRepository.findById(id);
-  },
-};
+  }
+
+}
+
+export const mentorService =
+  new MentorService();

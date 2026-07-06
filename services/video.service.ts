@@ -1,13 +1,28 @@
-import { Video } from "@/types";
+import { videoRepository } from "@/repositories";
 
-import { videoRepository } from "@/lib/repositories/video.repository";
+export class VideoService {
 
-export const videoService = {
-  getVideosByLesson(
+  async getVideos() {
+    return await videoRepository.getAll();
+  }
+
+  async getVideoById(id: string) {
+    return await videoRepository.getById(id);
+  }
+
+  async getVideosByLesson(
     lessonId: string
-  ): Video[] {
-    return videoRepository.findByLesson(
+  ) {
+    return await videoRepository.getByLesson(
       lessonId
     );
-  },
-};
+  }
+
+  async countVideos() {
+    return await videoRepository.count();
+  }
+
+}
+
+export const videoService =
+  new VideoService();

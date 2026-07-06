@@ -1,18 +1,24 @@
-import { Program } from "@/types";
-import { programRepository } from "@/lib/repositories/program.repository";
+import { programRepository } from "@/repositories";
 
-export const programService = {
-  getPrograms(): Program[] {
-    return programRepository.findAll();
-  },
+export class ProgramService {
 
-  getActivePrograms(): Program[] {
-    return programRepository.findActive();
-  },
+  async getPrograms() {
+    return await programRepository.getAll();
+  }
 
-  getProgramById(
-    id: string
-  ): Program | undefined {
-    return programRepository.findById(id);
-  },
-};
+  async getProgramById(id: string) {
+    return await programRepository.getById(id);
+  }
+
+  async getActivePrograms() {
+    return await programRepository.getActive();
+  }
+
+  async countPrograms() {
+    return await programRepository.count();
+  }
+
+}
+
+export const programService =
+  new ProgramService();

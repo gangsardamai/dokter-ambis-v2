@@ -1,29 +1,8 @@
 import Link from "next/link";
+import { organizationService } from "@/services";
 
-export default function UniversitasPage() {
-  const organizations = [
-    {
-      id: "ui",
-      slug: "universitas-indonesia",
-      title: "Universitas Indonesia",
-      totalCourses: 5,
-      isActive: true,
-    },
-    {
-      id: "ugm",
-      slug: "universitas-gadjah-mada",
-      title: "Universitas Gadjah Mada",
-      totalCourses: 4,
-      isActive: true,
-    },
-    {
-      id: "unair",
-      slug: "universitas-airlangga",
-      title: "Universitas Airlangga",
-      totalCourses: 6,
-      isActive: true,
-    },
-  ];
+export default async function UniversitasPage() {
+  const organizations = await organizationService.getOrganizations();
 
   return (
     <div
@@ -61,7 +40,7 @@ export default function UniversitasPage() {
         {organizations.map((organization) => (
           <Link
             key={organization.id}
-            href={`/universitas/${organization.id}/blok`}
+            href={`/universitas/${organization.slug}/blok`}
             style={{
               border: "1px solid #ddd",
               padding: 16,
@@ -86,7 +65,7 @@ export default function UniversitasPage() {
                 color: "#555",
               }}
             >
-              {organization.totalCourses} blok tersedia
+              {organization.short_name}
             </p>
           </Link>
         ))}

@@ -1,65 +1,35 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import {
+  organizationService,
+  courseService,
+} from "@/services";
 
 type PageProps = {
   params: Promise<{
-    id: string;
+    organizationSlug: string;
   }>;
 };
 
 export default async function BlokByUniversitas({
   params,
 }: PageProps) {
-  const { id } = await params;
+  const { organizationSlug } = await params;
 
-  const organizationCourses: Record<string, any> = {
-    ui: {
-      title: "Universitas Indonesia",
-      courses: [
-        {
-          id: 1,
-          title: "Blok Kardiovaskular",
-          totalLessons: 32,
-        },
-        {
-          id: 2,
-          title: "Blok Respirasi",
-          totalLessons: 28,
-        },
-      ],
-    },
-
-    ugm: {
-      title: "Universitas Gadjah Mada",
-      courses: [
-        {
-          id: 3,
-          title: "Blok Neurologi",
-          totalLessons: 35,
-        },
-      ],
-    },
-
-    unair: {
-      title: "Universitas Airlangga",
-      courses: [
-        {
-          id: 4,
-          title: "Blok Gastrointestinal",
-          totalLessons: 30,
-        },
-      ],
-    },
-  };
-
-  const organization = organizationCourses[id];
+  const organization =
+    await organizationService.getOrganizationBySlug(
+      organizationSlug
+    );
 
   if (!organization) {
-    return (
-      <div style={{ padding: 24 }}>
-        Universitas tidak ditemukan
-      </div>
-    );
+    notFound();
   }
+
+  const courses =
+    await courseService.getCoursesByOrganization(
+      organization.id
+    );
 
   return (
     <div
@@ -94,10 +64,16 @@ export default async function BlokByUniversitas({
           gap: 16,
         }}
       >
-        {organization.courses.map((course: any) => (
+        {courses.length === 0 && (
+          <p>
+            Belum ada blok pembelajaran.
+          </p>
+        )}
+
+        {courses.map((course) => (
           <Link
             key={course.id}
-            href={`/blok/${course.id}`}
+            href={`/universitas/${organization.slug}/blok/${course.slug}`}
             style={{
               border: "1px solid #ddd",
               padding: 16,
@@ -122,7 +98,7 @@ export default async function BlokByUniversitas({
                 color: "#555",
               }}
             >
-              {course.totalLessons} materi
+              {course.status}
             </p>
           </Link>
         ))}

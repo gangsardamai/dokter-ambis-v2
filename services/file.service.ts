@@ -1,13 +1,28 @@
-import { LessonFile } from "@/types";
+import { lessonFileRepository } from "@/repositories";
 
-import { fileRepository } from "@/lib/repositories/file.repository";
+export class LessonFileService {
 
-export const fileService = {
-  getFilesByLesson(
+  async getFiles() {
+    return await lessonFileRepository.getAll();
+  }
+
+  async getFileById(id: string) {
+    return await lessonFileRepository.getById(id);
+  }
+
+  async getFilesByLesson(
     lessonId: string
-  ): LessonFile[] {
-    return fileRepository.findByLesson(
+  ) {
+    return await lessonFileRepository.getByLesson(
       lessonId
     );
-  },
-};
+  }
+
+  async countFiles() {
+    return await lessonFileRepository.count();
+  }
+
+}
+
+export const lessonFileService =
+  new LessonFileService();

@@ -1,13 +1,28 @@
-import { LiveClass } from "@/types";
+import { liveClassRepository } from "@/repositories";
 
-import { liveClassRepository } from "@/lib/repositories/live-class.repository";
+export class LiveClassService {
 
-export const liveClassService = {
-  getLiveClassesByLesson(
+  async getLiveClasses() {
+    return await liveClassRepository.getAll();
+  }
+
+  async getLiveClassById(id: string) {
+    return await liveClassRepository.getById(id);
+  }
+
+  async getLiveClassesByLesson(
     lessonId: string
-  ): LiveClass[] {
-    return liveClassRepository.findByLesson(
+  ) {
+    return await liveClassRepository.getByLesson(
       lessonId
     );
-  },
-};
+  }
+
+  async countLiveClasses() {
+    return await liveClassRepository.count();
+  }
+
+}
+
+export const liveClassService =
+  new LiveClassService();

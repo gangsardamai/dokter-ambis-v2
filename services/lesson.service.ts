@@ -1,21 +1,32 @@
-import { Lesson } from "@/types";
+import { lessonRepository } from "@/repositories";
 
-import { lessonRepository } from "@/lib/repositories/lesson.repository";
+export class LessonService {
 
-export const lessonService = {
-  getLessons(): Lesson[] {
-    return lessonRepository.findAll();
-  },
+  async getLessons() {
+    return await lessonRepository.getAll();
+  }
 
-  getLessonById(
-    id: string
-  ): Lesson | undefined {
-    return lessonRepository.findById(id);
-  },
+  async getLessonById(id: string) {
+    return await lessonRepository.getById(id);
+  }
 
-  getLessonsByCourse(
-    courseId: string
-  ): Lesson[] {
-    return lessonRepository.findByCourse(courseId);
-  },
-};
+  async getLessonBySlug(slug: string) {
+    return await lessonRepository.getBySlug(slug);
+  }
+
+  async getLessonDetail(slug: string) {
+    return await lessonRepository.getDetailBySlug(slug);
+  }
+
+  async getLessonsByCourse(courseId: string) {
+    return await lessonRepository.getByCourse(courseId);
+  }
+
+  async countLessons() {
+    return await lessonRepository.count();
+  }
+
+}
+
+export const lessonService =
+  new LessonService();

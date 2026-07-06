@@ -1,13 +1,28 @@
-import { Quiz } from "@/types";
+import { quizRepository } from "@/repositories";
 
-import { quizRepository } from "@/lib/repositories/quiz.repository";
+export class QuizService {
 
-export const quizService = {
-  getQuizzesByLesson(
+  async getQuizzes() {
+    return await quizRepository.getAll();
+  }
+
+  async getQuizById(id: string) {
+    return await quizRepository.getById(id);
+  }
+
+  async getQuizzesByLesson(
     lessonId: string
-  ): Quiz[] {
-    return quizRepository.findByLesson(
+  ) {
+    return await quizRepository.getByLesson(
       lessonId
     );
-  },
-};
+  }
+
+  async countQuizzes() {
+    return await quizRepository.count();
+  }
+
+}
+
+export const quizService =
+  new QuizService();
