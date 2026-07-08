@@ -1,13 +1,24 @@
 import type { Database } from "@/supabase/types/database.types";
+
 import { BaseRepository } from "./base.repository";
 
-type Lesson = Database["public"]["Tables"]["lessons"]["Row"];
-type LessonInsert = Database["public"]["Tables"]["lessons"]["Insert"];
-type LessonUpdate = Database["public"]["Tables"]["lessons"]["Update"];
+type Lesson =
+  Database["public"]["Tables"]["lessons"]["Row"];
+
+type LessonInsert =
+  Database["public"]["Tables"]["lessons"]["Insert"];
+
+type LessonUpdate =
+  Database["public"]["Tables"]["lessons"]["Update"];
 
 export class LessonRepository extends BaseRepository {
 
+  /* ========================================
+     READ
+  ======================================== */
+
   async getAll(): Promise<Lesson[]> {
+
     const supabase = await this.db();
 
     const { data, error } = await supabase
@@ -18,9 +29,13 @@ export class LessonRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return data ?? [];
+
   }
 
-  async getById(id: string): Promise<Lesson | null> {
+  async getById(
+    id: string
+  ): Promise<Lesson | null> {
+
     const supabase = await this.db();
 
     const { data, error } = await supabase
@@ -32,6 +47,7 @@ export class LessonRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return data;
+
   }
 
   async getBySlug(
@@ -49,22 +65,6 @@ export class LessonRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return data;
-  }
-
-  /**
-   * Digunakan oleh:
-   * app/materi/[lessonSlug]/page.tsx
-   *
-   * Saat ini sama dengan getBySlug().
-   * Nanti apabila halaman materi membutuhkan relasi
-   * Course / Mentor / Progress, cukup ubah method ini
-   * tanpa mengubah Page ataupun Service.
-   */
-  async getDetailBySlug(
-    slug: string
-  ): Promise<Lesson | null> {
-
-    return await this.getBySlug(slug);
 
   }
 
@@ -83,25 +83,7 @@ export class LessonRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return data ?? [];
-  }
 
-  async exists(
-    id: string
-  ): Promise<boolean> {
-
-    const supabase = await this.db();
-
-    const { count, error } = await supabase
-      .from("lessons")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("id", id);
-
-    if (error) this.handleError(error);
-
-    return (count ?? 0) > 0;
   }
 
   async count(): Promise<number> {
@@ -118,7 +100,12 @@ export class LessonRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return count ?? 0;
+
   }
+
+  /* ========================================
+     CREATE
+  ======================================== */
 
   async create(
     data: LessonInsert
@@ -126,16 +113,22 @@ export class LessonRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { data: created, error } = await supabase
-      .from("lessons")
-      .insert(data)
-      .select()
-      .single();
+    const { data: created, error } =
+      await supabase
+        .from("lessons")
+        .insert(data)
+        .select()
+        .single();
 
     if (error) this.handleError(error);
 
     return created;
+
   }
+
+  /* ========================================
+     UPDATE
+  ======================================== */
 
   async update(
     id: string,
@@ -144,17 +137,23 @@ export class LessonRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { data: updated, error } = await supabase
-      .from("lessons")
-      .update(data)
-      .eq("id", id)
-      .select()
-      .single();
+    const { data: updated, error } =
+      await supabase
+        .from("lessons")
+        .update(data)
+        .eq("id", id)
+        .select()
+        .single();
 
     if (error) this.handleError(error);
 
     return updated;
+
   }
+
+  /* ========================================
+     DELETE
+  ======================================== */
 
   async delete(
     id: string
@@ -162,12 +161,14 @@ export class LessonRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { error } = await supabase
-      .from("lessons")
-      .delete()
-      .eq("id", id);
+    const { error } =
+      await supabase
+        .from("lessons")
+        .delete()
+        .eq("id", id);
 
     if (error) this.handleError(error);
+
   }
 
 }

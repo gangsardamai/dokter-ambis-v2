@@ -22,6 +22,7 @@ interface Props {
 export default async function EditProgramPage({
   params,
 }: Props) {
+
   const { id } = await params;
 
   const program =

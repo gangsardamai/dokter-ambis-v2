@@ -4,25 +4,26 @@ import Link from "next/link";
 import { useTransition } from "react";
 
 import {
-  activateProgramAction,
-  deactivateProgramAction,
-  deleteProgramAction,
-} from "@/app/dashboard/admin/program/actions";
+  activateOrganizationAction,
+  deactivateOrganizationAction,
+  deleteOrganizationAction,
+} from "@/app/dashboard/admin/organization/actions";
 
 import type { Database } from "@/supabase/types/database.types";
 
-type ProgramStatus =
-  Database["public"]["Enums"]["program_status"];
+type OrganizationStatus =
+  Database["public"]["Enums"]["organization_status"];
 
 interface Props {
-  programId: string;
-  status: ProgramStatus;
+  organizationId: string;
+  status: OrganizationStatus;
 }
 
-export default function ProgramActionMenu({
-  programId,
+export default function OrganizationActionMenu({
+  organizationId,
   status,
 }: Props) {
+
   const [isPending, startTransition] =
     useTransition();
 
@@ -31,16 +32,16 @@ export default function ProgramActionMenu({
 
   function handleActivate() {
     startTransition(async () => {
-      await activateProgramAction(
-        programId
+      await activateOrganizationAction(
+        organizationId
       );
     });
   }
 
   function handleDeactivate() {
     startTransition(async () => {
-      await deactivateProgramAction(
-        programId
+      await deactivateOrganizationAction(
+        organizationId
       );
     });
   }
@@ -49,16 +50,14 @@ export default function ProgramActionMenu({
 
     const confirmed =
       window.confirm(
-        "Apakah Anda yakin ingin menghapus program ini?"
+        "Apakah Anda yakin ingin menghapus universitas ini?"
       );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     startTransition(async () => {
-      await deleteProgramAction(
-        programId
+      await deleteOrganizationAction(
+        organizationId
       );
     });
 
@@ -68,14 +67,14 @@ export default function ProgramActionMenu({
     <div className="flex justify-end gap-2">
 
       <Link
-        href={`/dashboard/admin/program/${programId}`}
+        href={`/dashboard/admin/organization/${organizationId}`}
         className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
       >
         Detail
       </Link>
 
       <Link
-        href={`/dashboard/admin/program/${programId}/edit`}
+        href={`/dashboard/admin/organization/${organizationId}/edit`}
         className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
       >
         Edit

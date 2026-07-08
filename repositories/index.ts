@@ -11,3 +11,4 @@ export * from "./quiz.repository";
 
 export * from "./program.repository";
 export * from "./mentor.repository";
+export { courseRepository } from "./course.repository";

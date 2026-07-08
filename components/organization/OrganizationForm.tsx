@@ -4,27 +4,27 @@ import { useState } from "react";
 
 import {
   TextInput,
-  TextArea,
   SelectField,
 } from "@/components/ui";
 
-export type ProgramStatus =
-  | "active"
-  | "inactive"
-  | "coming_soon";
+import type { Database } from "@/supabase/types/database.types";
 
-export type ProgramFormData = {
+export type OrganizationStatus =
+  Database["public"]["Enums"]["organization_status"];
+
+export type OrganizationFormData = {
   title: string;
+  short_name: string;
   slug: string;
-  description: string;
-  status: ProgramStatus;
+  logo_path: string;
+  status: OrganizationStatus;
 };
 
-interface ProgramFormProps {
-  initialData?: ProgramFormData;
+interface OrganizationFormProps {
+  initialData?: OrganizationFormData;
   submitLabel?: string;
   onSubmit: (
-    data: ProgramFormData
+    data: OrganizationFormData
   ) => Promise<void>;
 }
 
@@ -37,27 +37,26 @@ function slugify(text: string): string {
     .replace(/-+/g, "-");
 }
 
-export default function ProgramForm({
+export default function OrganizationForm({
   initialData,
   submitLabel = "Simpan",
   onSubmit,
-}: ProgramFormProps) {
+}: OrganizationFormProps) {
 
-  const [title, setTitle] = useState(
-    initialData?.title ?? ""
-  );
+  const [title, setTitle] =
+    useState(initialData?.title ?? "");
 
-  const [slug, setSlug] = useState(
-    initialData?.slug ?? ""
-  );
+  const [shortName, setShortName] =
+    useState(initialData?.short_name ?? "");
 
-  const [description, setDescription] =
-    useState(
-      initialData?.description ?? ""
-    );
+  const [slug, setSlug] =
+    useState(initialData?.slug ?? "");
+
+  const [logoPath, setLogoPath] =
+    useState(initialData?.logo_path ?? "");
 
   const [status, setStatus] =
-    useState<ProgramStatus>(
+    useState<OrganizationStatus>(
       initialData?.status ?? "active"
     );
 
@@ -81,8 +80,9 @@ export default function ProgramForm({
 
       await onSubmit({
         title: title.trim(),
+        short_name: shortName.trim(),
         slug: slug.trim(),
-        description: description.trim(),
+        logo_path: logoPath.trim(),
         status,
       });
 
@@ -102,7 +102,7 @@ export default function ProgramForm({
     >
 
       <TextInput
-        label="Nama Program"
+        label="Nama Universitas"
         value={title}
         required
         onChange={(value) => {
@@ -119,6 +119,13 @@ export default function ProgramForm({
       />
 
       <TextInput
+        label="Nama Singkat"
+        value={shortName}
+        required
+        onChange={setShortName}
+      />
+
+      <TextInput
         label="Slug"
         value={slug}
         required
@@ -131,10 +138,10 @@ export default function ProgramForm({
         }}
       />
 
-      <TextArea
-        label="Deskripsi"
-        value={description}
-        onChange={setDescription}
+      <TextInput
+        label="Logo Path"
+        value={logoPath}
+        onChange={setLogoPath}
       />
 
       <SelectField
@@ -142,7 +149,7 @@ export default function ProgramForm({
         value={status}
         onChange={(value) =>
           setStatus(
-            value as ProgramStatus
+            value as OrganizationStatus
           )
         }
         options={[
@@ -153,10 +160,6 @@ export default function ProgramForm({
           {
             value: "inactive",
             label: "Inactive",
-          },
-          {
-            value: "coming_soon",
-            label: "Coming Soon",
           },
         ]}
       />

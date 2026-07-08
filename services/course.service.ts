@@ -1,31 +1,35 @@
 import { courseRepository } from "@/repositories";
 
+import type { Database } from "@/supabase/types/database.types";
+
+type CourseInsert =
+  Database["public"]["Tables"]["courses"]["Insert"];
+
+type CourseUpdate =
+  Database["public"]["Tables"]["courses"]["Update"];
+
 export class CourseService {
 
-  /**
-   * Get all active courses
-   */
+  /* ========================================
+     READ
+  ======================================== */
+
   async getCourses() {
     return await courseRepository.getAll();
   }
 
-  /**
-   * Get course by ID
-   */
-  async getCourseById(id: string) {
+  async getCourseById(
+    id: string
+  ) {
     return await courseRepository.getById(id);
   }
 
-  /**
-   * Get course by slug
-   */
-  async getCourseBySlug(slug: string) {
+  async getCourseBySlug(
+    slug: string
+  ) {
     return await courseRepository.getBySlug(slug);
   }
 
-  /**
-   * Get courses by organization
-   */
   async getCoursesByOrganization(
     organizationId: string
   ) {
@@ -34,11 +38,46 @@ export class CourseService {
     );
   }
 
-  /**
-   * Count all courses
-   */
   async countCourses() {
     return await courseRepository.count();
+  }
+
+  /* ========================================
+     CREATE
+  ======================================== */
+
+  async createCourse(
+    data: CourseInsert
+  ) {
+    return await courseRepository.create(
+      data
+    );
+  }
+
+  /* ========================================
+     UPDATE
+  ======================================== */
+
+  async updateCourse(
+    id: string,
+    data: CourseUpdate
+  ) {
+    return await courseRepository.update(
+      id,
+      data
+    );
+  }
+
+  /* ========================================
+     DELETE
+  ======================================== */
+
+  async deleteCourse(
+    id: string
+  ) {
+    return await courseRepository.delete(
+      id
+    );
   }
 
 }

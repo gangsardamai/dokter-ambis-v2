@@ -1,29 +1,85 @@
 import { lessonRepository } from "@/repositories";
 
+import type { Database } from "@/supabase/types/database.types";
+
+type LessonInsert =
+  Database["public"]["Tables"]["lessons"]["Insert"];
+
+type LessonUpdate =
+  Database["public"]["Tables"]["lessons"]["Update"];
+
 export class LessonService {
+
+  /* ========================================
+     READ
+  ======================================== */
 
   async getLessons() {
     return await lessonRepository.getAll();
   }
 
-  async getLessonById(id: string) {
+  async getLessonById(
+    id: string
+  ) {
     return await lessonRepository.getById(id);
   }
 
-  async getLessonBySlug(slug: string) {
-    return await lessonRepository.getBySlug(slug);
+  async getLessonDetail(
+    slug: string
+  ) {
+    return await lessonRepository.getBySlug(
+      slug
+    );
   }
 
-  async getLessonDetail(slug: string) {
-    return await lessonRepository.getDetailBySlug(slug);
-  }
-
-  async getLessonsByCourse(courseId: string) {
-    return await lessonRepository.getByCourse(courseId);
+  async getLessonsByCourse(
+    courseId: string
+  ) {
+    return await lessonRepository.getByCourse(
+      courseId
+    );
   }
 
   async countLessons() {
     return await lessonRepository.count();
+  }
+
+  /* ========================================
+     CREATE
+  ======================================== */
+
+  async createLesson(
+    data: LessonInsert
+  ) {
+    return await lessonRepository.create(
+      data
+    );
+  }
+
+  /* ========================================
+     UPDATE
+  ======================================== */
+
+  async updateLesson(
+    id: string,
+    data: LessonUpdate
+  ) {
+    return await lessonRepository.update(
+      id,
+      data
+    );
+  }
+
+  /* ========================================
+     DELETE
+  ======================================== */
+
+  async deleteLesson(
+    id: string
+  ) {
+    return await lessonRepository.delete(
+      id
+    );
   }
 
 }

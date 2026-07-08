@@ -1,27 +1,41 @@
 import type { Database } from "@/supabase/types/database.types";
+
 import { BaseRepository } from "./base.repository";
 
-type Course = Database["public"]["Tables"]["courses"]["Row"];
-type CourseInsert = Database["public"]["Tables"]["courses"]["Insert"];
-type CourseUpdate = Database["public"]["Tables"]["courses"]["Update"];
+type Course =
+  Database["public"]["Tables"]["courses"]["Row"];
+
+type CourseInsert =
+  Database["public"]["Tables"]["courses"]["Insert"];
+
+type CourseUpdate =
+  Database["public"]["Tables"]["courses"]["Update"];
 
 export class CourseRepository extends BaseRepository {
 
+  /* ========================================
+     READ
+  ======================================== */
+
   async getAll(): Promise<Course[]> {
+
     const supabase = await this.db();
 
     const { data, error } = await supabase
       .from("courses")
       .select("*")
-      .eq("status", "active")
       .order("title");
 
     if (error) this.handleError(error);
 
     return data ?? [];
+
   }
 
-  async getById(id: string): Promise<Course | null> {
+  async getById(
+    id: string
+  ): Promise<Course | null> {
+
     const supabase = await this.db();
 
     const { data, error } = await supabase
@@ -33,9 +47,13 @@ export class CourseRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return data;
+
   }
 
-  async getBySlug(slug: string): Promise<Course | null> {
+  async getBySlug(
+    slug: string
+  ): Promise<Course | null> {
+
     const supabase = await this.db();
 
     const { data, error } = await supabase
@@ -47,6 +65,7 @@ export class CourseRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return data;
+
   }
 
   async getByOrganization(
@@ -59,49 +78,46 @@ export class CourseRepository extends BaseRepository {
       .from("courses")
       .select("*")
       .eq("organization_id", organizationId)
-      .eq("status", "active")
       .order("title");
 
     if (error) this.handleError(error);
 
     return data ?? [];
-  }
 
-  async exists(id: string): Promise<boolean> {
-    const supabase = await this.db();
-
-    const { count, error } = await supabase
-      .from("courses")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("id", id);
-
-    if (error) this.handleError(error);
-
-    return (count ?? 0) > 0;
   }
 
   async count(): Promise<number> {
+
     const supabase = await this.db();
 
-    const { count, error } = await supabase
-      .from("courses")
-      .select("*", {
-        count: "exact",
-        head: true,
-      });
+    const { count, error } =
+      await supabase
+        .from("courses")
+        .select("*", {
+          count: "exact",
+          head: true,
+        });
 
     if (error) this.handleError(error);
 
     return count ?? 0;
+
   }
 
-  async create(data: CourseInsert): Promise<Course> {
+  /* ========================================
+     CREATE
+  ======================================== */
+
+  async create(
+    data: CourseInsert
+  ): Promise<Course> {
+
     const supabase = await this.db();
 
-    const { data: created, error } = await supabase
+    const {
+      data: created,
+      error,
+    } = await supabase
       .from("courses")
       .insert(data)
       .select()
@@ -110,7 +126,12 @@ export class CourseRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return created;
+
   }
+
+  /* ========================================
+     UPDATE
+  ======================================== */
 
   async update(
     id: string,
@@ -119,7 +140,10 @@ export class CourseRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { data: updated, error } = await supabase
+    const {
+      data: updated,
+      error,
+    } = await supabase
       .from("courses")
       .update(data)
       .eq("id", id)
@@ -129,18 +153,30 @@ export class CourseRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return updated;
+
   }
 
-  async delete(id: string): Promise<void> {
+  /* ========================================
+     DELETE
+  ======================================== */
+
+  async delete(
+    id: string
+  ): Promise<void> {
+
     const supabase = await this.db();
 
-    const { error } = await supabase
-      .from("courses")
-      .delete()
-      .eq("id", id);
+    const { error } =
+      await supabase
+        .from("courses")
+        .delete()
+        .eq("id", id);
 
     if (error) this.handleError(error);
+
   }
+
 }
 
-export const courseRepository = new CourseRepository();
+export const courseRepository =
+  new CourseRepository();
