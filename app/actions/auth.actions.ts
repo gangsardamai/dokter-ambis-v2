@@ -120,9 +120,16 @@ export async function loginAction(
     );
 
   if (result.error) {
+    const isEmailNotConfirmed =
+      result.error.message
+        .toLowerCase()
+        .includes("email not confirmed");
+
     redirect(
       `/login?error=${encodeURIComponent(
-        "Email atau password tidak sesuai.",
+        isEmailNotConfirmed
+          ? "Email belum dikonfirmasi. Silakan buka email Anda dan klik link konfirmasi terlebih dahulu."
+          : "Email atau password tidak sesuai.",
       )}`,
     );
   }

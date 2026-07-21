@@ -18,7 +18,10 @@ export interface RegisterFormData {
 interface RegisterFormProps {
   onSubmit: (
     data: RegisterFormData
-  ) => Promise<void>;
+  ) => Promise<{
+    success: boolean;
+    message: string;
+  }>;
 }
 
 export default function RegisterForm({
@@ -71,6 +74,16 @@ export default function RegisterForm({
 
     }
 
+    if (password.length < 6) {
+
+      setError(
+        "Password minimal terdiri dari 6 karakter."
+      );
+
+      return;
+
+    }
+
     if (!agreeTerms) {
 
       setError(
@@ -85,17 +98,24 @@ export default function RegisterForm({
 
     try {
 
-      await onSubmit({
+      const result =
+        await onSubmit({
 
-        fullName,
+          fullName,
 
-        phone,
+          phone,
 
-        email,
+          email,
 
-        password,
+          password,
 
-      });
+        });
+
+      if (!result.success) {
+
+        setError(result.message);
+
+      }
 
     } finally {
 
