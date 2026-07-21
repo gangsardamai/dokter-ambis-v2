@@ -1,71 +1,118 @@
 import { notFound } from "next/navigation";
 
 import {
-  Container,
-  PageHeader,
-} from "@/components/layout";
+  PageTitle,
+} from "@/components/admin";
 
-import {
-  CourseInfoCard,
-  CourseRelationCard,
-  CourseActionCard,
-} from "@/components/course";
+import CourseForm
+from "@/components/admin/course/CourseForm";
 
 import {
   courseService,
+  organizationService,
+  programService,
 } from "@/services";
 
-interface Props {
+import {
+  updateCourseAction,
+} from "../../actions";
+
+import {
+  mapCourseForm,
+} from "@/lib/forms/course";
+
+interface EditCoursePageProps {
+
   params: Promise<{
     id: string;
   }>;
+
 }
 
-export default async function CourseDetailPage({
+export default async function EditCoursePage({
+
   params,
-}: Props) {
+
+}: EditCoursePageProps) {
 
   const { id } = await params;
 
   const course =
-    await courseService.getCourseById(id);
+    await courseService.getCourseById(
+      id
+    );
 
   if (!course) {
+
     notFound();
+
+  }
+
+  const organizations =
+    await organizationService.getOrganizations();
+
+  const programs =
+    await programService.getPrograms();
+
+  async function updateAction(
+    formData: FormData
+  ) {
+
+    "use server";
+
+    const result =
+      await updateCourseAction(
+
+        id,
+
+        mapCourseForm(
+          formData
+        )
+
+      );
+
+    if (!result.success) {
+
+      throw new Error(
+        result.message
+      );
+
+    }
+
   }
 
   return (
 
-    <Container>
+    <main className="max-w-3xl mx-auto p-8">
 
-      <PageHeader
-        title={course.title}
-        description="Detail Blok Pembelajaran"
+      <PageTitle
+        title="Edit Course"
+        description="Perbarui data course."
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <CourseForm
+        defaultValues={course}
+        submitLabel="Update Course"
+        action={updateAction}
+        organizationOptions={
+          organizations.map(
+            (item) => ({
+              label: item.title,
+              value: item.id,
+            })
+          )
+        }
+        programOptions={
+          programs.map(
+            (item) => ({
+              label: item.title,
+              value: item.id,
+            })
+          )
+        }
+      />
 
-        <div className="space-y-6 lg:col-span-2">
-
-          <CourseInfoCard
-            course={course}
-          />
-
-          <CourseRelationCard />
-
-        </div>
-
-        <div>
-
-          <CourseActionCard
-            courseId={course.id}
-          />
-
-        </div>
-
-      </div>
-
-    </Container>
+    </main>
 
   );
 

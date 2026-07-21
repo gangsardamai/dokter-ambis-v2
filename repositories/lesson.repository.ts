@@ -86,6 +86,48 @@ export class LessonRepository extends BaseRepository {
 
   }
 
+  async getByFolder(
+    folderId: string
+  ): Promise<Lesson[]> {
+
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("*")
+      .eq("folder_id", folderId)
+      .order("lesson_order");
+
+    if (error) this.handleError(error);
+
+    return data ?? [];
+
+  }
+
+  async getSimpleByFolder(
+    folderId: string
+  ) {
+
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("lessons")
+      .select(`
+        id,
+        title,
+        lesson_order,
+        duration,
+        is_free
+      `)
+      .eq("folder_id", folderId)
+      .order("lesson_order");
+
+    if (error) this.handleError(error);
+
+    return data ?? [];
+
+  }
+
   async count(): Promise<number> {
 
     const supabase = await this.db();
@@ -113,12 +155,11 @@ export class LessonRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { data: created, error } =
-      await supabase
-        .from("lessons")
-        .insert(data)
-        .select()
-        .single();
+    const { data: created, error } = await supabase
+      .from("lessons")
+      .insert(data)
+      .select()
+      .single();
 
     if (error) this.handleError(error);
 
@@ -137,13 +178,12 @@ export class LessonRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { data: updated, error } =
-      await supabase
-        .from("lessons")
-        .update(data)
-        .eq("id", id)
-        .select()
-        .single();
+    const { data: updated, error } = await supabase
+      .from("lessons")
+      .update(data)
+      .eq("id", id)
+      .select()
+      .single();
 
     if (error) this.handleError(error);
 
@@ -161,11 +201,10 @@ export class LessonRepository extends BaseRepository {
 
     const supabase = await this.db();
 
-    const { error } =
-      await supabase
-        .from("lessons")
-        .delete()
-        .eq("id", id);
+    const { error } = await supabase
+      .from("lessons")
+      .delete()
+      .eq("id", id);
 
     if (error) this.handleError(error);
 

@@ -1,32 +1,37 @@
 import { Card } from "@/components/ui";
 
-export default function CourseRelationCard() {
+import LessonRelationTable from "@/components/lesson/LessonRelationTable";
+
+interface Props {
+  courseId: string;
+}
+
+export default function CourseRelationCard({
+  courseId,
+}: Props) {
+
   return (
+
     <Card>
 
       <div className="p-6">
 
         <h2 className="text-xl font-semibold">
-          Relasi Blok
+          Materi Dalam Blok
         </h2>
 
-        <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+        <div className="mt-6">
 
-          <p className="font-medium">
-            Belum ada data relasi
-          </p>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Materi, quiz, live class,
-            dan mahasiswa akan
-            muncul di sini setelah
-            modul berikutnya selesai.
-          </p>
+          <LessonRelationTable
+            courseId={courseId}
+          />
 
         </div>
 
       </div>
 
     </Card>
+
   );
+
 }

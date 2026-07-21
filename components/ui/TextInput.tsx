@@ -2,10 +2,18 @@ interface TextInputProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
+
   placeholder?: string;
+
   required?: boolean;
+
   disabled?: boolean;
-  type?: "text" | "email" | "number";
+
+  type?:
+    | "text"
+    | "email"
+    | "number"
+    | "datetime-local";
 }
 
 export default function TextInput({
@@ -17,10 +25,15 @@ export default function TextInput({
   disabled = false,
   type = "text",
 }: TextInputProps) {
+
   return (
-    <div>
-      <label className="mb-2 block font-medium">
+
+    <div className="space-y-2">
+
+      <label className="block text-sm font-medium">
+
         {label}
+
       </label>
 
       <input
@@ -32,8 +45,11 @@ export default function TextInput({
         onChange={(e) =>
           onChange(e.target.value)
         }
-        className="w-full rounded-lg border px-4 py-3 disabled:cursor-not-allowed disabled:bg-gray-100"
+        className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
       />
+
     </div>
+
   );
+
 }

@@ -1,9 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { programService } from "@/services";
+
+import { validateProgram } from "@/lib/validators/program";
+
+import {
+  success,
+  failure,
+} from "@/lib/actions/result";
+
+import type { ActionResult } from "@/types/action-result";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -13,61 +21,38 @@ type ProgramInsert =
 type ProgramUpdate =
   Database["public"]["Tables"]["programs"]["Update"];
 
-function validateProgram(
-  data: {
-    title?: string | null;
-    slug?: string | null;
-  }
-) {
-
-  const title =
-    data.title?.trim() ?? "";
-
-  const slug =
-    data.slug?.trim() ?? "";
-
-  if (!title) {
-    throw new Error(
-      "Nama program wajib diisi."
-    );
-  }
-
-  if (!slug) {
-    throw new Error(
-      "Slug wajib diisi."
-    );
-  }
-
-  return {
-    title,
-    slug,
-  };
-
-}
-
 /* ========================================
    CREATE
 ======================================== */
 
 export async function createProgramAction(
   data: ProgramInsert
-) {
+): Promise<ActionResult> {
 
-  const validated =
-    validateProgram(data);
+  const validation =
+    validateProgram({
+      title: data.title,
+      slug: data.slug,
+    });
 
-  await programService.createProgram({
-    ...data,
-    title: validated.title,
-    slug: validated.slug,
-  });
+  if (!validation.valid) {
+
+    return failure(
+      validation.message!
+    );
+
+  }
+
+  await programService.createProgram(
+    data
+  );
 
   revalidatePath(
     "/dashboard/admin/program"
   );
 
-  redirect(
-    "/dashboard/admin/program"
+  return success(
+    "Program berhasil dibuat."
   );
 
 }
@@ -79,26 +64,33 @@ export async function createProgramAction(
 export async function updateProgramAction(
   id: string,
   data: ProgramUpdate
-) {
+): Promise<ActionResult> {
 
-  const validated =
-    validateProgram(data);
+  const validation =
+    validateProgram({
+      title: data.title ?? "",
+      slug: data.slug ?? "",
+    });
+
+  if (!validation.valid) {
+
+    return failure(
+      validation.message!
+    );
+
+  }
 
   await programService.updateProgram(
     id,
-    {
-      ...data,
-      title: validated.title,
-      slug: validated.slug,
-    }
+    data
   );
 
   revalidatePath(
     "/dashboard/admin/program"
   );
 
-  redirect(
-    "/dashboard/admin/program"
+  return success(
+    "Program berhasil diupdate."
   );
 
 }
@@ -109,7 +101,7 @@ export async function updateProgramAction(
 
 export async function activateProgramAction(
   id: string
-) {
+): Promise<ActionResult> {
 
   await programService.activateProgram(
     id
@@ -117,6 +109,10 @@ export async function activateProgramAction(
 
   revalidatePath(
     "/dashboard/admin/program"
+  );
+
+  return success(
+    "Program berhasil diaktifkan."
   );
 
 }
@@ -127,7 +123,7 @@ export async function activateProgramAction(
 
 export async function deactivateProgramAction(
   id: string
-) {
+): Promise<ActionResult> {
 
   await programService.deactivateProgram(
     id
@@ -135,6 +131,10 @@ export async function deactivateProgramAction(
 
   revalidatePath(
     "/dashboard/admin/program"
+  );
+
+  return success(
+    "Program berhasil dinonaktifkan."
   );
 
 }
@@ -145,7 +145,7 @@ export async function deactivateProgramAction(
 
 export async function deleteProgramAction(
   id: string
-) {
+): Promise<ActionResult> {
 
   await programService.deleteProgram(
     id
@@ -153,6 +153,10 @@ export async function deleteProgramAction(
 
   revalidatePath(
     "/dashboard/admin/program"
+  );
+
+  return success(
+    "Program berhasil dihapus."
   );
 
 }

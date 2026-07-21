@@ -1,40 +1,62 @@
-import { organizationService } from "@/services";
+import {
+  EmptyState,
+} from "@/components/admin";
 
-import OrganizationRow from "./OrganizationRow";
+import OrganizationStatusBadge
+  from "./OrganizationStatusBadge";
 
-export default async function OrganizationTable() {
-  const organizations =
-    await organizationService.getOrganizations();
+import OrganizationActionMenu
+  from "./OrganizationActionMenu";
+
+import type { Database }
+  from "@/supabase/types/database.types";
+
+type Organization =
+  Database["public"]["Tables"]["organizations"]["Row"];
+
+interface OrganizationTableProps {
+  organizations: Organization[];
+}
+
+export default function OrganizationTable({
+  organizations,
+}: OrganizationTableProps) {
 
   if (organizations.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-8 text-center text-gray-500">
-        Belum ada universitas.
-      </div>
+      <EmptyState
+        title="Belum ada Universitas"
+        description="Silakan tambahkan universitas baru."
+      />
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-white">
+    <div className="overflow-x-auto rounded-lg border">
+
       <table className="min-w-full">
 
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-100">
 
           <tr>
 
-            <th className="px-6 py-4 text-left">
-              Universitas
+            <th className="px-4 py-3 text-left">
+              Nama
             </th>
 
-            <th className="px-6 py-4 text-left">
+            <th className="px-4 py-3 text-left">
               Singkatan
             </th>
 
-            <th className="px-6 py-4 text-left">
+            <th className="px-4 py-3 text-left">
+              Slug
+            </th>
+
+            <th className="px-4 py-3 text-center">
               Status
             </th>
 
-            <th className="px-6 py-4 text-right">
+            <th className="px-4 py-3 text-center">
               Aksi
             </th>
 
@@ -46,16 +68,49 @@ export default async function OrganizationTable() {
 
           {organizations.map((organization) => (
 
-            <OrganizationRow
+            <tr
               key={organization.id}
-              organization={organization}
-            />
+              className="border-t"
+            >
+
+              <td className="px-4 py-3">
+                {organization.title}
+              </td>
+
+              <td className="px-4 py-3">
+                {organization.short_name}
+              </td>
+
+              <td className="px-4 py-3">
+                {organization.slug}
+              </td>
+
+              <td className="px-4 py-3 text-center">
+
+                <OrganizationStatusBadge
+                  status={organization.status}
+                />
+
+              </td>
+
+              <td className="px-4 py-3">
+
+                <OrganizationActionMenu
+                  organizationId={organization.id}
+                  status={organization.status}
+                />
+
+              </td>
+
+            </tr>
 
           ))}
 
         </tbody>
 
       </table>
+
     </div>
   );
+
 }

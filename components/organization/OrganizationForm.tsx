@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import type { ActionResult } from "@/types/action-result";
+
 import {
   TextInput,
   SelectField,
@@ -13,34 +15,52 @@ export type OrganizationStatus =
   Database["public"]["Enums"]["organization_status"];
 
 export type OrganizationFormData = {
+
   title: string;
+
   short_name: string;
+
   slug: string;
+
   logo_path: string;
+
   status: OrganizationStatus;
+
 };
 
 interface OrganizationFormProps {
+
   initialData?: OrganizationFormData;
+
   submitLabel?: string;
+
   onSubmit: (
     data: OrganizationFormData
-  ) => Promise<void>;
+  ) => Promise<ActionResult>;
+
 }
 
-function slugify(text: string): string {
+function slugify(
+  text: string
+): string {
+
   return text
     .toLowerCase()
     .trim()
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
+
 }
 
 export default function OrganizationForm({
+
   initialData,
+
   submitLabel = "Simpan",
+
   onSubmit,
+
 }: OrganizationFormProps) {
 
   const [title, setTitle] =
@@ -78,15 +98,32 @@ export default function OrganizationForm({
 
     try {
 
-      await onSubmit({
-        title: title.trim(),
-        short_name: shortName.trim(),
-        slug: slug.trim(),
-        logo_path: logoPath.trim(),
-        status,
-      });
+      const result =
+        await onSubmit({
 
-    } finally {
+          title,
+
+          short_name: shortName,
+
+          slug,
+
+          logo_path: logoPath,
+
+          status,
+
+        });
+
+      if (!result.success) {
+
+        alert(result.message);
+
+        return;
+
+      }
+
+    }
+
+    finally {
 
       setLoading(false);
 
@@ -110,9 +147,11 @@ export default function OrganizationForm({
           setTitle(value);
 
           if (!slugEdited) {
+
             setSlug(
               slugify(value)
             );
+
           }
 
         }}
@@ -169,11 +208,28 @@ export default function OrganizationForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="
+            rounded-lg
+            bg-blue-600
+            px-6
+            py-3
+            font-medium
+            text-white
+            transition
+            hover:bg-blue-700
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
         >
-          {loading
-            ? "Menyimpan..."
-            : submitLabel}
+
+          {
+
+            loading
+              ? "Menyimpan..."
+              : submitLabel
+
+          }
+
         </button>
 
       </div>

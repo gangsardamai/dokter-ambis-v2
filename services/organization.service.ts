@@ -9,13 +9,16 @@ type OrganizationUpdate =
   Database["public"]["Tables"]["organizations"]["Update"];
 
 export class OrganizationService {
-
   /* ========================================
      READ
   ======================================== */
 
   async getOrganizations() {
     return await organizationRepository.getAll();
+  }
+
+  async getActiveOrganizations() {
+    return await organizationRepository.getActive();
   }
 
   async getOrganizationById(
@@ -33,6 +36,7 @@ export class OrganizationService {
   async countOrganizations() {
     return await organizationRepository.count();
   }
+
 
   /* ========================================
      CREATE

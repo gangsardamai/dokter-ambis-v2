@@ -1,31 +1,76 @@
+import Link from "next/link";
+
 import {
-  Container,
   PageHeader,
-} from "@/components/layout";
+  PrimaryButton,
+} from "@/components/admin";
 
-import { Button } from "@/components/ui";
+import ProgramTable
+from "@/components/admin/program/ProgramTable";
 
-import ProgramTable from "@/components/program/ProgramTable";
+import {
+  programService,
+} from "@/services";
 
-export default function ProgramPage() {
+import {
+  deleteProgramAction,
+} from "./actions";
+
+export default async function ProgramPage() {
+
+  const programs =
+    await programService.getPrograms();
+
+  async function handleDelete(
+    id: string
+  ) {
+
+    "use server";
+
+    await deleteProgramAction(
+      id
+    );
+
+  }
+
   return (
-    <Container>
+
+    <main className="max-w-7xl mx-auto p-8 space-y-8">
 
       <PageHeader
+
         title="Program"
-        description="Kelola seluruh program pembelajaran Dokter Ambis."
-      >
 
-        <Button
-          href="/dashboard/admin/program/new"
-        >
-          + Tambah Program
-        </Button>
+        description="Kelola daftar program."
 
-      </PageHeader>
+        actions={
 
-      <ProgramTable />
+          <Link
+            href="/dashboard/admin/program/create"
+          >
 
-    </Container>
+            <PrimaryButton>
+
+              Tambah Program
+
+            </PrimaryButton>
+
+          </Link>
+
+        }
+
+      />
+
+      <ProgramTable
+
+        programs={programs}
+
+        onDelete={handleDelete}
+
+      />
+
+    </main>
+
   );
+
 }

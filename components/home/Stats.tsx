@@ -1,12 +1,22 @@
-export default function Stats() {
+interface StatsProps {
+  organizationCount: number;
+}
+
+export default function Stats({
+  organizationCount,
+}: StatsProps) {
   const stats = [
     {
-      value: "25+",
+      value: "500+",
+      label: "Peserta Aktif",
+    },
+    {
+      value: organizationCount.toString(),
       label: "Universitas",
     },
     {
       value: "100+",
-      label: "Blok",
+      label: "Blok Pembelajaran",
     },
     {
       value: "3000+",
@@ -15,23 +25,33 @@ export default function Stats() {
   ];
 
   return (
-    <section className="py-16 bg-white">
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-6">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="bg-white border border-blue-100 rounded-2xl p-8 text-center shadow-sm hover:shadow-lg transition"
-            >
-              <h3 className="text-4xl font-bold text-blue-600">
-                {item.value}
-              </h3>
+    <section className="bg-white py-14 sm:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#1769cf] via-[#033b63] to-[#061827] px-5 py-9 shadow-[0_20px_50px_rgba(3,59,99,0.18)] sm:px-8 lg:px-12">
+          <div className="absolute -right-16 -top-24 h-56 w-56 rounded-full border-[35px] border-white/5" />
 
-              <p className="mt-3 text-slate-600">
-                {item.label}
-              </p>
-            </div>
-          ))}
+          <div className="absolute -bottom-20 -left-12 h-48 w-48 rounded-full border-[30px] border-blue-300/10" />
+
+          <div className="relative grid grid-cols-2 gap-y-9 lg:grid-cols-4">
+            {stats.map((item, index) => (
+              <div
+                key={item.label}
+                className={`px-3 text-center ${
+                  index > 0
+                    ? "lg:border-l lg:border-white/15"
+                    : ""
+                }`}
+              >
+                <p className="text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-4xl">
+                  {item.value}
+                </p>
+
+                <p className="mt-2 text-xs font-medium text-blue-100 sm:text-sm">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -9,7 +9,6 @@ type CourseUpdate =
   Database["public"]["Tables"]["courses"]["Update"];
 
 export class CourseService {
-
   /* ========================================
      READ
   ======================================== */
@@ -18,28 +17,51 @@ export class CourseService {
     return await courseRepository.getAll();
   }
 
-  async getCourseById(
-    id: string
+  async getAvailableCourses() {
+    return await courseRepository
+      .getAvailableCourses();
+  }
+
+  async getAvailableCourseDetails() {
+    return await courseRepository
+      .getAvailableCourseDetails();
+  }
+
+  async getAvailableCourseDetailById(
+    id: string,
   ) {
-    return await courseRepository.getById(id);
+    return await courseRepository
+      .getAvailableCourseDetailById(
+        id,
+      );
+  }
+
+  async getCourseById(
+    id: string,
+  ) {
+    return await courseRepository
+      .getById(id);
   }
 
   async getCourseBySlug(
-    slug: string
+    slug: string,
   ) {
-    return await courseRepository.getBySlug(slug);
+    return await courseRepository
+      .getBySlug(slug);
   }
 
   async getCoursesByOrganization(
-    organizationId: string
+    organizationId: string,
   ) {
-    return await courseRepository.getByOrganization(
-      organizationId
-    );
+    return await courseRepository
+      .getByOrganization(
+        organizationId,
+      );
   }
 
   async countCourses() {
-    return await courseRepository.count();
+    return await courseRepository
+      .count();
   }
 
   /* ========================================
@@ -47,11 +69,10 @@ export class CourseService {
   ======================================== */
 
   async createCourse(
-    data: CourseInsert
+    data: CourseInsert,
   ) {
-    return await courseRepository.create(
-      data
-    );
+    return await courseRepository
+      .create(data);
   }
 
   /* ========================================
@@ -60,12 +81,13 @@ export class CourseService {
 
   async updateCourse(
     id: string,
-    data: CourseUpdate
+    data: CourseUpdate,
   ) {
-    return await courseRepository.update(
-      id,
-      data
-    );
+    return await courseRepository
+      .update(
+        id,
+        data,
+      );
   }
 
   /* ========================================
@@ -73,13 +95,11 @@ export class CourseService {
   ======================================== */
 
   async deleteCourse(
-    id: string
+    id: string,
   ) {
-    return await courseRepository.delete(
-      id
-    );
+    return await courseRepository
+      .delete(id);
   }
-
 }
 
 export const courseService =

@@ -40,6 +40,22 @@ export class LessonService {
     );
   }
 
+  async getLessonsByFolder(
+    folderId: string
+  ) {
+    return await lessonRepository.getByFolder(
+      folderId
+    );
+  }
+
+  async getLessonSummaries(
+    folderId: string
+  ) {
+    return await lessonRepository.getSimpleByFolder(
+      folderId
+    );
+  }
+
   async countLessons() {
     return await lessonRepository.count();
   }

@@ -1,70 +1,95 @@
 import { notFound } from "next/navigation";
 
 import {
-  Container,
-  PageHeader,
-} from "@/components/layout";
+  PageTitle,
+} from "@/components/admin";
 
-import { Card } from "@/components/ui";
+import ProgramForm
+from "@/components/admin/program/ProgramForm";
 
-import { ProgramForm } from "@/components/program";
+import {
+  programService,
+} from "@/services";
 
-import { updateProgramAction } from "../../actions";
+import {
+  updateProgramAction,
+} from "../../actions";
 
-import { programService } from "@/services";
+import {
+  mapProgramForm,
+} from "@/lib/forms/program";
 
-interface Props {
+interface EditProgramPageProps {
+
   params: Promise<{
     id: string;
   }>;
+
 }
 
 export default async function EditProgramPage({
+
   params,
-}: Props) {
+
+}: EditProgramPageProps) {
 
   const { id } = await params;
 
   const program =
-    await programService.getProgramById(id);
+    await programService.getProgramById(
+      id
+    );
 
   if (!program) {
+
     notFound();
+
+  }
+
+  async function updateAction(
+    formData: FormData
+  ) {
+
+    "use server";
+
+    const result =
+      await updateProgramAction(
+
+        id,
+
+        mapProgramForm(
+          formData
+        )
+
+      );
+
+    if (!result.success) {
+
+      throw new Error(
+        result.message
+      );
+
+    }
+
   }
 
   return (
-    <Container>
 
-      <PageHeader
+    <main className="max-w-3xl mx-auto p-8">
+
+      <PageTitle
         title="Edit Program"
-        description="Perbarui informasi program."
+        description="Ubah data program."
       />
 
-      <Card>
+      <ProgramForm
+        defaultValues={program}
+        submitLabel="Update Program"
+        action={updateAction}
+      />
 
-        <div className="p-6">
+    </main>
 
-          <ProgramForm
-            initialData={{
-              title: program.title,
-              slug: program.slug,
-              description:
-                program.description ?? "",
-              status: program.status,
-            }}
-            submitLabel="Simpan Perubahan"
-            onSubmit={async (data) => {
-              await updateProgramAction(
-                program.id,
-                data
-              );
-            }}
-          />
-
-        </div>
-
-      </Card>
-
-    </Container>
   );
+
 }

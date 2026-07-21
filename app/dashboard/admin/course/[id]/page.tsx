@@ -11,9 +11,7 @@ import {
   CourseActionCard,
 } from "@/components/course";
 
-import {
-  courseService,
-} from "@/services";
+import { courseService } from "@/services";
 
 interface Props {
   params: Promise<{
@@ -35,7 +33,6 @@ export default async function CourseDetailPage({
   }
 
   return (
-
     <Container>
 
       <PageHeader
@@ -51,7 +48,9 @@ export default async function CourseDetailPage({
             course={course}
           />
 
-          <CourseRelationCard />
+          <CourseRelationCard
+            courseId={course.id}
+          />
 
         </div>
 
@@ -59,6 +58,7 @@ export default async function CourseDetailPage({
 
           <CourseActionCard
             courseId={course.id}
+            
           />
 
         </div>
@@ -66,7 +66,5 @@ export default async function CourseDetailPage({
       </div>
 
     </Container>
-
   );
-
 }

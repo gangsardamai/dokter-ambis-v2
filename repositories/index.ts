@@ -10,5 +10,13 @@ export * from "./live-class.repository";
 export * from "./quiz.repository";
 
 export * from "./program.repository";
-export * from "./mentor.repository";
 export { courseRepository } from "./course.repository";
+export * from "./auth.repository";
+export * from "./profile.repository";
+export * from "./promotion.repository";
+export * from "./program.repository";
+export * from "./folder.repository";
+export * from "./enrollment.repository";
+export * from "./payment.repository";
+export * from "./payment-proof.repository";
+export * from "./device.repository";

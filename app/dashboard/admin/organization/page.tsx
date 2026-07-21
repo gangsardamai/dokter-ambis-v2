@@ -1,31 +1,56 @@
+import Link from "next/link";
+
 import {
-  Container,
   PageHeader,
-} from "@/components/layout";
+  PrimaryButton,
+ } from "@/components/admin";
 
-import { Button } from "@/components/ui";
+import OrganizationTable
+from "@/components/admin/organization/OrganizationTable";
 
-import OrganizationTable from "@/components/organization/OrganizationTable";
+import {
+  organizationService,
+} from "@/services";
 
-export default function OrganizationPage() {
+export default async function OrganizationPage() {
+
+  const organizations =
+    await organizationService.getOrganizations();
+
   return (
-    <Container>
+
+    <main className="max-w-7xl mx-auto p-8 space-y-8">
 
       <PageHeader
+
         title="Universitas"
-        description="Kelola seluruh universitas yang tersedia di Dokter Ambis."
-      >
 
-        <Button
-          href="/dashboard/admin/organization/new"
-        >
-          + Tambah Universitas
-        </Button>
+        description="Kelola daftar universitas."
 
-      </PageHeader>
+        actions={
 
-      <OrganizationTable />
+          <Link
+            href="/dashboard/admin/organization/create"
+          >
 
-    </Container>
+            <PrimaryButton>
+
+              Tambah Universitas
+
+            </PrimaryButton>
+
+          </Link>
+
+        }
+
+      />
+
+      <OrganizationTable
+        organizations={organizations}
+      />
+
+    </main>
+
   );
+
 }

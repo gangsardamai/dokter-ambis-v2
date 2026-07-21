@@ -1,4 +1,6 @@
-import { programRepository } from "@/repositories";
+import {
+  programRepository,
+} from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -10,90 +12,94 @@ type ProgramUpdate =
 
 export class ProgramService {
 
-  /* ========================================
-     READ
-  ======================================== */
-
   async getPrograms() {
+
     return await programRepository.getAll();
+
   }
 
   async getProgramById(
     id: string
   ) {
-    return await programRepository.getById(id);
+
+    return await programRepository.getById(
+      id
+    );
+
+  }
+
+  async getProgramBySlug(
+    slug: string
+  ) {
+
+    return await programRepository.getBySlug(
+      slug
+    );
+
   }
 
   async countPrograms() {
-    return await programRepository.count();
-  }
 
-  /* ========================================
-     CREATE
-  ======================================== */
+    return await programRepository.count();
+
+  }
 
   async createProgram(
     data: ProgramInsert
   ) {
+
     return await programRepository.create(
       data
     );
-  }
 
-  /* ========================================
-     UPDATE
-  ======================================== */
+  }
 
   async updateProgram(
     id: string,
     data: ProgramUpdate
   ) {
+
     return await programRepository.update(
       id,
       data
     );
-  }
 
-  /* ========================================
-     ACTIVATE
-  ======================================== */
+  }
 
   async activateProgram(
     id: string
   ) {
+
     return await programRepository.update(
       id,
       {
         status: "active",
       }
     );
-  }
 
-  /* ========================================
-     DEACTIVATE
-  ======================================== */
+  }
 
   async deactivateProgram(
     id: string
   ) {
+
     return await programRepository.update(
       id,
       {
         status: "inactive",
       }
     );
-  }
 
-  /* ========================================
-     DELETE
-  ======================================== */
+  }
 
   async deleteProgram(
     id: string
   ) {
+
     return await programRepository.delete(
       id
     );
+
   }
 
 }

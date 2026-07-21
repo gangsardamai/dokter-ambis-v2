@@ -1,31 +1,30 @@
-import {
-  Container,
-  PageHeader,
-} from "@/components/layout";
+import Link from "next/link";
 
-import { Button } from "@/components/ui";
+import PageTitle from "@/components/admin/page/PageTitle";
+import CourseTable from "@/components/admin/course/CourseTable";
 
-import { CourseTable } from "@/components/course";
+import { courseService } from "@/services";
 
-export default function CoursePage() {
+export default async function CoursePage() {
+  const courses = await courseService.getCourses();
+
   return (
-    <Container>
+    <main className="mx-auto max-w-7xl p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <PageTitle
+          title="Blok Pembelajaran"
+          description="Kelola seluruh blok pembelajaran."
+        />
 
-      <PageHeader
-        title="Blok Pembelajaran"
-        description="Kelola seluruh blok pembelajaran."
-      >
-
-        <Button
-          href="/dashboard/admin/course/new"
+        <Link
+          href="/dashboard/admin/course/create"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
           + Tambah Blok
-        </Button>
+        </Link>
+      </div>
 
-      </PageHeader>
-
-      <CourseTable />
-
-    </Container>
+      <CourseTable courses={courses} />
+    </main>
   );
 }

@@ -1,14 +1,13 @@
-import { Container, PageHeader } from "@/components/layout";
-
 export default function MentorDashboardPage() {
   return (
-    <Container>
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">
+        Dashboard Mentor
+      </h1>
 
-      <PageHeader
-        title="Dashboard Mentor"
-        description="Halaman Dashboard Mentor."
-      />
-
-    </Container>
+      <p className="text-gray-500">
+        Selamat datang di dashboard mentor Dokter Ambis.
+      </p>
+    </div>
   );
 }

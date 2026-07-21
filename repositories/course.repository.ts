@@ -11,84 +11,200 @@ type CourseInsert =
 type CourseUpdate =
   Database["public"]["Tables"]["courses"]["Update"];
 
-export class CourseRepository extends BaseRepository {
+type OrganizationSummary = Pick<
+  Database["public"]["Tables"]["organizations"]["Row"],
+  "id" | "title" | "short_name" | "slug" | "status"
+>;
 
+type ProgramSummary = Pick<
+  Database["public"]["Tables"]["programs"]["Row"],
+  "id" | "title" | "slug" | "status"
+>;
+
+export type CourseDetails = Course & {
+  organization: OrganizationSummary | null;
+  program: ProgramSummary | null;
+};
+
+export class CourseRepository extends BaseRepository {
   /* ========================================
      READ
   ======================================== */
 
   async getAll(): Promise<Course[]> {
+    const supabase =
+      await this.db();
 
-    const supabase = await this.db();
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select("*")
+        .order("title");
 
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .order("title");
-
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return data ?? [];
+  }
 
+  async getAvailableCourses(): Promise<Course[]> {
+    const supabase =
+      await this.db();
+
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select("*")
+        .eq("status", "active")
+        .order("title");
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return data ?? [];
+  }
+
+  async getAvailableCourseDetails(): Promise<
+    CourseDetails[]
+  > {
+    const supabase =
+      await this.db();
+
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select(`
+          *,
+          organization:organizations!fk_courses_organization (
+            id,
+            title,
+            short_name,
+            slug,
+            status
+          ),
+          program:programs!fk_courses_program (
+            id,
+            title,
+            slug,
+            status
+          )
+        `)
+        .eq("status", "active")
+        .order("title");
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return (
+      data ?? []
+    ) as CourseDetails[];
+  }
+
+  async getAvailableCourseDetailById(
+    id: string,
+  ): Promise<CourseDetails | null> {
+    const supabase =
+      await this.db();
+
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select(`
+          *,
+          organization:organizations!fk_courses_organization (
+            id,
+            title,
+            short_name,
+            slug,
+            status
+          ),
+          program:programs!fk_courses_program (
+            id,
+            title,
+            slug,
+            status
+          )
+        `)
+        .eq("id", id)
+        .eq("status", "active")
+        .maybeSingle();
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return data as CourseDetails | null;
   }
 
   async getById(
-    id: string
+    id: string,
   ): Promise<Course | null> {
+    const supabase =
+      await this.db();
 
-    const supabase = await this.db();
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
 
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return data;
-
   }
 
   async getBySlug(
-    slug: string
+    slug: string,
   ): Promise<Course | null> {
+    const supabase =
+      await this.db();
 
-    const supabase = await this.db();
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
 
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return data;
-
   }
 
   async getByOrganization(
-    organizationId: string
+    organizationId: string,
   ): Promise<Course[]> {
+    const supabase =
+      await this.db();
 
-    const supabase = await this.db();
+    const { data, error } =
+      await supabase
+        .from("courses")
+        .select("*")
+        .eq(
+          "organization_id",
+          organizationId,
+        )
+        .order("title");
 
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .order("title");
-
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return data ?? [];
-
   }
 
   async count(): Promise<number> {
-
-    const supabase = await this.db();
+    const supabase =
+      await this.db();
 
     const { count, error } =
       await supabase
@@ -98,10 +214,11 @@ export class CourseRepository extends BaseRepository {
           head: true,
         });
 
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return count ?? 0;
-
   }
 
   /* ========================================
@@ -109,10 +226,10 @@ export class CourseRepository extends BaseRepository {
   ======================================== */
 
   async create(
-    data: CourseInsert
+    data: CourseInsert,
   ): Promise<Course> {
-
-    const supabase = await this.db();
+    const supabase =
+      await this.db();
 
     const {
       data: created,
@@ -123,10 +240,11 @@ export class CourseRepository extends BaseRepository {
       .select()
       .single();
 
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return created;
-
   }
 
   /* ========================================
@@ -135,10 +253,10 @@ export class CourseRepository extends BaseRepository {
 
   async update(
     id: string,
-    data: CourseUpdate
+    data: CourseUpdate,
   ): Promise<Course> {
-
-    const supabase = await this.db();
+    const supabase =
+      await this.db();
 
     const {
       data: updated,
@@ -150,10 +268,11 @@ export class CourseRepository extends BaseRepository {
       .select()
       .single();
 
-    if (error) this.handleError(error);
+    if (error) {
+      this.handleError(error);
+    }
 
     return updated;
-
   }
 
   /* ========================================
@@ -161,10 +280,10 @@ export class CourseRepository extends BaseRepository {
   ======================================== */
 
   async delete(
-    id: string
+    id: string,
   ): Promise<void> {
-
-    const supabase = await this.db();
+    const supabase =
+      await this.db();
 
     const { error } =
       await supabase
@@ -172,10 +291,10 @@ export class CourseRepository extends BaseRepository {
         .delete()
         .eq("id", id);
 
-    if (error) this.handleError(error);
-
+    if (error) {
+      this.handleError(error);
+    }
   }
-
 }
 
 export const courseRepository =

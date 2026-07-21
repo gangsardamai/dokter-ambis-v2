@@ -1,96 +1,142 @@
+import { createClient } from "@/lib/supabase/server";
+
 import type { Database } from "@/supabase/types/database.types";
-import { BaseRepository } from "./base.repository";
 
-type Program = Database["public"]["Tables"]["programs"]["Row"];
-type ProgramInsert = Database["public"]["Tables"]["programs"]["Insert"];
-type ProgramUpdate = Database["public"]["Tables"]["programs"]["Update"];
+type Program =
+  Database["public"]["Tables"]["programs"]["Row"];
 
-export class ProgramRepository extends BaseRepository {
+type ProgramInsert =
+  Database["public"]["Tables"]["programs"]["Insert"];
+
+type ProgramUpdate =
+  Database["public"]["Tables"]["programs"]["Update"];
+
+export class ProgramRepository {
 
   async getAll(): Promise<Program[]> {
-    const supabase = await this.db();
 
-    const { data, error } = await supabase
+    const supabase =
+      await createClient();
+
+    const {
+      data,
+      error,
+    } = await supabase
       .from("programs")
       .select("*")
       .order("title");
 
-    if (error) this.handleError(error);
+    if (error) {
+
+      throw error;
+
+    }
 
     return data ?? [];
+
   }
 
-  async getById(id: string): Promise<Program | null> {
-    const supabase = await this.db();
+  async getById(
+    id: string
+  ): Promise<Program | null> {
 
-    const { data, error } = await supabase
+    const supabase =
+      await createClient();
+
+    const {
+      data,
+      error,
+    } = await supabase
       .from("programs")
       .select("*")
       .eq("id", id)
       .maybeSingle();
 
-    if (error) this.handleError(error);
+    if (error) {
+
+      throw error;
+
+    }
 
     return data;
+
   }
 
-  async getActive(): Promise<Program[]> {
-    const supabase = await this.db();
+  async getBySlug(
+    slug: string
+  ): Promise<Program | null> {
 
-    const { data, error } = await supabase
+    const supabase =
+      await createClient();
+
+    const {
+      data,
+      error,
+    } = await supabase
       .from("programs")
       .select("*")
-      .eq("status", "active")
-      .order("title");
+      .eq("slug", slug)
+      .maybeSingle();
 
-    if (error) this.handleError(error);
+    if (error) {
 
-    return data ?? [];
-  }
+      throw error;
 
-  async exists(id: string): Promise<boolean> {
-    const supabase = await this.db();
+    }
 
-    const { count, error } = await supabase
-      .from("programs")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
-      .eq("id", id);
+    return data;
 
-    if (error) this.handleError(error);
-
-    return (count ?? 0) > 0;
   }
 
   async count(): Promise<number> {
-    const supabase = await this.db();
 
-    const { count, error } = await supabase
+    const supabase =
+      await createClient();
+
+    const {
+      count,
+      error,
+    } = await supabase
       .from("programs")
       .select("*", {
         count: "exact",
         head: true,
       });
 
-    if (error) this.handleError(error);
+    if (error) {
+
+      throw error;
+
+    }
 
     return count ?? 0;
+
   }
 
-  async create(data: ProgramInsert): Promise<Program> {
-    const supabase = await this.db();
+  async create(
+    data: ProgramInsert
+  ): Promise<Program> {
 
-    const { data: created, error } = await supabase
+    const supabase =
+      await createClient();
+
+    const {
+      data: result,
+      error,
+    } = await supabase
       .from("programs")
       .insert(data)
       .select()
       .single();
 
-    if (error) this.handleError(error);
+    if (error) {
 
-    return created;
+      throw error;
+
+    }
+
+    return result;
+
   }
 
   async update(
@@ -98,30 +144,51 @@ export class ProgramRepository extends BaseRepository {
     data: ProgramUpdate
   ): Promise<Program> {
 
-    const supabase = await this.db();
+    const supabase =
+      await createClient();
 
-    const { data: updated, error } = await supabase
+    const {
+      data: result,
+      error,
+    } = await supabase
       .from("programs")
       .update(data)
       .eq("id", id)
       .select()
       .single();
 
-    if (error) this.handleError(error);
+    if (error) {
 
-    return updated;
+      throw error;
+
+    }
+
+    return result;
+
   }
 
-  async delete(id: string): Promise<void> {
-    const supabase = await this.db();
+  async delete(
+    id: string
+  ): Promise<void> {
 
-    const { error } = await supabase
+    const supabase =
+      await createClient();
+
+    const {
+      error,
+    } = await supabase
       .from("programs")
       .delete()
       .eq("id", id);
 
-    if (error) this.handleError(error);
+    if (error) {
+
+      throw error;
+
+    }
+
   }
+
 }
 
 export const programRepository =

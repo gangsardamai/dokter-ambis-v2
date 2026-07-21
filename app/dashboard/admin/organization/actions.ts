@@ -1,9 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { organizationService } from "@/services";
+
+import { validateOrganization } from "@/lib/validators/organization";
+
+import {
+  success,
+  failure,
+} from "@/lib/actions/result";
+
+import type { ActionResult } from "@/types/action-result";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -13,13 +21,29 @@ type OrganizationInsert =
 type OrganizationUpdate =
   Database["public"]["Tables"]["organizations"]["Update"];
 
-/* ========================================
-   CREATE
-======================================== */
-
 export async function createOrganizationAction(
   data: OrganizationInsert
-) {
+): Promise<ActionResult> {
+
+  const validation =
+    validateOrganization({
+
+      title: data.title,
+
+      short_name: data.short_name,
+
+      slug: data.slug,
+
+    });
+
+  if (!validation.valid) {
+
+    return failure(
+      validation.message!
+    );
+
+  }
+
   await organizationService.createOrganization(
     data
   );
@@ -28,19 +52,39 @@ export async function createOrganizationAction(
     "/dashboard/admin/organization"
   );
 
-  redirect(
-    "/dashboard/admin/organization"
+  return success(
+    "Organization berhasil dibuat."
   );
-}
 
-/* ========================================
-   UPDATE
-======================================== */
+}
 
 export async function updateOrganizationAction(
   id: string,
   data: OrganizationUpdate
-) {
+): Promise<ActionResult> {
+
+  const validation =
+    validateOrganization({
+
+      title:
+        data.title ?? "",
+
+      short_name:
+        data.short_name ?? "",
+
+      slug:
+        data.slug ?? "",
+
+    });
+
+  if (!validation.valid) {
+
+    return failure(
+      validation.message!
+    );
+
+  }
+
   await organizationService.updateOrganization(
     id,
     data
@@ -50,50 +94,16 @@ export async function updateOrganizationAction(
     "/dashboard/admin/organization"
   );
 
-  redirect(
-    "/dashboard/admin/organization"
+  return success(
+    "Organization berhasil diupdate."
   );
+
 }
-
-/* ========================================
-   ACTIVATE
-======================================== */
-
-export async function activateOrganizationAction(
-  id: string
-) {
-  await organizationService.activateOrganization(
-    id
-  );
-
-  revalidatePath(
-    "/dashboard/admin/organization"
-  );
-}
-
-/* ========================================
-   DEACTIVATE
-======================================== */
-
-export async function deactivateOrganizationAction(
-  id: string
-) {
-  await organizationService.deactivateOrganization(
-    id
-  );
-
-  revalidatePath(
-    "/dashboard/admin/organization"
-  );
-}
-
-/* ========================================
-   DELETE
-======================================== */
 
 export async function deleteOrganizationAction(
   id: string
-) {
+): Promise<ActionResult> {
+
   await organizationService.deleteOrganization(
     id
   );
@@ -101,4 +111,45 @@ export async function deleteOrganizationAction(
   revalidatePath(
     "/dashboard/admin/organization"
   );
+
+  return success(
+    "Organization berhasil dihapus."
+  );
+
+}
+
+export async function activateOrganizationAction(
+  id: string
+): Promise<ActionResult> {
+
+  await organizationService.activateOrganization(
+    id
+  );
+
+  revalidatePath(
+    "/dashboard/admin/organization"
+  );
+
+  return success(
+    "Organization berhasil diaktifkan."
+  );
+
+}
+
+export async function deactivateOrganizationAction(
+  id: string
+): Promise<ActionResult> {
+
+  await organizationService.deactivateOrganization(
+    id
+  );
+
+  revalidatePath(
+    "/dashboard/admin/organization"
+  );
+
+  return success(
+    "Organization berhasil dinonaktifkan."
+  );
+
 }

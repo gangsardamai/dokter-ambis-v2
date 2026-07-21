@@ -1,31 +1,43 @@
-import { notFound } from "next/navigation";
+import {
+  notFound,
+  redirect,
+} from "next/navigation";
 
 import {
-  Container,
-  PageHeader,
-} from "@/components/layout";
+  PageTitle,
+} from "@/components/admin";
 
-import { Card } from "@/components/ui";
+import OrganizationForm
+from "@/components/admin/organization/OrganizationForm";
 
 import {
-  OrganizationForm,
-} from "@/components/organization";
+  organizationService,
+} from "@/services";
 
-import { updateOrganizationAction } from "../../actions";
+import {
+  updateOrganizationAction,
+} from "../../actions";
 
-import { organizationService } from "@/services";
+import {
+  mapOrganizationForm,
+} from "@/lib/forms/organization";
 
-interface Props {
+interface EditOrganizationPageProps {
+
   params: Promise<{
     id: string;
   }>;
+
 }
 
 export default async function EditOrganizationPage({
-  params,
-}: Props) {
 
-  const { id } = await params;
+  params,
+
+}: EditOrganizationPageProps) {
+
+  const { id } =
+    await params;
 
   const organization =
     await organizationService.getOrganizationById(
@@ -33,45 +45,59 @@ export default async function EditOrganizationPage({
     );
 
   if (!organization) {
+
     notFound();
+
+  }
+
+  async function update(
+    formData: FormData
+  ) {
+
+    "use server";
+
+    const result =
+      await updateOrganizationAction(
+
+        id,
+
+        mapOrganizationForm(
+          formData
+        )
+
+      );
+
+    if (!result.success) {
+
+      throw new Error(
+        result.message
+      );
+
+    }
+
+    redirect(
+      "/dashboard/admin/organization"
+    );
+
   }
 
   return (
-    <Container>
 
-      <PageHeader
+    <main className="max-w-3xl mx-auto p-8">
+
+      <PageTitle
         title="Edit Universitas"
-        description="Perbarui informasi universitas."
+        description="Ubah data universitas."
       />
 
-      <Card>
+      <OrganizationForm
+        defaultValues={organization}
+        submitLabel="Update Universitas"
+        action={update}
+      />
 
-        <div className="p-6">
+    </main>
 
-          <OrganizationForm
-            initialData={{
-              title: organization.title,
-              short_name:
-                organization.short_name,
-              slug: organization.slug,
-              logo_path:
-                organization.logo_path ?? "",
-              status:
-                organization.status,
-            }}
-            submitLabel="Simpan Perubahan"
-            onSubmit={async (data) => {
-              await updateOrganizationAction(
-                organization.id,
-                data
-              );
-            }}
-          />
-
-        </div>
-
-      </Card>
-
-    </Container>
   );
+
 }

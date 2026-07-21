@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -147,7 +147,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_free: boolean
           organization_id: string
+          price: number
           program_id: string
           slug: string
           status: Database["public"]["Enums"]["course_status"]
@@ -159,7 +161,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_free?: boolean
           organization_id: string
+          price?: number
           program_id: string
           slug: string
           status?: Database["public"]["Enums"]["course_status"]
@@ -171,7 +175,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_free?: boolean
           organization_id?: string
+          price?: number
           program_id?: string
           slug?: string
           status?: Database["public"]["Enums"]["course_status"]
@@ -255,11 +261,15 @@ export type Database = {
           category: Database["public"]["Enums"]["enrollment_category"]
           course_id: string
           created_at: string
+          discount_amount: number
           enrolled_at: string
           expired_at: string | null
           id: string
           price_snapshot: number
           profile_id: string
+          promotion_code_snapshot: string | null
+          promotion_id: string | null
+          promotion_name_snapshot: string | null
           status: Database["public"]["Enums"]["enrollment_status"]
           updated_at: string
         }
@@ -268,11 +278,15 @@ export type Database = {
           category?: Database["public"]["Enums"]["enrollment_category"]
           course_id: string
           created_at?: string
+          discount_amount?: number
           enrolled_at?: string
           expired_at?: string | null
           id?: string
           price_snapshot: number
           profile_id: string
+          promotion_code_snapshot?: string | null
+          promotion_id?: string | null
+          promotion_name_snapshot?: string | null
           status?: Database["public"]["Enums"]["enrollment_status"]
           updated_at?: string
         }
@@ -281,11 +295,15 @@ export type Database = {
           category?: Database["public"]["Enums"]["enrollment_category"]
           course_id?: string
           created_at?: string
+          discount_amount?: number
           enrolled_at?: string
           expired_at?: string | null
           id?: string
           price_snapshot?: number
           profile_id?: string
+          promotion_code_snapshot?: string | null
+          promotion_id?: string | null
+          promotion_name_snapshot?: string | null
           status?: Database["public"]["Enums"]["enrollment_status"]
           updated_at?: string
         }
@@ -302,6 +320,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollments_promotion"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
             referencedColumns: ["id"]
           },
         ]
@@ -343,6 +368,57 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_folders: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          folder_order: number
+          id: string
+          parent_folder_id: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          folder_order?: number
+          id?: string
+          parent_folder_id?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          folder_order?: number
+          id?: string
+          parent_folder_id?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_lesson_folders_course"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_lesson_folders_parent"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_folders"
             referencedColumns: ["id"]
           },
         ]
@@ -407,6 +483,7 @@ export type Database = {
           created_at: string
           description: string | null
           duration: number
+          folder_id: string | null
           id: string
           is_free: boolean
           lesson_order: number
@@ -419,6 +496,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration: number
+          folder_id?: string | null
           id?: string
           is_free?: boolean
           lesson_order: number
@@ -431,6 +509,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration?: number
+          folder_id?: string | null
           id?: string
           is_free?: boolean
           lesson_order?: number
@@ -444,6 +523,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_lessons_folder"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_folders"
             referencedColumns: ["id"]
           },
         ]
@@ -629,6 +715,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          phone: string
           role: Database["public"]["Enums"]["profile_role"]
           status: Database["public"]["Enums"]["profile_status"]
           updated_at: string
@@ -638,6 +725,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id: string
+          phone: string
           role?: Database["public"]["Enums"]["profile_role"]
           status?: Database["public"]["Enums"]["profile_status"]
           updated_at?: string
@@ -647,6 +735,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          phone?: string
           role?: Database["public"]["Enums"]["profile_role"]
           status?: Database["public"]["Enums"]["profile_status"]
           updated_at?: string
@@ -685,6 +774,106 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      promotions: {
+        Row: {
+          code: string | null
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_at: string | null
+          id: string
+          max_discount: number | null
+          minimum_purchase: number | null
+          name: string
+          notes: string | null
+          priority: number
+          quota: number | null
+          requires_code: boolean
+          special_price: number | null
+          start_at: string
+          status: Database["public"]["Enums"]["promotion_status"]
+          type: Database["public"]["Enums"]["promotion_type"]
+          updated_at: string
+          updated_by: string | null
+          usage_per_user: number
+          used_count: number
+          value: number
+        }
+        Insert: {
+          code?: string | null
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          max_discount?: number | null
+          minimum_purchase?: number | null
+          name: string
+          notes?: string | null
+          priority?: number
+          quota?: number | null
+          requires_code?: boolean
+          special_price?: number | null
+          start_at: string
+          status?: Database["public"]["Enums"]["promotion_status"]
+          type: Database["public"]["Enums"]["promotion_type"]
+          updated_at?: string
+          updated_by?: string | null
+          usage_per_user?: number
+          used_count?: number
+          value: number
+        }
+        Update: {
+          code?: string | null
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          max_discount?: number | null
+          minimum_purchase?: number | null
+          name?: string
+          notes?: string | null
+          priority?: number
+          quota?: number | null
+          requires_code?: boolean
+          special_price?: number | null
+          start_at?: string
+          status?: Database["public"]["Enums"]["promotion_status"]
+          type?: Database["public"]["Enums"]["promotion_type"]
+          updated_at?: string
+          updated_by?: string | null
+          usage_per_user?: number
+          used_count?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_promotions_course"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_promotions_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_answers: {
         Row: {
@@ -1016,6 +1205,8 @@ export type Database = {
       profile_role: "admin" | "mentor" | "student"
       profile_status: "active" | "inactive" | "suspended"
       program_status: "coming_soon" | "active" | "inactive"
+      promotion_status: "active" | "inactive"
+      promotion_type: "fixed_amount" | "percentage" | "special_price" | "free"
       video_provider: "youtube" | "bunny" | "upload"
     }
     CompositeTypes: {
@@ -1171,6 +1362,8 @@ export const Constants = {
       profile_role: ["admin", "mentor", "student"],
       profile_status: ["active", "inactive", "suspended"],
       program_status: ["coming_soon", "active", "inactive"],
+      promotion_status: ["active", "inactive"],
+      promotion_type: ["fixed_amount", "percentage", "special_price", "free"],
       video_provider: ["youtube", "bunny", "upload"],
     },
   },
