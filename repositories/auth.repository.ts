@@ -13,6 +13,22 @@ export interface RegisterData {
   password: string;
 }
 
+function getSiteUrl(): string {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim();
+
+  const vercelUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+
+  const siteUrl =
+    configuredUrl ||
+    (vercelUrl
+      ? `https://${vercelUrl}`
+      : "http://localhost:3000");
+
+  return siteUrl.replace(/\/+$/, "");
+}
+
 export class AuthRepository {
 
   async signUp(
@@ -29,6 +45,9 @@ export class AuthRepository {
       password: data.password,
 
       options: {
+
+        emailRedirectTo:
+          `${getSiteUrl()}/login?confirmed=true`,
 
         data: {
 

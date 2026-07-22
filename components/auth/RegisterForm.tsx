@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { registerAction } from "@/app/(auth)/register/actions";
 import {
   AuthCard,
   AuthSubmitButton,
@@ -15,18 +15,8 @@ export interface RegisterFormData {
   password: string;
 }
 
-interface RegisterFormProps {
-  onSubmit: (
-    data: RegisterFormData
-  ) => Promise<{
-    success: boolean;
-    message: string;
-  }>;
-}
 
-export default function RegisterForm({
-  onSubmit,
-}: RegisterFormProps) {
+export default function RegisterForm() {
 
   const [fullName, setFullName] =
     useState("");
@@ -61,6 +51,10 @@ export default function RegisterForm({
   ) {
 
     e.preventDefault();
+
+    if (loading) {
+      return;
+    }
 
     setError("");
 
@@ -99,7 +93,7 @@ export default function RegisterForm({
     try {
 
       const result =
-        await onSubmit({
+        await registerAction({
 
           fullName,
 
@@ -111,11 +105,23 @@ export default function RegisterForm({
 
         });
 
-      if (!result.success) {
+      if (result.success) {
+  window.location.replace(
+    result.redirectTo ??
+      "/login?registered=check-email"
+  );
 
-        setError(result.message);
+        return;
 
       }
+
+      setError(result.message);
+
+    } catch {
+
+      setError(
+        "Terjadi gangguan saat melakukan pendaftaran. Silakan coba kembali."
+      );
 
     } finally {
 
@@ -211,12 +217,22 @@ export default function RegisterForm({
 
         </div>
 
-        <PasswordField
-          label="Password"
-          value={password}
-          required
-          onChange={setPassword}
-        />
+        <div>
+
+          <PasswordField
+            label="Password"
+            value={password}
+            required
+            onChange={setPassword}
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+
+            Password minimal 6 karakter.
+
+          </p>
+
+        </div>
 
         <PasswordField
           label="Konfirmasi Password"

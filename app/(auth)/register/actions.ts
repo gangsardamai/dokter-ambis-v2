@@ -12,6 +12,7 @@ export interface RegisterActionInput {
 export interface RegisterActionResult {
   success: boolean;
   message: string;
+  redirectTo?: string;
 }
 
 function getRegisterErrorMessage(
@@ -46,10 +47,28 @@ function getRegisterErrorMessage(
 export async function registerAction(
   data: RegisterActionInput,
 ): Promise<RegisterActionResult> {
+  const fullName = data.fullName.trim();
+  const phone = data.phone.trim();
+  const email = data.email.trim();
+
+  if (!fullName || !phone || !email || !data.password) {
+    return {
+      success: false,
+      message: "Nama, email, nomor WhatsApp, dan password wajib diisi.",
+    };
+  }
+
+  if (data.password.length < 6) {
+    return {
+      success: false,
+      message: "Password minimal terdiri dari 6 karakter.",
+    };
+  }
+
   const result = await authService.register({
-    fullName: data.fullName,
-    phone: data.phone,
-    email: data.email,
+    fullName,
+    phone,
+    email,
     password: data.password,
   });
 
@@ -71,6 +90,7 @@ export async function registerAction(
 
   return {
     success: true,
-    message: "Pendaftaran berhasil. Silakan konfirmasi email Anda.",
+    message: "Pendaftaran berhasil. Silakan periksa email Anda untuk melakukan konfirmasi.",
+    redirectTo: "/login?registered=check-email",
   };
 }

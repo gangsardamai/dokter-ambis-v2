@@ -13,6 +13,7 @@ interface LoginPageProps {
   searchParams: Promise<{
     error?: string | string[];
     registered?: string | string[];
+    confirmed?: string | string[];
   }>;
 }
 
@@ -80,6 +81,11 @@ export default async function LoginPage({
       params.registered,
     ) === "check-email";
 
+  const showConfirmedNotice =
+    getParamValue(
+      params.confirmed,
+    ) === "true";
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-10">
       <div className="w-full max-w-md rounded-2xl border bg-white p-8 shadow-sm">
@@ -138,6 +144,17 @@ export default async function LoginPage({
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {showConfirmedNotice && (
+          <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+            <p className="font-bold">
+              Email berhasil dikonfirmasi
+            </p>
+            <p className="mt-1 leading-6 text-emerald-800">
+              Akun Anda sudah aktif. Silakan masuk menggunakan email dan password yang telah didaftarkan.
+            </p>
           </div>
         )}
 
