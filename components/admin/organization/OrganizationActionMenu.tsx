@@ -17,6 +17,7 @@ type OrganizationStatus =
 interface OrganizationActionMenuProps {
   organizationId: string;
   status: OrganizationStatus;
+  isGeneral: boolean;
 }
 
 const actionBase =
@@ -25,6 +26,7 @@ const actionBase =
 export default function OrganizationActionMenu({
   organizationId,
   status,
+  isGeneral,
 }: OrganizationActionMenuProps) {
   const [isPending, startTransition] = useTransition();
   const isActive = status === "active";
@@ -109,14 +111,16 @@ export default function OrganizationActionMenu({
         </button>
       )}
 
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={handleDelete}
-        className={`${actionBase} bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-200`}
-      >
-        {isPending ? "Memproses..." : "Hapus"}
-      </button>
+      {!isGeneral ? (
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={handleDelete}
+          className={`${actionBase} bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-200`}
+        >
+          {isPending ? "Memproses..." : "Hapus"}
+        </button>
+      ) : null}
     </div>
   );
 }

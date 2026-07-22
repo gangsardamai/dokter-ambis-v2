@@ -38,6 +38,23 @@ export class OrganizationRepository extends BaseRepository {
      READ ACTIVE
   ======================================== */
 
+  async getActiveUniversities(): Promise<Organization[]> {
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("status", "active")
+      .eq("is_general", false)
+      .order("title");
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return data ?? [];
+  }
+
   async getActive(): Promise<Organization[]> {
     const supabase = await this.db();
 
@@ -110,6 +127,21 @@ export class OrganizationRepository extends BaseRepository {
   /* ========================================
      COUNT
   ======================================== */
+
+  async countUniversities(): Promise<number> {
+    const supabase = await this.db();
+
+    const { count, error } = await supabase
+      .from("organizations")
+      .select("*", { count: "exact", head: true })
+      .eq("is_general", false);
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return count ?? 0;
+  }
 
   async count(): Promise<number> {
     const supabase = await this.db();

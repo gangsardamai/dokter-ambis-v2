@@ -6,6 +6,8 @@ interface Option {
 
 }
 
+import type { ChangeEventHandler } from "react";
+
 interface SelectInputProps {
 
   label: string;
@@ -15,6 +17,10 @@ interface SelectInputProps {
   options: Option[];
 
   defaultValue?: string;
+
+  value?: string;
+
+  onChange?: ChangeEventHandler<HTMLSelectElement>;
 
 }
 
@@ -27,6 +33,10 @@ export default function SelectInput({
   options,
 
   defaultValue,
+
+  value,
+
+  onChange,
 
 }: SelectInputProps) {
 
@@ -46,7 +56,9 @@ export default function SelectInput({
       <select
         id={name}
         name={name}
-        defaultValue={defaultValue}
+        defaultValue={value === undefined ? defaultValue : undefined}
+        value={value}
+        onChange={onChange}
         className="
           w-full
           rounded-lg

@@ -21,6 +21,10 @@ export class OrganizationService {
     return await organizationRepository.getActive();
   }
 
+  async getActiveUniversities() {
+    return await organizationRepository.getActiveUniversities();
+  }
+
   async getOrganizationById(
     id: string
   ) {
@@ -35,6 +39,10 @@ export class OrganizationService {
 
   async countOrganizations() {
     return await organizationRepository.count();
+  }
+
+  async countUniversities() {
+    return await organizationRepository.countUniversities();
   }
 
 

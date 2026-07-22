@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const organizations =
-    await organizationService.getActiveOrganizations();
+    await organizationService.getActiveUniversities();
 
   return (
     <>

@@ -8,6 +8,7 @@ import ProgramForm
 from "@/components/admin/program/ProgramForm";
 
 import {
+  organizationService,
   programService,
 } from "@/services";
 
@@ -45,6 +46,9 @@ export default async function EditProgramPage({
     notFound();
 
   }
+
+  const organizations =
+    await organizationService.getOrganizations();
 
   async function updateAction(
     formData: FormData
@@ -86,6 +90,12 @@ export default async function EditProgramPage({
         defaultValues={program}
         submitLabel="Update Program"
         action={updateAction}
+        organizationOptions={
+          organizations.map((item) => ({
+            label: item.is_general ? `${item.title} (Umum)` : item.title,
+            value: item.id,
+          }))
+        }
       />
 
     </main>

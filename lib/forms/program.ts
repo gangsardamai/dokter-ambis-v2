@@ -9,6 +9,9 @@ export function mapProgramForm(
 
   return {
 
+    organization_id:
+      formData.get("organization_id") as string,
+
     title:
       formData.get("title") as string,
 

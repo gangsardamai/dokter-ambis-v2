@@ -2,7 +2,7 @@ import Link from "next/link";
 import { organizationService } from "@/services";
 
 export default async function UniversitasPage() {
-  const organizations = await organizationService.getOrganizations();
+  const organizations = await organizationService.getActiveUniversities();
 
   return (
     <div

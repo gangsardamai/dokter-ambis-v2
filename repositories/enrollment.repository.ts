@@ -149,7 +149,7 @@ export class EnrollmentRepository extends BaseRepository {
             id,
             title
           ),
-          programs (
+          programs!fk_courses_program (
             id,
             title
           )
@@ -204,7 +204,7 @@ export class EnrollmentRepository extends BaseRepository {
             id,
             title
           ),
-          programs (
+          programs!fk_courses_program (
             id,
             title
           )
@@ -310,7 +310,7 @@ export class EnrollmentRepository extends BaseRepository {
             id,
             title
           ),
-          programs (
+          programs!fk_courses_program (
             id,
             title
           )
@@ -349,7 +349,7 @@ export class EnrollmentRepository extends BaseRepository {
             id,
             title
           ),
-          programs (
+          programs!fk_courses_program (
             id,
             title
           )
