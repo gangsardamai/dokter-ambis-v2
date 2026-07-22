@@ -134,6 +134,7 @@ export class OrganizationRepository extends BaseRepository {
     const { count, error } = await supabase
       .from("organizations")
       .select("*", { count: "exact", head: true })
+      .eq("status", "active")
       .eq("is_general", false);
 
     if (error) {
