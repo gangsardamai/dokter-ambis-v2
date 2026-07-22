@@ -110,6 +110,26 @@ export class PaymentRepository extends BaseRepository {
 
   }
 
+  async countByStatus(
+    status: PaymentStatus
+  ): Promise<number> {
+
+    const supabase = await this.db();
+
+    const { count, error } = await supabase
+      .from("payments")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("status", status);
+
+    if (error) this.handleError(error);
+
+    return count ?? 0;
+
+  }
+
   /* ========================================
      CREATE
   ======================================== */

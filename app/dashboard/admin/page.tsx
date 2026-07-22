@@ -3,14 +3,9 @@ import Link from "next/link";
 import {
   courseService,
   enrollmentService,
-  lessonFileService,
-  lessonService,
-  liveClassService,
   organizationService,
   paymentService,
-  programService,
-  quizService,
-  videoService,
+  profileService,
 } from "@/services";
 
 export const dynamic = "force-dynamic";
@@ -41,39 +36,27 @@ const quickActions = [
 export default async function AdminDashboardPage() {
   const [
     organizationCount,
-    programCount,
     courseCount,
-    enrollmentCount,
-    lessonCount,
-    videoCount,
-    fileCount,
-    quizCount,
-    liveClassCount,
-    paymentCount,
+    studentCount,
+    activeEnrollmentCount,
+    pendingEnrollmentCount,
+    pendingPaymentCount,
   ] = await Promise.all([
     organizationService.countOrganizations(),
-    programService.countPrograms(),
     courseService.countCourses(),
-    enrollmentService.countEnrollments(),
-    lessonService.countLessons(),
-    videoService.countVideos(),
-    lessonFileService.countFiles(),
-    quizService.countQuizzes(),
-    liveClassService.countLiveClasses(),
-    paymentService.countPayments(),
+    profileService.countProfilesByRole("student"),
+    enrollmentService.countEnrollmentsByStatus("active"),
+    enrollmentService.countEnrollmentsByStatus("pending_approval"),
+    paymentService.countPaymentsByStatus("pending"),
   ]);
 
   const stats = [
     { label: "Universitas", value: organizationCount },
-    { label: "Program", value: programCount },
-    { label: "Course", value: courseCount },
-    { label: "Enrollment", value: enrollmentCount },
-    { label: "Lesson", value: lessonCount },
-    { label: "Video", value: videoCount },
-    { label: "File", value: fileCount },
-    { label: "Quiz", value: quizCount },
-    { label: "Live Class", value: liveClassCount },
-    { label: "Pembayaran", value: paymentCount },
+    { label: "Total Course", value: courseCount },
+    { label: "Mahasiswa", value: studentCount },
+    { label: "Enrollment Aktif", value: activeEnrollmentCount },
+    { label: "Enrollment Menunggu", value: pendingEnrollmentCount },
+    { label: "Pembayaran Menunggu", value: pendingPaymentCount },
   ];
 
   return (
@@ -95,7 +78,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {stats.map((item) => (
           <div
             key={item.label}
