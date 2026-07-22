@@ -1,106 +1,57 @@
-import { courseRepository } from "@/repositories";
+import { courseRepository, programRepository } from "@/repositories";
 
+import type { CourseListFilters } from "@/repositories/course.repository";
 import type { Database } from "@/supabase/types/database.types";
 
-type CourseInsert =
-  Database["public"]["Tables"]["courses"]["Insert"];
-
-type CourseUpdate =
-  Database["public"]["Tables"]["courses"]["Update"];
+type CourseInsert = Database["public"]["Tables"]["courses"]["Insert"];
+type CourseUpdate = Database["public"]["Tables"]["courses"]["Update"];
 
 export class CourseService {
-  /* ========================================
-     READ
-  ======================================== */
+  async getCourses() { return await courseRepository.getAll(); }
+  async getCourseList(filters: CourseListFilters) { return await courseRepository.getList(filters); }
+  async getAvailableCourses() { return await courseRepository.getAvailableCourses(); }
+  async getAvailableCourseDetails() { return await courseRepository.getAvailableCourseDetails(); }
+  async getAvailableCourseDetailById(id: string) { return await courseRepository.getAvailableCourseDetailById(id); }
+  async getCourseById(id: string) { return await courseRepository.getById(id); }
+  async getCourseBySlug(slug: string) { return await courseRepository.getBySlug(slug); }
+  async getCourseByOrganizationAndSlug(organizationId: string, slug: string) {
+    return await courseRepository.getByOrganizationAndSlug(organizationId, slug);
+  }
+  async getCoursesByOrganization(organizationId: string) { return await courseRepository.getByOrganization(organizationId); }
+  async countCourses() { return await courseRepository.count(); }
 
-  async getCourses() {
-    return await courseRepository.getAll();
+  async createCourse(data: CourseInsert) {
+    await this.validateProgramOwnership(data.organization_id, data.program_id);
+    await this.validateSlugAvailability(data.organization_id, data.slug);
+    return await courseRepository.create({ ...data, slug: data.slug.toLowerCase() });
   }
 
-  async getAvailableCourses() {
-    return await courseRepository
-      .getAvailableCourses();
+  async updateCourse(id: string, data: CourseUpdate) {
+    const existing = await courseRepository.getById(id);
+    if (!existing) throw new Error("Course tidak ditemukan.");
+    const organizationId = data.organization_id ?? existing.organization_id;
+    const programId = data.program_id ?? existing.program_id;
+    const slug = data.slug ?? existing.slug;
+    await this.validateProgramOwnership(organizationId, programId);
+    await this.validateSlugAvailability(organizationId, slug, id);
+    return await courseRepository.update(id, { ...data, slug: slug.toLowerCase() });
   }
 
-  async getAvailableCourseDetails() {
-    return await courseRepository
-      .getAvailableCourseDetails();
+  async deleteCourse(id: string) { return await courseRepository.delete(id); }
+
+  private async validateProgramOwnership(organizationId: string, programId: string) {
+    const program = await programRepository.getById(programId);
+    if (!program || program.organization_id !== organizationId) {
+      throw new Error("Program tidak sesuai dengan Organization yang dipilih.");
+    }
   }
 
-  async getAvailableCourseDetailById(
-    id: string,
-  ) {
-    return await courseRepository
-      .getAvailableCourseDetailById(
-        id,
-      );
-  }
-
-  async getCourseById(
-    id: string,
-  ) {
-    return await courseRepository
-      .getById(id);
-  }
-
-  async getCourseBySlug(
-    slug: string,
-  ) {
-    return await courseRepository
-      .getBySlug(slug);
-  }
-
-  async getCoursesByOrganization(
-    organizationId: string,
-  ) {
-    return await courseRepository
-      .getByOrganization(
-        organizationId,
-      );
-  }
-
-  async countCourses() {
-    return await courseRepository
-      .count();
-  }
-
-  /* ========================================
-     CREATE
-  ======================================== */
-
-  async createCourse(
-    data: CourseInsert,
-  ) {
-    return await courseRepository
-      .create(data);
-  }
-
-  /* ========================================
-     UPDATE
-  ======================================== */
-
-  async updateCourse(
-    id: string,
-    data: CourseUpdate,
-  ) {
-    return await courseRepository
-      .update(
-        id,
-        data,
-      );
-  }
-
-  /* ========================================
-     DELETE
-  ======================================== */
-
-  async deleteCourse(
-    id: string,
-  ) {
-    return await courseRepository
-      .delete(id);
+  private async validateSlugAvailability(organizationId: string, slug: string, excludeId?: string) {
+    const existing = await courseRepository.findByOrganizationAndSlug(organizationId, slug, excludeId);
+    if (existing) {
+      throw new Error("Slug course sudah digunakan pada Organization yang sama.");
+    }
   }
 }
 
-export const courseService =
-  new CourseService();
+export const courseService = new CourseService();

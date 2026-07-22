@@ -7,13 +7,10 @@ import {
 
 import ProgramStatusBadge from "./ProgramStatusBadge";
 
-import type { Database } from "@/supabase/types/database.types";
-
-type Program =
-  Database["public"]["Tables"]["programs"]["Row"];
+import type { ProgramWithOrganization } from "@/repositories/program.repository";
 
 interface ProgramTableProps {
-  programs: Program[];
+  programs: ProgramWithOrganization[];
   onDelete?: (id: string) => Promise<void>;
 }
 
@@ -71,7 +68,29 @@ export default function ProgramTable({
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50/80 p-4">
+          <div className="mt-5 rounded-2xl border border-blue-100/70 bg-blue-50/50 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+              Organization
+            </p>
+
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+              <p className="min-w-0 break-words text-sm font-extrabold text-[#061827]">
+                {program.organization.title}
+              </p>
+
+              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[#1769cf] ring-1 ring-blue-100">
+                {program.organization.short_name}
+              </span>
+
+              {program.organization.is_general && (
+                <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[11px] font-bold text-cyan-700 ring-1 ring-cyan-100">
+                  Umum
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50/80 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
               Status
             </p>

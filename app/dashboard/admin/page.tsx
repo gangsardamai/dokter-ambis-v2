@@ -42,7 +42,7 @@ export default async function AdminDashboardPage() {
     pendingEnrollmentCount,
     pendingPaymentCount,
   ] = await Promise.all([
-    organizationService.countOrganizations(),
+    organizationService.countUniversities(),
     courseService.countCourses(),
     profileService.countProfilesByRole("student"),
     enrollmentService.countEnrollmentsByStatus("active"),

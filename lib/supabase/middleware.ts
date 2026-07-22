@@ -7,7 +7,7 @@ import type { Database } from "@/supabase/types/database.types";
 export async function updateSession(
   request: NextRequest,
 ) {
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request,
   });
 
@@ -20,22 +20,39 @@ export async function updateSession(
           return request.cookies.getAll();
         },
 
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(
+            ({ name, value }) => {
+              request.cookies.set(
+                name,
+                value,
+              );
+            },
+          );
+
+          response = NextResponse.next({
+            request,
+          });
+
           cookiesToSet.forEach(
             ({
               name,
               value,
               options,
             }) => {
-              request.cookies.set(
-                name,
-                value,
-              );
-
               response.cookies.set(
                 name,
                 value,
                 options,
+              );
+            },
+          );
+
+          Object.entries(headers).forEach(
+            ([key, value]) => {
+              response.headers.set(
+                key,
+                value,
               );
             },
           );
@@ -44,7 +61,7 @@ export async function updateSession(
     },
   );
 
-  await supabase.auth.getUser();
+  await supabase.auth.getClaims();
 
   return response;
 }

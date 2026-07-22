@@ -11,9 +11,25 @@ type ProgramInsert =
 type ProgramUpdate =
   Database["public"]["Tables"]["programs"]["Update"];
 
+type Organization =
+  Database["public"]["Tables"]["organizations"]["Row"];
+
+export type ProgramWithOrganization =
+  Program & {
+    organization: Pick<
+      Organization,
+      | "id"
+      | "title"
+      | "short_name"
+      | "slug"
+      | "status"
+      | "is_general"
+    >;
+  };
+
 export class ProgramRepository {
 
-  async getAll(): Promise<Program[]> {
+  async getAll(): Promise<ProgramWithOrganization[]> {
 
     const supabase =
       await createClient();
@@ -23,7 +39,9 @@ export class ProgramRepository {
       error,
     } = await supabase
       .from("programs")
-      .select("*")
+      .select(
+        "*, organization:organizations!fk_programs_organization(id, title, short_name, slug, status, is_general)",
+      )
       .order("title");
 
     if (error) {
@@ -31,6 +49,25 @@ export class ProgramRepository {
       throw error;
 
     }
+
+    return data ?? [];
+
+  }
+
+  async getByOrganization(
+    organizationId: string
+  ): Promise<Program[]> {
+
+    const supabase =
+      await createClient();
+
+    const { data, error } = await supabase
+      .from("programs")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("title");
+
+    if (error) { throw error; }
 
     return data ?? [];
 

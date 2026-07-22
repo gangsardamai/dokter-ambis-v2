@@ -18,6 +18,16 @@ export class ProgramService {
 
   }
 
+  async getProgramsByOrganization(
+    organizationId: string
+  ) {
+
+    return await programRepository.getByOrganization(
+      organizationId
+    );
+
+  }
+
   async getProgramById(
     id: string
   ) {

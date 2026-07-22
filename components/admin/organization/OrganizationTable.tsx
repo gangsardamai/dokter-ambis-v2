@@ -82,7 +82,12 @@ export default function OrganizationTable({
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Status
               </p>
-              <OrganizationStatusBadge status={organization.status} />
+              <div className="flex flex-wrap gap-2">
+                {organization.is_general ? (
+                  <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-extrabold text-cyan-700">Umum</span>
+                ) : null}
+                <OrganizationStatusBadge status={organization.status} />
+              </div>
             </div>
           </div>
 
@@ -90,6 +95,7 @@ export default function OrganizationTable({
             <OrganizationActionMenu
               organizationId={organization.id}
               status={organization.status}
+              isGeneral={organization.is_general}
             />
           </div>
         </article>

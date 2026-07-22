@@ -12,6 +12,8 @@ export function validateProgram(data: {
 
   slug: string;
 
+  organization_id: string;
+
 }) : ProgramValidationResult {
 
   if (!data.title.trim()) {
@@ -21,6 +23,18 @@ export function validateProgram(data: {
       valid: false,
 
       message: "Nama program wajib diisi.",
+
+    };
+
+  }
+
+  if (!data.organization_id) {
+
+    return {
+
+      valid: false,
+
+      message: "Organization wajib dipilih.",
 
     };
 
