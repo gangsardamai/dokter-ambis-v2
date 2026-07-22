@@ -1,56 +1,34 @@
-import Link from "next/link";
-
 import {
   PageHeader,
   PrimaryButton,
- } from "@/components/admin";
+} from "@/components/admin";
 
-import OrganizationTable
-from "@/components/admin/organization/OrganizationTable";
+import OrganizationTable from "@/components/admin/organization/OrganizationTable";
 
-import {
-  organizationService,
-} from "@/services";
+import { organizationService } from "@/services";
 
 export default async function OrganizationPage() {
-
   const organizations =
     await organizationService.getOrganizations();
 
   return (
-
-    <main className="max-w-7xl mx-auto p-8 space-y-8">
-
+    <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
       <PageHeader
-
         title="Universitas"
-
         description="Kelola daftar universitas."
-
-        actions={
-
-          <Link
+        actions={(
+          <PrimaryButton
             href="/dashboard/admin/organization/create"
+            className="w-full sm:w-auto"
           >
-
-            <PrimaryButton>
-
-              Tambah Universitas
-
-            </PrimaryButton>
-
-          </Link>
-
-        }
-
+            Tambah Universitas
+          </PrimaryButton>
+        )}
       />
 
       <OrganizationTable
         organizations={organizations}
       />
-
     </main>
-
   );
-
 }

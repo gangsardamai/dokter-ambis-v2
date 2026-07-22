@@ -4,9 +4,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import {
-  useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { Database } from "@/supabase/types/database.types";
 
 import {
@@ -34,20 +32,20 @@ interface EnrollmentActionButtonsProps {
   paymentStatus: PaymentStatus | null;
 }
 
+const actionClass =
+  "inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-2.5 text-sm font-bold transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+
 export function EnrollmentActionButtons({
-    enrollmentId,
+  enrollmentId,
   enrollmentStatus,
   enrollmentCategory,
   paymentId,
   paymentStatus,
 }: EnrollmentActionButtonsProps) {
-    const router =
-    useRouter();
-  const [isPending, startTransition] =
-    useTransition();
-
-  const [message, setMessage] =
-    useState<string | null>(null);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
 
   function runAction(
     action: () => Promise<{
@@ -56,10 +54,10 @@ export function EnrollmentActionButtons({
     }>,
   ) {
     startTransition(async () => {
-           const result =
-        await action();
+      const result = await action();
 
       setMessage(result.message);
+      setIsSuccess(result.success);
 
       if (result.success) {
         router.refresh();
@@ -142,9 +140,7 @@ export function EnrollmentActionButtons({
     );
   }
 
-  function updateCategory(
-    category: EnrollmentCategory,
-  ) {
+  function updateCategory(category: EnrollmentCategory) {
     if (category === enrollmentCategory) {
       return;
     }
@@ -158,41 +154,45 @@ export function EnrollmentActionButtons({
   }
 
   return (
-    <section className="rounded-lg border bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold">
-        Tindakan Admin
-      </h2>
+    <section className="rounded-3xl border border-blue-100/80 bg-white p-5 shadow-sm sm:p-6">
+      <div className="mb-5">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1769cf]">
+          Tindakan Admin
+        </p>
+        <h2 className="mt-2 text-xl font-extrabold tracking-[-0.04em] text-[#061827]">
+          Kelola status enrollment
+        </h2>
+      </div>
 
-      <div className="flex flex-wrap gap-3">
-        {paymentId &&
-          paymentStatus !== "approved" && (
-            <>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={approvePayment}
-                className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
-              >
-                Setujui Payment
-              </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        {paymentId && paymentStatus !== "approved" && (
+          <>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={approvePayment}
+              className={`${actionClass} bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-200`}
+            >
+              Setujui Payment
+            </button>
 
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={rejectPayment}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                Tolak Payment
-              </button>
-            </>
-          )}
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={rejectPayment}
+              className={`${actionClass} bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-200`}
+            >
+              Tolak Payment
+            </button>
+          </>
+        )}
 
         {enrollmentStatus !== "active" && (
           <button
             type="button"
             disabled={isPending}
             onClick={activateEnrollment}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className={`${actionClass} bg-gradient-to-r from-[#1769cf] to-[#033b63] text-white hover:-translate-y-0.5 hover:shadow-md focus:ring-blue-300`}
           >
             Aktifkan Enrollment
           </button>
@@ -203,7 +203,7 @@ export function EnrollmentActionButtons({
             type="button"
             disabled={isPending}
             onClick={cancelEnrollment}
-            className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            className={`${actionClass} border border-red-200 bg-white text-red-700 hover:bg-red-50 focus:ring-red-200`}
           >
             Batalkan Enrollment
           </button>
@@ -211,35 +211,25 @@ export function EnrollmentActionButtons({
       </div>
 
       <div className="mt-6">
-        <p className="mb-2 text-sm font-medium">
+        <p className="mb-3 text-sm font-bold text-slate-700">
           Kategori Enrollment
         </p>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
-            disabled={
-              isPending ||
-              enrollmentCategory === "regular"
-            }
-            onClick={() =>
-              updateCategory("regular")
-            }
-            className="rounded-md border px-4 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            disabled={isPending || enrollmentCategory === "regular"}
+            onClick={() => updateCategory("regular")}
+            className={`${actionClass} border border-blue-100 bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200 disabled:bg-slate-100 disabled:text-slate-400`}
           >
             Reguler
           </button>
 
           <button
             type="button"
-            disabled={
-              isPending ||
-              enrollmentCategory === "separated"
-            }
-            onClick={() =>
-              updateCategory("separated")
-            }
-            className="rounded-md border px-4 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            disabled={isPending || enrollmentCategory === "separated"}
+            onClick={() => updateCategory("separated")}
+            className={`${actionClass} border border-blue-100 bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200 disabled:bg-slate-100 disabled:text-slate-400`}
           >
             Terpisah
           </button>
@@ -247,15 +237,20 @@ export function EnrollmentActionButtons({
       </div>
 
       {isPending && (
-        <p className="mt-4 text-sm text-gray-500">
+        <p className="mt-4 text-sm font-semibold text-slate-500">
           Sedang memproses...
         </p>
       )}
 
       {message && !isPending && (
-        <p className="mt-4 text-sm text-gray-600">
+        <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+          isSuccess
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-red-200 bg-red-50 text-red-700"
+        }`}
+        >
           {message}
-        </p>
+        </div>
       )}
     </section>
   );

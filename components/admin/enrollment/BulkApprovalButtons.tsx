@@ -4,9 +4,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import {
-  useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import {
   approveAllEnrollmentsAction,
@@ -18,21 +16,30 @@ type ActionResult = {
   message: string;
 };
 
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
 export function BulkApprovalButtons() {
-    const router =
-    useRouter();
-  const [isPending, startTransition] =
-    useTransition();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
 
-  const [message, setMessage] =
-    useState<string | null>(null);
-
-  const [isSuccess, setIsSuccess] =
-    useState<boolean | null>(null);
-
-    function handleResult(
-    result: ActionResult,
-  ) {
+  function handleResult(result: ActionResult) {
     setMessage(result.message);
     setIsSuccess(result.success);
 
@@ -54,9 +61,7 @@ export function BulkApprovalButtons() {
     setIsSuccess(null);
 
     startTransition(async () => {
-      const result =
-        await approveAllEnrollmentsAction();
-
+      const result = await approveAllEnrollmentsAction();
       handleResult(result);
     });
   }
@@ -74,77 +79,42 @@ export function BulkApprovalButtons() {
     setIsSuccess(null);
 
     startTransition(async () => {
-      const result =
-        await approveAllPaymentsAction();
-
+      const result = await approveAllPaymentsAction();
       handleResult(result);
     });
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
+    <div className="w-full space-y-3 sm:w-auto">
+      <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
         <button
           type="button"
           disabled={isPending}
           onClick={approveAllEnrollments}
-          className="
-            rounded-md
-            bg-green-600
-            px-4
-            py-2
-            text-sm
-            font-medium
-            text-white
-            transition
-            hover:bg-green-700
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
-          {isPending
-            ? "Memproses..."
-            : "Setujui Semua Enrollment"}
+          <CheckIcon />
+          {isPending ? "Memproses..." : "Setujui Semua Enrollment"}
         </button>
 
         <button
           type="button"
           disabled={isPending}
           onClick={approveAllPayments}
-          className="
-            rounded-md
-            bg-blue-600
-            px-4
-            py-2
-            text-sm
-            font-medium
-            text-white
-            transition
-            hover:bg-blue-700
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
-          {isPending
-            ? "Memproses..."
-            : "Setujui Semua Payment"}
+          <CheckIcon />
+          {isPending ? "Memproses..." : "Setujui Semua Payment"}
         </button>
       </div>
 
       {message && (
         <div
-          className={`
-            rounded-md
-            border
-            px-4
-            py-3
-            text-sm
-            ${
-              isSuccess
-                ? "border-green-200 bg-green-50 text-green-700"
-                : "border-red-200 bg-red-50 text-red-700"
-            }
-          `}
+          className={`rounded-2xl border px-4 py-3 text-sm font-semibold shadow-sm ${
+            isSuccess
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
         >
           {message}
         </div>

@@ -73,6 +73,16 @@ export class PaymentService {
 
   }
 
+  async countPaymentsByStatus(
+    status: PaymentStatus
+  ): Promise<number> {
+
+    return paymentRepository.countByStatus(
+      status,
+    );
+
+  }
+
   /* ========================================
      CREATE
   ======================================== */
