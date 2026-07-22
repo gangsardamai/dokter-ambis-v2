@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   FormCard,
@@ -36,10 +36,9 @@ export default function CourseForm({
   const [organizationId, setOrganizationId] = useState(defaultValues?.organization_id ?? "");
   const [programId, setProgramId] = useState(defaultValues?.program_id ?? "");
 
-  const filteredPrograms = useMemo(
-    () => programOptions.filter((program) => !organizationId || program.organizationId === organizationId),
-    [organizationId, programOptions],
-  );
+  const filteredPrograms = organizationId
+    ? programOptions.filter((program) => program.organizationId === organizationId)
+    : [];
 
   return (
     <FormCard>
@@ -55,6 +54,8 @@ export default function CourseForm({
             if (selectedProgram?.organizationId !== nextOrganizationId) setProgramId("");
           }}
           options={organizationOptions}
+          placeholder="Pilih Organization"
+          required
         />
 
         <SelectInput
@@ -63,6 +64,9 @@ export default function CourseForm({
           value={programId}
           onChange={(event) => setProgramId(event.target.value)}
           options={filteredPrograms}
+          placeholder={organizationId ? "Pilih Program" : "Pilih Organization terlebih dahulu"}
+          required
+          disabled={!organizationId}
         />
 
         <TextInput label="Nama Blok" name="title" required defaultValue={defaultValues?.title ?? ""} />
