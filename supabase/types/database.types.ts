@@ -718,6 +718,7 @@ export type Database = {
           phone: string
           role: Database["public"]["Enums"]["profile_role"]
           status: Database["public"]["Enums"]["profile_status"]
+          university_origin: string | null
           updated_at: string
         }
         Insert: {
@@ -728,6 +729,7 @@ export type Database = {
           phone: string
           role?: Database["public"]["Enums"]["profile_role"]
           status?: Database["public"]["Enums"]["profile_status"]
+          university_origin?: string | null
           updated_at?: string
         }
         Update: {
@@ -738,6 +740,7 @@ export type Database = {
           phone?: string
           role?: Database["public"]["Enums"]["profile_role"]
           status?: Database["public"]["Enums"]["profile_status"]
+          university_origin?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1177,7 +1180,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_active_course_access: {
+        Args: { target_course_id: string }
+        Returns: boolean
+      }
+      is_active_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       course_status: "draft" | "active" | "archived"
