@@ -72,8 +72,12 @@ export class CourseRepository extends BaseRepository {
 
   async getList(filters: CourseListFilters): Promise<PaginatedCourses> {
     const supabase = await this.db();
-    const page = Math.max(filters.page ?? 1, 1);
-    const perPage = Math.min(filters.perPage ?? 14, 14);
+    const requestedPage = filters.page ?? 1;
+    const requestedPerPage = filters.perPage ?? 14;
+    const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    const perPage = Number.isInteger(requestedPerPage)
+      ? Math.max(1, Math.min(requestedPerPage, 14))
+      : 14;
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
@@ -89,9 +93,13 @@ export class CourseRepository extends BaseRepository {
 
     const q = filters.q?.trim();
     if (q) {
-      query = query.or(
-        `title.ilike.%${q}%,slug.ilike.%${q}%,organizations.title.ilike.%${q}%,organizations.short_name.ilike.%${q}%,programs.title.ilike.%${q}%,programs.slug.ilike.%${q}%`,
-      );
+      const matchingCourseIds = await this.findSearchCourseIds(q);
+
+      if (matchingCourseIds.length === 0) {
+        return { data: [], total: 0, page, perPage };
+      }
+
+      query = query.in("id", matchingCourseIds);
     }
 
     if (filters.sort === "oldest") query = query.order("created_at", { ascending: true });
@@ -103,6 +111,76 @@ export class CourseRepository extends BaseRepository {
     if (error) this.handleError(error);
 
     return { data: (data ?? []) as CourseDetails[], total: count ?? 0, page, perPage };
+  }
+
+  private async findSearchCourseIds(q: string): Promise<string[]> {
+    const supabase = await this.db();
+    const escapedQuery = q.replace(/[\\%_]/g, (character) => `\\${character}`);
+    const pattern = `%${escapedQuery}%`;
+
+    const [
+      courseTitleResult,
+      courseSlugResult,
+      organizationTitleResult,
+      organizationShortNameResult,
+      programTitleResult,
+      programSlugResult,
+    ] = await Promise.all([
+      supabase.from("courses").select("id").ilike("title", pattern),
+      supabase.from("courses").select("id").ilike("slug", pattern),
+      supabase.from("organizations").select("id").ilike("title", pattern),
+      supabase.from("organizations").select("id").ilike("short_name", pattern),
+      supabase.from("programs").select("id").ilike("title", pattern),
+      supabase.from("programs").select("id").ilike("slug", pattern),
+    ]);
+
+    const lookupResults = [
+      courseTitleResult,
+      courseSlugResult,
+      organizationTitleResult,
+      organizationShortNameResult,
+      programTitleResult,
+      programSlugResult,
+    ];
+
+    for (const result of lookupResults) {
+      if (result.error) this.handleError(result.error);
+    }
+
+    const courseIds = new Set<string>([
+      ...(courseTitleResult.data ?? []).map((item) => item.id),
+      ...(courseSlugResult.data ?? []).map((item) => item.id),
+    ]);
+    const organizationIds = Array.from(new Set([
+      ...(organizationTitleResult.data ?? []).map((item) => item.id),
+      ...(organizationShortNameResult.data ?? []).map((item) => item.id),
+    ]));
+    const programIds = Array.from(new Set([
+      ...(programTitleResult.data ?? []).map((item) => item.id),
+      ...(programSlugResult.data ?? []).map((item) => item.id),
+    ]));
+
+    if (organizationIds.length > 0) {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id")
+        .in("organization_id", organizationIds);
+
+      if (error) this.handleError(error);
+      for (const item of data ?? []) courseIds.add(item.id);
+    }
+
+    if (programIds.length > 0) {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id")
+        .in("program_id", programIds);
+
+      if (error) this.handleError(error);
+      for (const item of data ?? []) courseIds.add(item.id);
+    }
+
+    return Array.from(courseIds);
   }
 
   async getAvailableCourses(): Promise<Course[]> {
@@ -136,6 +214,22 @@ export class CourseRepository extends BaseRepository {
   async getBySlug(slug: string): Promise<Course | null> {
     const supabase = await this.db();
     const { data, error } = await supabase.from("courses").select("*").eq("slug", slug.toLowerCase()).maybeSingle();
+    if (error) this.handleError(error);
+    return data;
+  }
+
+  async getByOrganizationAndSlug(
+    organizationId: string,
+    slug: string,
+  ): Promise<Course | null> {
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("slug", slug.toLowerCase())
+      .maybeSingle();
+
     if (error) this.handleError(error);
     return data;
   }
