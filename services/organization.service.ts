@@ -109,6 +109,19 @@ export class OrganizationService {
   async deleteOrganization(
     id: string
   ) {
+    const organization =
+      await organizationRepository.getById(id);
+
+    if (!organization) {
+      throw new Error("Organization tidak ditemukan.");
+    }
+
+    if (organization.is_general) {
+      throw new Error(
+        "Organization Umum / Nasional tidak dapat dihapus."
+      );
+    }
+
     return await organizationRepository.delete(
       id
     );
