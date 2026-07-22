@@ -44,7 +44,8 @@ export default async function Page({
   // ==========================
 
   const course =
-    await courseService.getCourseBySlug(
+    await courseService.getCourseByOrganizationAndSlug(
+      organization.id,
       courseSlug
     );
 
