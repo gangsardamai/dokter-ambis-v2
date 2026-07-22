@@ -14,6 +14,9 @@ export class CourseService {
   async getAvailableCourseDetailById(id: string) { return await courseRepository.getAvailableCourseDetailById(id); }
   async getCourseById(id: string) { return await courseRepository.getById(id); }
   async getCourseBySlug(slug: string) { return await courseRepository.getBySlug(slug); }
+  async getCourseByOrganizationAndSlug(organizationId: string, slug: string) {
+    return await courseRepository.getByOrganizationAndSlug(organizationId, slug);
+  }
   async getCoursesByOrganization(organizationId: string) { return await courseRepository.getByOrganization(organizationId); }
   async countCourses() { return await courseRepository.count(); }
 
