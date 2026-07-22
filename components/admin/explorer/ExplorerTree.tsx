@@ -1,8 +1,6 @@
 import type { Database } from "@/supabase/types/database.types";
 
-import {
-  FolderNode,
-} from ".";
+import { FolderNode } from ".";
 
 type Folder =
   Database["public"]["Tables"]["lesson_folders"]["Row"];
@@ -17,7 +15,7 @@ export function ExplorerTree({
   folders,
 }: ExplorerTreeProps) {
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-4">
       {folders.map((folder) => (
         <FolderNode
           key={folder.id}
