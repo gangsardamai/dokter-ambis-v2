@@ -22,6 +22,12 @@ interface SelectInputProps {
 
   onChange?: ChangeEventHandler<HTMLSelectElement>;
 
+  placeholder?: string;
+
+  required?: boolean;
+
+  disabled?: boolean;
+
 }
 
 export default function SelectInput({
@@ -37,6 +43,12 @@ export default function SelectInput({
   value,
 
   onChange,
+
+  placeholder,
+
+  required,
+
+  disabled,
 
 }: SelectInputProps) {
 
@@ -59,6 +71,8 @@ export default function SelectInput({
         defaultValue={value === undefined ? defaultValue : undefined}
         value={value}
         onChange={onChange}
+        required={required}
+        disabled={disabled}
         className="
           w-full
           rounded-lg
@@ -68,8 +82,17 @@ export default function SelectInput({
           outline-none
           focus:ring-2
           focus:ring-blue-500
+          disabled:cursor-not-allowed
+          disabled:bg-slate-100
+          disabled:text-slate-400
         "
       >
+
+        {placeholder ? (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        ) : null}
 
         {options.map((option) => (
 
