@@ -19,7 +19,14 @@ export default function ProgramForm({ defaultValues, organizationOptions, submit
   return (
     <FormCard>
       <form action={action} className="space-y-6">
-        <SelectInput label="Organization" name="organization_id" defaultValue={defaultValues?.organization_id ?? ""} options={organizationOptions} />
+        <SelectInput
+          label="Organization"
+          name="organization_id"
+          defaultValue={defaultValues?.organization_id ?? ""}
+          options={organizationOptions}
+          placeholder="Pilih Organization"
+          required
+        />
         <TextInput label="Nama Program" name="title" required defaultValue={defaultValues?.title ?? ""} />
         <TextInput label="Slug" name="slug" required defaultValue={defaultValues?.slug ?? ""} />
         <TextAreaInput label="Deskripsi" name="description" defaultValue={defaultValues?.description ?? ""} />
