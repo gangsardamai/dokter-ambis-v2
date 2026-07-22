@@ -11,6 +11,9 @@ type ProfileInsert =
 type ProfileUpdate =
   Database["public"]["Tables"]["profiles"]["Update"];
 
+type ProfileRole =
+  Database["public"]["Enums"]["profile_role"];
+
 export class ProfileRepository {
 
   async getCurrentProfile(): Promise<Profile | null> {
@@ -69,6 +72,32 @@ export class ProfileRepository {
     }
 
     return data;
+
+  }
+
+  async countByRole(
+    role: ProfileRole
+  ): Promise<number> {
+
+    const supabase =
+      await createClient();
+
+    const {
+      count,
+      error,
+    } = await supabase
+      .from("profiles")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("role", role);
+
+    if (error) {
+      throw error;
+    }
+
+    return count ?? 0;
 
   }
 

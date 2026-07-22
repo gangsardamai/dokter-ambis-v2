@@ -192,6 +192,14 @@ export class EnrollmentService {
     return enrollmentRepository.count();
   }
 
+  async countEnrollmentsByStatus(
+    status: EnrollmentStatus,
+  ): Promise<number> {
+    return enrollmentRepository.countByStatus(
+      status,
+    );
+  }
+
   /* ========================================
      CREATE
   ======================================== */

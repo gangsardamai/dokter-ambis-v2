@@ -472,6 +472,26 @@ export class EnrollmentRepository extends BaseRepository {
     return count ?? 0;
   }
 
+  async countByStatus(
+    status: EnrollmentStatus,
+  ): Promise<number> {
+    const supabase = await this.db();
+
+    const { count, error } = await supabase
+      .from("enrollments")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("status", status);
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return count ?? 0;
+  }
+
   /* ========================================
      CREATE
   ======================================== */

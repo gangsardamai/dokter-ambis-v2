@@ -1,5 +1,10 @@
 import { profileRepository } from "@/repositories";
 
+import type { Database } from "@/supabase/types/database.types";
+
+type ProfileRole =
+  Database["public"]["Enums"]["profile_role"];
+
 export class ProfileService {
 
   async getCurrentProfile() {
@@ -14,6 +19,16 @@ export class ProfileService {
 
     return await profileRepository.getById(
       id
+    );
+
+  }
+
+  async countProfilesByRole(
+    role: ProfileRole
+  ) {
+
+    return await profileRepository.countByRole(
+      role
     );
 
   }
