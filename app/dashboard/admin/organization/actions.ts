@@ -104,9 +104,17 @@ export async function deleteOrganizationAction(
   id: string
 ): Promise<ActionResult> {
 
-  await organizationService.deleteOrganization(
-    id
-  );
+  try {
+    await organizationService.deleteOrganization(
+      id
+    );
+  } catch (error) {
+    return failure(
+      error instanceof Error
+        ? error.message
+        : "Organization gagal dihapus."
+    );
+  }
 
   revalidatePath(
     "/dashboard/admin/organization"
