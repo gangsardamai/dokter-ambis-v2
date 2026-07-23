@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+import type { Json } from "@/supabase/types/database.types";
 import type {
   QuizReviewPayload,
   QuizSubmissionResult,
@@ -17,12 +18,18 @@ export async function submitQuizAttemptAction(
   answers: SubmittedAnswer[],
 ): Promise<QuizSubmissionResult> {
   const supabase = await createClient();
+  const submittedAnswers = answers.map(
+    (answer): Json => ({
+      question_id: answer.question_id,
+      selected_option_id: answer.selected_option_id,
+    }),
+  );
 
   const { data, error } = await supabase.rpc(
     "submit_quiz_attempt",
     {
       target_quiz_id: quizId,
-      submitted_answers: answers,
+      submitted_answers: submittedAnswers,
     },
   );
 
