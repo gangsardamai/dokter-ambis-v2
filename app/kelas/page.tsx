@@ -2,11 +2,13 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import PublicCourseCatalog, {
   type PublicCourseCatalogItem,
+  type PublicOrganizationOption,
 } from "@/components/public/PublicCourseCatalog";
 import {
   authService,
   courseService,
   enrollmentService,
+  organizationService,
   profileService,
 } from "@/services";
 
@@ -39,10 +41,16 @@ function formatRupiah(value: number): string {
 export default async function PublicClassCatalogPage({
   searchParams,
 }: PublicClassCatalogPageProps) {
-  const [params, authenticated, availableCourses] = await Promise.all([
+  const [
+    params,
+    authenticated,
+    availableCourses,
+    activeOrganizations,
+  ] = await Promise.all([
     searchParams,
     authService.isAuthenticated(),
     courseService.getAvailableCourseDetails(),
+    organizationService.getActiveOrganizations(),
   ]);
 
   const profile = authenticated
@@ -57,6 +65,11 @@ export default async function PublicClassCatalogPage({
   );
 
   const courses: PublicCourseCatalogItem[] = availableCourses
+    .filter(
+      (course) =>
+        course.organization?.status === "active" &&
+        course.program?.status === "active",
+    )
     .slice()
     .sort(
       (a, b) =>
@@ -100,6 +113,14 @@ export default async function PublicClassCatalogPage({
       };
     });
 
+  const organizationOptions: PublicOrganizationOption[] =
+    activeOrganizations.map((organization) => ({
+      slug: organization.slug,
+      title: organization.title,
+      shortName: organization.short_name,
+      isGeneral: organization.is_general,
+    }));
+
   return (
     <>
       <Navbar />
@@ -127,6 +148,7 @@ export default async function PublicClassCatalogPage({
 
           <PublicCourseCatalog
             courses={courses}
+            organizationOptions={organizationOptions}
             initialOrganizationSlug={getParamValue(
               params.organization,
             )}
