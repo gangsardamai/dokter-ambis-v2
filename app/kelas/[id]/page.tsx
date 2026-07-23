@@ -44,7 +44,7 @@ export default async function PublicCourseDetailPage({
     : null;
   const ownedEnrollment =
     profile?.role === "student"
-      ? await enrollmentService.getActiveCourseEnrollmentByCourse(
+      ? await enrollmentService.getActiveCourseEnrollment(
           profile.id,
           course.id,
         )
@@ -77,7 +77,7 @@ export default async function PublicCourseDetailPage({
             ← Kembali ke Katalog
           </Link>
 
-          <article className="mt-6 overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/8">
+          <article className="mt-6 overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-blue-950/10">
             <div className="relative overflow-hidden bg-gradient-to-br from-[#1769cf] via-[#0b5ba5] to-[#033b63] p-7 text-white sm:p-10">
               <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
               <div className="relative">
