@@ -17,7 +17,14 @@ import {
   lessonService,
 } from "@/services";
 
-export default async function NewQuizPage() {
+export default async function NewQuizPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    lessonId?: string;
+  }>;
+}) {
+  const { lessonId } = await searchParams;
 
   const lessons =
     await lessonService.getLessons();
@@ -36,6 +43,7 @@ export default async function NewQuizPage() {
         <div className="p-6">
 
           <QuizForm
+            initialLessonId={lessonId}
             lessonOptions={lessons.map(
               (lesson) => ({
                 value: lesson.id,
