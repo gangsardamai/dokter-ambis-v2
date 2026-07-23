@@ -379,7 +379,7 @@ CREATE POLICY videos_student_access
 ON public.videos
 FOR SELECT
 TO authenticated
-USING ((SELECT private.can_access_lesson(lesson_id)));
+USING (private.can_access_lesson(lesson_id));
 
 DROP POLICY IF EXISTS lesson_files_public_read
 ON public.lesson_files;
@@ -390,7 +390,7 @@ CREATE POLICY lesson_files_authorized_read
 ON public.lesson_files
 FOR SELECT
 TO authenticated
-USING ((SELECT private.can_access_lesson(lesson_id)));
+USING (private.can_access_lesson(lesson_id));
 
 DROP POLICY IF EXISTS live_classes_public_read
 ON public.live_classes;
@@ -401,7 +401,7 @@ CREATE POLICY live_classes_authorized_read
 ON public.live_classes
 FOR SELECT
 TO authenticated
-USING ((SELECT private.can_access_lesson(lesson_id)));
+USING (private.can_access_lesson(lesson_id));
 
 DROP POLICY IF EXISTS quizzes_public_read
 ON public.quizzes;
@@ -412,7 +412,7 @@ CREATE POLICY quizzes_authorized_read
 ON public.quizzes
 FOR SELECT
 TO authenticated
-USING ((SELECT private.can_access_lesson(lesson_id)));
+USING (private.can_access_lesson(lesson_id));
 
 DROP POLICY IF EXISTS quiz_questions_public_read
 ON public.quiz_questions;
@@ -428,7 +428,7 @@ USING (
     SELECT 1
     FROM public.quizzes
     WHERE quizzes.id = quiz_questions.quiz_id
-      AND (SELECT private.can_access_lesson(quizzes.lesson_id))
+      AND private.can_access_lesson(quizzes.lesson_id)
   )
 );
 
@@ -448,6 +448,6 @@ USING (
     JOIN public.quizzes
       ON quizzes.id = quiz_questions.quiz_id
     WHERE quiz_questions.id = quiz_options.question_id
-      AND (SELECT private.can_access_lesson(quizzes.lesson_id))
+      AND private.can_access_lesson(quizzes.lesson_id)
   )
 );
