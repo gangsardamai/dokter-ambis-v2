@@ -44,11 +44,31 @@ export class QuizRepository extends BaseRepository {
       .from("quizzes")
       .select("*")
       .eq("lesson_id", lessonId)
-      .order("created_at");
+      .order("quiz_order");
 
     if (error) this.handleError(error);
 
     return data ?? [];
+  }
+
+  async getByCourse(
+    courseId: string
+  ): Promise<Quiz[]> {
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("quizzes")
+      .select("*, lessons!inner(course_id)")
+      .eq("lessons.course_id", courseId)
+      .order("quiz_order");
+
+    if (error) this.handleError(error);
+
+    return (data ?? []).map((row) => {
+      const { lessons: _lessons, ...quiz } = row;
+      void _lessons;
+      return quiz;
+    });
   }
 
   async exists(id: string): Promise<boolean> {
