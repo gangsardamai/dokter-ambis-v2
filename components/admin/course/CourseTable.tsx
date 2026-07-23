@@ -37,6 +37,7 @@ export default function CourseTable({ courses }: CourseTableProps) {
 
           <div className="mt-5 flex flex-wrap gap-2">
             <Link href={`/dashboard/admin/course/${course.id}/explorer`} className="inline-flex min-h-10 items-center rounded-xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100">Explorer</Link>
+            <Link href={`/dashboard/admin/course/${course.id}/mentors`} className="inline-flex min-h-10 items-center rounded-xl bg-violet-50 px-4 py-2 text-sm font-bold text-violet-700 hover:bg-violet-100">Atur Mentor</Link>
             <Link href={`/dashboard/admin/course/${course.id}/edit`} className="inline-flex min-h-10 items-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-[#1769cf] hover:bg-blue-100">Edit</Link>
             <form action={deleteCourseFormAction}>
               <input type="hidden" name="id" value={course.id} />
