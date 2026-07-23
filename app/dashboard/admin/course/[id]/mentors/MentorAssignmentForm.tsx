@@ -46,7 +46,7 @@ export default function MentorAssignmentForm({
         </div>
       ) : (
         <>
-          <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+          <div className="mb-5">
             <label
               htmlFor="mentor-search"
               className="block text-sm font-black text-slate-900"
@@ -71,7 +71,7 @@ export default function MentorAssignmentForm({
           </div>
 
           {visibleMentorIds.size === 0 ? (
-            <div className="mb-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+            <div className="mb-4 border-y border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
               <p className="font-black text-slate-900">
                 Mentor tidak ditemukan.
               </p>
@@ -81,12 +81,12 @@ export default function MentorAssignmentForm({
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="divide-y divide-slate-200 border-y border-slate-200">
             {mentors.map((mentor) => (
               <label
                 key={mentor.id}
                 hidden={!visibleMentorIds.has(mentor.id)}
-                className="flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/50"
+                className="flex min-h-14 cursor-pointer items-center gap-3 px-1 py-3 transition hover:bg-slate-50"
               >
                 <input
                   type="checkbox"
@@ -94,17 +94,23 @@ export default function MentorAssignmentForm({
                   value={mentor.id}
                   defaultChecked={mentor.assigned}
                   disabled={mentor.status !== "active"}
-                  className="h-4 w-4 accent-blue-600"
+                  className="h-4 w-4 shrink-0 accent-blue-600"
                 />
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block break-words text-sm font-black text-slate-950">
                     {mentor.fullName}
                   </span>
-                  <span className="mt-1 block text-xs font-semibold text-slate-500">
-                    {mentor.status === "active"
-                      ? "Mentor aktif"
-                      : "Mentor tidak aktif"}
-                  </span>
+                </span>
+                <span
+                  className={`shrink-0 text-xs font-semibold ${
+                    mentor.status === "active"
+                      ? "text-emerald-700"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {mentor.status === "active"
+                    ? "Aktif"
+                    : "Tidak aktif"}
                 </span>
               </label>
             ))}
