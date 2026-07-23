@@ -4,16 +4,34 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { dashboardMenus } from "@/lib/dashboard-menu";
+import {
+  dashboardMenus,
+  type ProfileRole,
+} from "@/lib/dashboard-menu";
 
 interface SidebarProps {
+  role: ProfileRole;
   onNavigate?: () => void;
 }
 
-const fallbackHref = "/dashboard/admin";
+const homeHrefByRole: Record<ProfileRole, string> = {
+  admin: "/dashboard/admin",
+  mentor: "/dashboard/mentor",
+  student: "/dashboard/student",
+};
 
-function isActivePath(pathname: string, href: string) {
-  if (href === fallbackHref) {
+const consoleLabelByRole: Record<ProfileRole, string> = {
+  admin: "Admin Console",
+  mentor: "Mentor Console",
+  student: "Student Console",
+};
+
+function isActivePath(
+  pathname: string,
+  href: string,
+  homeHref: string,
+) {
+  if (href === homeHref) {
     return pathname === href;
   }
 
@@ -21,10 +39,12 @@ function isActivePath(pathname: string, href: string) {
 }
 
 export default function Sidebar({
+  role,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
-  const menu = dashboardMenus.admin;
+  const menu = dashboardMenus[role];
+  const homeHref = homeHrefByRole[role];
 
   return (
     <aside className="flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden bg-gradient-to-b from-[#1769cf] via-[#033b63] to-[#061827] text-white shadow-2xl lg:w-72 lg:shadow-none">
@@ -32,10 +52,10 @@ export default function Sidebar({
         <div className="absolute -right-10 -top-16 h-36 w-36 rounded-full bg-cyan-300/20 blur-2xl" />
 
         <Link
-          href={fallbackHref}
+          href={homeHref}
           onClick={onNavigate}
           className="relative flex items-center gap-3"
-          aria-label="DokterAmbis — Dashboard Admin"
+          aria-label={`DokterAmbis — ${consoleLabelByRole[role]}`}
         >
           <span className="relative block h-12 w-13 overflow-hidden rounded-2xl bg-white/95 shadow-lg shadow-blue-950/20 ring-1 ring-white/40">
             <Image
@@ -53,7 +73,7 @@ export default function Sidebar({
               Dokter<span className="text-cyan-200">Ambis</span>
             </span>
             <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.18em] text-blue-100/80">
-              Admin Console
+              {consoleLabelByRole[role]}
             </span>
           </span>
         </Link>
@@ -71,7 +91,11 @@ export default function Sidebar({
 
             <div className="flex flex-col gap-1">
               {section.items.map((item) => {
-                const active = isActivePath(pathname, item.href);
+                const active = isActivePath(
+                  pathname,
+                  item.href,
+                  homeHref,
+                );
 
                 return (
                   <Link
