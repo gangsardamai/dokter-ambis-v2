@@ -32,7 +32,23 @@ function isActivePath(
   homeHref: string,
 ) {
   if (href === homeHref) {
-    return pathname === href;
+    if (pathname === href) return true;
+
+    if (
+      homeHref === "/dashboard/student" &&
+      pathname.startsWith("/dashboard/student/my-course/")
+    ) {
+      return true;
+    }
+
+    if (
+      homeHref === "/dashboard/mentor" &&
+      pathname.startsWith("/dashboard/mentor/course/")
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
