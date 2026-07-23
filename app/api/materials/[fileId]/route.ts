@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+import {
+  createR2PresignedUrl,
+  getR2BucketName,
+  parseR2FilePath,
+} from "@/lib/cloudflare/r2";
 import { createClient } from "@/lib/supabase/server";
 
 interface MaterialRouteContext {
@@ -29,6 +34,38 @@ export async function GET(
       },
       { status: 404 },
     );
+  }
+
+  const r2File = parseR2FilePath(file.file_path);
+
+  if (r2File) {
+    if (r2File.bucket !== getR2BucketName()) {
+      return NextResponse.json(
+        { message: "Bucket file tidak valid." },
+        { status: 500 },
+      );
+    }
+
+    try {
+      const signed = createR2PresignedUrl({
+        method: "GET",
+        key: r2File.key,
+        expiresIn: 60,
+        downloadName: file.title,
+      });
+
+      return NextResponse.redirect(signed.url);
+    } catch (r2Error) {
+      return NextResponse.json(
+        {
+          message:
+            r2Error instanceof Error
+              ? r2Error.message
+              : "Tautan unduhan R2 gagal dibuat.",
+        },
+        { status: 500 },
+      );
+    }
   }
 
   if (/^https?:\/\//i.test(file.file_path)) {
