@@ -41,6 +41,9 @@ export default async function EditFilePage({
   const lessons =
     await lessonService.getLessons();
 
+  const updateCurrentFileAction =
+    updateFileAction.bind(null, file.id);
+
   return (
 
     <Container>
@@ -94,14 +97,7 @@ export default async function EditFilePage({
                   })
                 )}
                 submitLabel="Simpan Perubahan"
-                onSubmit={async (data) => {
-
-                  await updateFileAction(
-                    file.id,
-                    data
-                  );
-
-                }}
+                onSubmit={updateCurrentFileAction}
               />
 
             </div>
@@ -121,5 +117,4 @@ export default async function EditFilePage({
     </Container>
 
   );
-
 }
