@@ -17,7 +17,14 @@ import {
   lessonService,
 } from "@/services";
 
-export default async function NewFilePage() {
+export default async function NewFilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    lessonId?: string;
+  }>;
+}) {
+  const { lessonId } = await searchParams;
 
   const lessons =
     await lessonService.getLessons();
@@ -36,6 +43,13 @@ export default async function NewFilePage() {
         <div className="p-6">
 
           <FileForm
+            initialLessonId={lessonId}
+            lessonCourseIds={Object.fromEntries(
+              lessons.map((lesson) => [
+                lesson.id,
+                lesson.course_id,
+              ]),
+            )}
             lessonOptions={lessons.map(
               (lesson) => ({
                 value: lesson.id,
