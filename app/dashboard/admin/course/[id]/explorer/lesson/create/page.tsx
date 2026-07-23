@@ -67,6 +67,8 @@ export default async function Page({
           lesson_order: 1,
           duration: 10,
           is_free: false,
+          is_required: true,
+          publication_status: "draft",
         }}
 
         submitLabel="Simpan Lesson"
