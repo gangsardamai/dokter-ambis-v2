@@ -9,3 +9,9 @@ from "./DashboardHeader";
 
 export { default as Sidebar }
 from "./Sidebar";
+
+export { default as CourseDirectory }
+from "./CourseDirectory";
+
+export type { DashboardCourseItem }
+from "./CourseDirectory";
