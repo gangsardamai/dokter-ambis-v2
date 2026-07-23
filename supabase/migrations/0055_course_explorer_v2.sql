@@ -1198,3 +1198,157 @@ BEGIN
               ORDER BY option_row.option_order
             ),
             '[]'::JSONB
+          )
+          FROM public.quiz_options AS option_row
+          WHERE option_row.question_id = question.id
+        )
+      )
+      ORDER BY question.question_order
+    ),
+    '[]'::JSONB
+  )
+  INTO review_payload
+  FROM public.quiz_questions AS question
+  LEFT JOIN public.quiz_answers AS answer
+    ON answer.question_id = question.id
+    AND answer.attempt_id = latest_attempt_id
+  WHERE question.quiz_id = target_quiz_id;
+
+  RETURN jsonb_build_object(
+    'quiz_id', quiz_record.id,
+    'title', quiz_record.title,
+    'attempts_used', attempts_used,
+    'questions', review_payload
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_quiz_for_attempt(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_quiz_for_attempt(UUID) FROM anon;
+REVOKE ALL ON FUNCTION public.submit_quiz_attempt(UUID, JSONB) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.submit_quiz_attempt(UUID, JSONB) FROM anon;
+REVOKE ALL ON FUNCTION public.get_quiz_review(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_quiz_review(UUID) FROM anon;
+
+GRANT EXECUTE ON FUNCTION public.get_quiz_for_attempt(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.submit_quiz_attempt(UUID, JSONB) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_quiz_review(UUID) TO authenticated;
+
+-- =========================================================
+-- PRIVATE COURSE MATERIAL STORAGE
+-- Object path: <course_uuid>/<lesson_uuid>/<unique-file-name>
+-- =========================================================
+
+INSERT INTO storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+VALUES (
+  'course-materials',
+  'course-materials',
+  FALSE,
+  52428800,
+  ARRAY[
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip',
+    'audio/mpeg'
+  ]
+)
+ON CONFLICT (id)
+DO UPDATE SET
+  public = FALSE,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+CREATE OR REPLACE FUNCTION private.course_id_from_storage_path(
+  object_name TEXT
+)
+RETURNS UUID
+LANGUAGE plpgsql
+IMMUTABLE
+SET search_path = ''
+AS $$
+DECLARE
+  first_segment TEXT;
+BEGIN
+  first_segment := split_part(object_name, '/', 1);
+
+  IF first_segment !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' THEN
+    RETURN NULL;
+  END IF;
+
+  RETURN first_segment::UUID;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.course_id_from_storage_path(TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private.course_id_from_storage_path(TEXT) FROM anon;
+GRANT EXECUTE ON FUNCTION private.course_id_from_storage_path(TEXT) TO authenticated;
+
+DROP POLICY IF EXISTS course_materials_authorized_select
+ON storage.objects;
+DROP POLICY IF EXISTS course_materials_manager_insert
+ON storage.objects;
+DROP POLICY IF EXISTS course_materials_manager_update
+ON storage.objects;
+DROP POLICY IF EXISTS course_materials_manager_delete
+ON storage.objects;
+
+CREATE POLICY course_materials_authorized_select
+ON storage.objects
+FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'course-materials'
+  AND private.can_access_course_content(
+    private.course_id_from_storage_path(name)
+  )
+);
+
+CREATE POLICY course_materials_manager_insert
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'course-materials'
+  AND private.can_manage_course(
+    private.course_id_from_storage_path(name)
+  )
+);
+
+CREATE POLICY course_materials_manager_update
+ON storage.objects
+FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'course-materials'
+  AND private.can_manage_course(
+    private.course_id_from_storage_path(name)
+  )
+)
+WITH CHECK (
+  bucket_id = 'course-materials'
+  AND private.can_manage_course(
+    private.course_id_from_storage_path(name)
+  )
+);
+
+CREATE POLICY course_materials_manager_delete
+ON storage.objects
+FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'course-materials'
+  AND private.can_manage_course(
+    private.course_id_from_storage_path(name)
+  )
+);
