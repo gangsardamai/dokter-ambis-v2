@@ -3,7 +3,7 @@
 type LessonFormProps = {
   defaultValues: {
     course_id: string;
-    folder_id: string;
+    folder_id?: string | null;
     title?: string;
     slug?: string;
     description?: string;
@@ -40,7 +40,7 @@ export function LessonForm({
       <input
         type="hidden"
         name="folder_id"
-        value={defaultValues.folder_id}
+        value={defaultValues.folder_id ?? ""}
       />
 
       <label className="block">
