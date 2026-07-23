@@ -41,6 +41,9 @@ export default async function EditQuizPage({
   const lessons =
     await lessonService.getLessons();
 
+  const updateCurrentQuizAction =
+    updateQuizAction.bind(null, quiz.id);
+
   return (
 
     <Container>
@@ -100,14 +103,7 @@ export default async function EditQuizPage({
                   })
                 )}
                 submitLabel="Simpan Perubahan"
-                onSubmit={async (data) => {
-
-                  await updateQuizAction(
-                    quiz.id,
-                    data
-                  );
-
-                }}
+                onSubmit={updateCurrentQuizAction}
               />
 
             </div>
@@ -127,5 +123,4 @@ export default async function EditQuizPage({
     </Container>
 
   );
-
 }
