@@ -71,7 +71,22 @@ export default async function EditFilePage({
 
                   file_path:
                     file.file_path,
+
+                  file_order:
+                    file.file_order,
+
+                  publication_status:
+                    file.publication_status,
+
+                  is_required:
+                    file.is_required,
                 }}
+                lessonCourseIds={Object.fromEntries(
+                  lessons.map((lesson) => [
+                    lesson.id,
+                    lesson.course_id,
+                  ]),
+                )}
                 lessonOptions={lessons.map(
                   (lesson) => ({
                     value: lesson.id,
