@@ -48,11 +48,10 @@ export default async function StudentDashboardPage({
       return [{
         id: course.id,
         title: course.title,
-        description: course.description,
+        description: null,
         organizationTitle:
           course.organizations?.title ?? "Universitas belum tersedia",
-        organizationShortName:
-          course.organizations?.short_name ?? null,
+        organizationShortName: null,
         programTitle:
           course.programs?.title ?? "Program belum tersedia",
         statusLabel: "Dimiliki",
