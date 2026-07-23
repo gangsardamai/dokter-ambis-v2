@@ -21,6 +21,9 @@ export type VideoFormData = {
   provider: VideoProvider;
   provider_video_id: string;
   duration: number;
+  video_order: number;
+  publication_status: string;
+  is_required: boolean;
 };
 
 interface SelectOption {
@@ -30,6 +33,7 @@ interface SelectOption {
 
 interface VideoFormProps {
   initialData?: VideoFormData;
+  initialLessonId?: string;
   lessonOptions: SelectOption[];
   submitLabel?: string;
 
@@ -139,6 +143,7 @@ function getInitialVideoInput(
 
 export default function VideoForm({
   initialData,
+  initialLessonId,
   lessonOptions,
   submitLabel = "Simpan",
   onSubmit,
@@ -147,7 +152,7 @@ export default function VideoForm({
     lessonId,
     setLessonId,
   ] = useState(
-    initialData?.lesson_id ?? "",
+    initialData?.lesson_id ?? initialLessonId ?? "",
   );
 
   const [
@@ -171,6 +176,27 @@ export default function VideoForm({
     setDuration,
   ] = useState(
     initialData?.duration ?? 0,
+  );
+
+  const [
+    videoOrder,
+    setVideoOrder,
+  ] = useState(
+    initialData?.video_order ?? 1,
+  );
+
+  const [
+    publicationStatus,
+    setPublicationStatus,
+  ] = useState(
+    initialData?.publication_status ?? "draft",
+  );
+
+  const [
+    isRequired,
+    setIsRequired,
+  ] = useState(
+    initialData?.is_required ?? true,
   );
 
   const [
@@ -255,6 +281,15 @@ export default function VideoForm({
           youtubeUrl.trim(),
 
         duration,
+
+        video_order:
+          videoOrder,
+
+        publication_status:
+          publicationStatus,
+
+        is_required:
+          isRequired,
       });
     } catch (error) {
       setErrorMessage(
@@ -320,16 +355,54 @@ export default function VideoForm({
           )}
       </div>
 
-      <TextInput
-        label="Durasi (menit)"
-        type="number"
-        value={String(duration)}
-        onChange={(value) =>
-          setDuration(
-            Number(value),
-          )
-        }
+      <div className="grid gap-5 sm:grid-cols-2">
+        <TextInput
+          label="Durasi (menit)"
+          type="number"
+          value={String(duration)}
+          onChange={(value) =>
+            setDuration(
+              Number(value),
+            )
+          }
+        />
+
+        <TextInput
+          label="Urutan Video"
+          type="number"
+          value={String(videoOrder)}
+          onChange={(value) =>
+            setVideoOrder(
+              Number(value),
+            )
+          }
+        />
+      </div>
+
+      <SelectField
+        label="Status Publikasi"
+        value={publicationStatus}
+        onChange={setPublicationStatus}
+        options={[
+          { value: "draft", label: "Draft" },
+          {
+            value: "published",
+            label: "Published",
+          },
+        ]}
       />
+
+      <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
+        <input
+          type="checkbox"
+          checked={isRequired}
+          onChange={(event) =>
+            setIsRequired(event.target.checked)
+          }
+          className="h-4 w-4 accent-blue-600"
+        />
+        Video wajib dipelajari
+      </label>
 
       {youtubeVideoId && (
         <div className="overflow-hidden rounded-xl border bg-black">
