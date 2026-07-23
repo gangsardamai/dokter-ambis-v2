@@ -341,30 +341,39 @@ export type Database = {
       lesson_files: {
         Row: {
           created_at: string
+          file_order: number
           file_path: string
           file_type: Database["public"]["Enums"]["file_type"]
           id: string
+          is_required: boolean
           lesson_id: string
+          publication_status: string
           title: string
           updated_at: string
           version: number
         }
         Insert: {
           created_at?: string
+          file_order?: number
           file_path: string
           file_type: Database["public"]["Enums"]["file_type"]
           id?: string
+          is_required?: boolean
           lesson_id: string
+          publication_status?: string
           title: string
           updated_at?: string
           version?: number
         }
         Update: {
           created_at?: string
+          file_order?: number
           file_path?: string
           file_type?: Database["public"]["Enums"]["file_type"]
           id?: string
+          is_required?: boolean
           lesson_id?: string
+          publication_status?: string
           title?: string
           updated_at?: string
           version?: number
@@ -387,6 +396,7 @@ export type Database = {
           folder_order: number
           id: string
           parent_folder_id: string | null
+          publication_status: string
           slug: string
           title: string
           updated_at: string
@@ -398,6 +408,7 @@ export type Database = {
           folder_order?: number
           id?: string
           parent_folder_id?: string | null
+          publication_status?: string
           slug: string
           title: string
           updated_at?: string
@@ -409,6 +420,7 @@ export type Database = {
           folder_order?: number
           id?: string
           parent_folder_id?: string | null
+          publication_status?: string
           slug?: string
           title?: string
           updated_at?: string
@@ -493,7 +505,9 @@ export type Database = {
           folder_id: string | null
           id: string
           is_free: boolean
+          is_required: boolean
           lesson_order: number
+          publication_status: string
           slug: string
           title: string
           updated_at: string
@@ -506,7 +520,9 @@ export type Database = {
           folder_id?: string | null
           id?: string
           is_free?: boolean
+          is_required?: boolean
           lesson_order: number
+          publication_status?: string
           slug: string
           title: string
           updated_at?: string
@@ -519,7 +535,9 @@ export type Database = {
           folder_id?: string | null
           id?: string
           is_free?: boolean
+          is_required?: boolean
           lesson_order?: number
+          publication_status?: string
           slug?: string
           title?: string
           updated_at?: string
@@ -1115,9 +1133,14 @@ export type Database = {
           created_at: string
           duration: number
           id: string
+          is_required: boolean
           lesson_id: string
           max_attempt: number
           passing_score: number
+          publication_status: string
+          quiz_order: number
+          shuffle_options: boolean
+          shuffle_questions: boolean
           title: string
           total_questions: number
           updated_at: string
@@ -1126,20 +1149,30 @@ export type Database = {
           created_at?: string
           duration: number
           id?: string
+          is_required?: boolean
           lesson_id: string
           max_attempt?: number
           passing_score?: number
+          publication_status?: string
+          quiz_order?: number
+          shuffle_options?: boolean
+          shuffle_questions?: boolean
           title: string
-          total_questions: number
+          total_questions?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           duration?: number
           id?: string
+          is_required?: boolean
           lesson_id?: string
           max_attempt?: number
           passing_score?: number
+          publication_status?: string
+          quiz_order?: number
+          shuffle_options?: boolean
+          shuffle_questions?: boolean
           title?: string
           total_questions?: number
           updated_at?: string
@@ -1148,8 +1181,62 @@ export type Database = {
           {
             foreignKeyName: "fk_quizzes_lesson"
             columns: ["lesson_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_results: {
+        Row: {
+          attempts_used: number
+          best_score: number | null
+          created_at: string
+          first_attempt_at: string | null
+          id: string
+          last_attempt_at: string | null
+          passed: boolean
+          profile_id: string
+          quiz_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempts_used?: number
+          best_score?: number | null
+          created_at?: string
+          first_attempt_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          passed?: boolean
+          profile_id: string
+          quiz_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempts_used?: number
+          best_score?: number | null
+          created_at?: string
+          first_attempt_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          passed?: boolean
+          profile_id?: string
+          quiz_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_quiz_results_profile"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_quiz_results_quiz"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]
@@ -1159,34 +1246,43 @@ export type Database = {
           created_at: string
           duration: number
           id: string
+          is_required: boolean
           lesson_id: string
           provider: Database["public"]["Enums"]["video_provider"]
           provider_video_id: string
+          publication_status: string
           title: string
           updated_at: string
           version: number
+          video_order: number
         }
         Insert: {
           created_at?: string
           duration: number
           id?: string
+          is_required?: boolean
           lesson_id: string
           provider: Database["public"]["Enums"]["video_provider"]
           provider_video_id: string
+          publication_status?: string
           title: string
           updated_at?: string
           version?: number
+          video_order?: number
         }
         Update: {
           created_at?: string
           duration?: number
           id?: string
+          is_required?: boolean
           lesson_id?: string
           provider?: Database["public"]["Enums"]["video_provider"]
           provider_video_id?: string
+          publication_status?: string
           title?: string
           updated_at?: string
           version?: number
+          video_order?: number
         }
         Relationships: [
           {
@@ -1203,11 +1299,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_active_course_access: {
-        Args: { target_course_id: string }
-        Returns: boolean
+      get_quiz_for_attempt: {
+        Args: { target_quiz_id: string }
+        Returns: Json
       }
-      is_active_admin: { Args: never; Returns: boolean }
+      get_quiz_review: {
+        Args: { target_quiz_id: string }
+        Returns: Json
+      }
+      submit_quiz_attempt: {
+        Args: {
+          submitted_answers: Json
+          target_quiz_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       course_status: "draft" | "active" | "archived"
