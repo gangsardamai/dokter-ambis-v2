@@ -51,13 +51,7 @@ export default async function NewQuizPage({
               })
             )}
             submitLabel="Simpan"
-            onSubmit={async (data) => {
-
-              await createQuizAction(
-                data
-              );
-
-            }}
+            onSubmit={createQuizAction}
           />
 
         </div>
@@ -67,5 +61,4 @@ export default async function NewQuizPage({
     </Container>
 
   );
-
 }
