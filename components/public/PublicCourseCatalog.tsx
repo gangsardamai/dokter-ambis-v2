@@ -18,8 +18,16 @@ export interface PublicCourseCatalogItem {
   owned: boolean;
 }
 
+export interface PublicOrganizationOption {
+  slug: string;
+  title: string;
+  shortName: string | null;
+  isGeneral: boolean;
+}
+
 interface PublicCourseCatalogProps {
   courses: PublicCourseCatalogItem[];
+  organizationOptions: PublicOrganizationOption[];
   initialOrganizationSlug?: string;
 }
 
@@ -29,10 +37,11 @@ function normalize(value: string): string {
 
 export default function PublicCourseCatalog({
   courses,
+  organizationOptions,
   initialOrganizationSlug = "",
 }: PublicCourseCatalogProps) {
-  const validInitialOrganization = courses.some(
-    (course) => course.organizationSlug === initialOrganizationSlug,
+  const validInitialOrganization = organizationOptions.some(
+    (organization) => organization.slug === initialOrganizationSlug,
   )
     ? initialOrganizationSlug
     : "";
@@ -42,26 +51,15 @@ export default function PublicCourseCatalog({
   );
   const [programTitle, setProgramTitle] = useState("");
 
-  const organizations = useMemo(() => {
-    const items = new Map<
-      string,
-      { slug: string; title: string; shortName: string | null }
-    >();
-
-    courses.forEach((course) => {
-      items.set(course.organizationSlug, {
-        slug: course.organizationSlug,
-        title: course.organizationTitle,
-        shortName: course.organizationShortName,
-      });
-    });
-
-    return Array.from(items.values()).sort((a, b) => {
-      if (a.slug === "umum") return -1;
-      if (b.slug === "umum") return 1;
-      return a.title.localeCompare(b.title, "id-ID");
-    });
-  }, [courses]);
+  const organizations = useMemo(
+    () =>
+      organizationOptions.slice().sort((a, b) => {
+        if (a.isGeneral) return -1;
+        if (b.isGeneral) return 1;
+        return a.title.localeCompare(b.title, "id-ID");
+      }),
+    [organizationOptions],
+  );
 
   const programs = useMemo(
     () =>
