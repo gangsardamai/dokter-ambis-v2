@@ -64,6 +64,11 @@ export async function createLessonFormAction(
     lesson_order: lessonOrder,
     duration,
     is_free: isFree,
+    is_required:
+      formData.get("is_required") === "on",
+    publication_status: String(
+      formData.get("publication_status") ?? "draft",
+    ),
   });
 
   redirect(
