@@ -51,9 +51,6 @@ ALTER TABLE public.lesson_files
 ADD CONSTRAINT chk_lesson_files_publication_status
 CHECK (publication_status IN ('draft', 'published'));
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_lesson_files_lesson_order
-ON public.lesson_files(lesson_id, file_order);
-
 ALTER TABLE public.videos
 ADD COLUMN IF NOT EXISTS video_order INTEGER NOT NULL DEFAULT 1,
 ADD COLUMN IF NOT EXISTS publication_status TEXT NOT NULL DEFAULT 'draft',
@@ -71,9 +68,6 @@ CHECK (video_order > 0);
 ALTER TABLE public.videos
 ADD CONSTRAINT chk_videos_publication_status
 CHECK (publication_status IN ('draft', 'published'));
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_videos_lesson_order
-ON public.videos(lesson_id, video_order);
 
 -- A lesson may contain multiple quizzes.
 ALTER TABLE public.quizzes
@@ -108,6 +102,71 @@ CHECK (quiz_order > 0);
 ALTER TABLE public.quizzes
 ADD CONSTRAINT chk_quizzes_publication_status
 CHECK (publication_status IN ('draft', 'published'));
+
+-- Preserve the visibility of content that existed before publication states
+-- were introduced. New rows continue to default to draft.
+UPDATE public.lesson_folders
+SET publication_status = 'published';
+
+UPDATE public.lessons
+SET publication_status = 'published';
+
+UPDATE public.lesson_files
+SET publication_status = 'published';
+
+UPDATE public.videos
+SET publication_status = 'published';
+
+UPDATE public.quizzes
+SET publication_status = 'published';
+
+WITH ranked_files AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY lesson_id
+      ORDER BY created_at, id
+    )::INTEGER AS next_order
+  FROM public.lesson_files
+)
+UPDATE public.lesson_files AS lesson_file
+SET file_order = ranked_files.next_order
+FROM ranked_files
+WHERE ranked_files.id = lesson_file.id;
+
+WITH ranked_videos AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY lesson_id
+      ORDER BY created_at, id
+    )::INTEGER AS next_order
+  FROM public.videos
+)
+UPDATE public.videos AS video
+SET video_order = ranked_videos.next_order
+FROM ranked_videos
+WHERE ranked_videos.id = video.id;
+
+WITH ranked_quizzes AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY lesson_id
+      ORDER BY created_at, id
+    )::INTEGER AS next_order
+  FROM public.quizzes
+)
+UPDATE public.quizzes AS quiz
+SET quiz_order = ranked_quizzes.next_order
+FROM ranked_quizzes
+WHERE ranked_quizzes.id = quiz.id;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_lesson_files_lesson_order
+ON public.lesson_files(lesson_id, file_order);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_videos_lesson_order
+ON public.videos(lesson_id, video_order);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_quizzes_lesson_order
 ON public.quizzes(lesson_id, quiz_order);
