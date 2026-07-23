@@ -1307,6 +1307,13 @@ export type Database = {
         Args: { target_quiz_id: string }
         Returns: Json
       }
+      set_course_mentors: {
+        Args: {
+          target_course_id: string
+          target_mentor_ids: string[]
+        }
+        Returns: undefined
+      }
       submit_quiz_attempt: {
         Args: {
           submitted_answers: Json
