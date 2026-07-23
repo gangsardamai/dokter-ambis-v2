@@ -12,6 +12,7 @@ export interface RegisterData {
   email: string;
   password: string;
   universityOrigin: string;
+  nextPath?: string;
 }
 
 export class AuthService {
