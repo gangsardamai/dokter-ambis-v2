@@ -32,6 +32,14 @@ export class LessonFileService {
     );
   }
 
+  async getFilesByCourse(
+    courseId: string
+  ) {
+    return await lessonFileRepository.getByCourse(
+      courseId
+    );
+  }
+
   async countFiles() {
     return await lessonFileRepository.count();
   }
