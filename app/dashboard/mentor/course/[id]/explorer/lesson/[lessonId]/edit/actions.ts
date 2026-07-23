@@ -1,25 +1,32 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { lessonService } from "@/services";
 
 export async function updateMentorLessonAction(
+  courseId: string,
   lessonId: string,
   formData: FormData,
 ): Promise<void> {
-  const courseId = String(formData.get("course_id") ?? "");
-  const folderId = String(formData.get("folder_id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
 
   if (!courseId) throw new Error("Course tidak ditemukan.");
-  if (!folderId) throw new Error("Folder tidak ditemukan.");
+  if (!lessonId) throw new Error("Lesson tidak ditemukan.");
   if (!title) throw new Error("Judul Lesson wajib diisi.");
   if (!slug) throw new Error("Slug wajib diisi.");
 
+  const lesson = await lessonService.getLessonById(lessonId);
+
+  if (!lesson || lesson.course_id !== courseId) {
+    throw new Error(
+      "Lesson tidak ditemukan atau tidak termasuk dalam course ini.",
+    );
+  }
+
   await lessonService.updateLesson(lessonId, {
-    folder_id: folderId,
     title,
     slug,
     description: String(
@@ -34,5 +41,9 @@ export async function updateMentorLessonAction(
     ),
   });
 
-  redirect(`/dashboard/mentor/course/${courseId}/explorer`);
+  const explorerPath =
+    `/dashboard/mentor/course/${courseId}/explorer`;
+
+  revalidatePath(explorerPath);
+  redirect(explorerPath);
 }
