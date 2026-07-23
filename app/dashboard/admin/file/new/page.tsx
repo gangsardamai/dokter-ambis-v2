@@ -57,13 +57,7 @@ export default async function NewFilePage({
               })
             )}
             submitLabel="Simpan"
-            onSubmit={async (data) => {
-
-              await createFileAction(
-                data
-              );
-
-            }}
+            onSubmit={createFileAction}
           />
 
         </div>
@@ -73,5 +67,4 @@ export default async function NewFilePage({
     </Container>
 
   );
-
 }
