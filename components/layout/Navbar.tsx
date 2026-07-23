@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 
 const menus = [
-  { label: "Universitas", href: "#universitas" },
-  { label: "Program", href: "#program" },
-  { label: "Mentor", href: "#mentor" },
+  { label: "Kelas", href: "/kelas" },
+  { label: "Universitas", href: "/#universitas" },
+  { label: "Mentor", href: "/#mentor" },
 ];
 
 export default function Navbar() {
@@ -45,13 +45,13 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-8 md:flex">
           {menus.map((menu) => (
-            <a
+            <Link
               key={menu.href}
               href={menu.href}
               className="text-sm font-semibold text-slate-600 transition hover:text-[#1769cf]"
             >
               {menu.label}
-            </a>
+            </Link>
           ))}
 
           <Link
@@ -108,14 +108,14 @@ export default function Navbar() {
         <div className="border-t border-slate-100 bg-white px-4 py-4 shadow-lg md:hidden">
           <div className="mx-auto flex max-w-lg flex-col gap-1">
             {menus.map((menu) => (
-              <a
+              <Link
                 key={menu.href}
                 href={menu.href}
                 onClick={() => setMenuOpen(false)}
                 className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-[#1769cf]"
               >
                 {menu.label}
-              </a>
+              </Link>
             ))}
 
             <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
