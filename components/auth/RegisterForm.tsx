@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { registerAction } from "@/app/(auth)/register/actions";
@@ -13,7 +14,13 @@ import {
   UNIVERSITY_OPTIONS,
 } from "@/lib/university-options";
 
-export default function RegisterForm() {
+interface RegisterFormProps {
+  nextPath?: string;
+}
+
+export default function RegisterForm({
+  nextPath = "",
+}: RegisterFormProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -31,9 +38,7 @@ export default function RegisterForm() {
   ) {
     event.preventDefault();
 
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     setError("");
 
@@ -75,6 +80,7 @@ export default function RegisterForm() {
         universityOrigin,
         universityOriginOther,
         password,
+        nextPath,
       });
 
       if (result.success) {
@@ -93,6 +99,10 @@ export default function RegisterForm() {
       setLoading(false);
     }
   }
+
+  const loginHref = nextPath
+    ? `/login?next=${encodeURIComponent(nextPath)}`
+    : "/login";
 
   return (
     <AuthCard
@@ -236,6 +246,16 @@ export default function RegisterForm() {
           Daftar
         </AuthSubmitButton>
       </form>
+
+      <p className="mt-5 text-center text-sm text-slate-600">
+        Sudah punya akun?{" "}
+        <Link
+          href={loginHref}
+          className="font-black text-blue-600 hover:text-blue-700 hover:underline"
+        >
+          Masuk
+        </Link>
+      </p>
     </AuthCard>
   );
 }
