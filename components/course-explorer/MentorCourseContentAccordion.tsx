@@ -85,8 +85,15 @@ function LessonPanel({
       </summary>
 
       <div className="border-t border-blue-100 p-3 sm:p-4">
-        <div className="mb-4 flex justify-end">
-          <ActionMenu label={`Aksi lesson ${lesson.title}`}>
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          <Link
+            href={`/dashboard/mentor/course/${courseId}/explorer/lesson/${lesson.id}/edit`}
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            Edit Lesson
+          </Link>
+
+          <ActionMenu label={`Tambah konten lesson ${lesson.title}`}>
             <Link
               href={`/dashboard/mentor/file/new?lessonId=${lesson.id}`}
               className={menuLinkClass}
@@ -104,12 +111,6 @@ function LessonPanel({
               className={menuLinkClass}
             >
               Tambah Quiz
-            </Link>
-            <Link
-              href={`/dashboard/mentor/course/${courseId}/explorer/lesson/${lesson.id}/edit`}
-              className={menuLinkClass}
-            >
-              Edit Lesson
             </Link>
           </ActionMenu>
         </div>
