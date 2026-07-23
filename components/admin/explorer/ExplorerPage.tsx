@@ -14,11 +14,13 @@ type Course =
 interface ExplorerPageProps {
   course: Course;
   content: CourseExplorerContent;
+  managerRole?: "admin" | "mentor";
 }
 
 export function ExplorerPage({
   course,
   content,
+  managerRole = "admin",
 }: ExplorerPageProps) {
   const folderCount = content.folders.length;
   const lessonCount =
@@ -38,12 +40,14 @@ export function ExplorerPage({
 
       <ExplorerToolbar
         courseId={course.id}
+        managerRole={managerRole}
       />
 
       <CourseContentAccordion
         courseId={course.id}
         content={content}
         mode="manager"
+        managerRole={managerRole}
       />
     </main>
   );
