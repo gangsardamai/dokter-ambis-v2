@@ -95,6 +95,7 @@ export async function registerAction(
     email,
     password: data.password,
     universityOrigin,
+    nextPath,
   });
 
   if (result.error) {
