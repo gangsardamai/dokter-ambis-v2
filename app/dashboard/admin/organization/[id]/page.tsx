@@ -57,6 +57,7 @@ export default async function OrganizationDetailPage({
           <OrganizationActionCard
             organizationId={organization.id}
             status={organization.status}
+            isGeneral={organization.is_general}
           />
 
         </div>
