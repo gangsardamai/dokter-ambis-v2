@@ -10,12 +10,26 @@ export interface RegisterActionInput {
   password: string;
   universityOrigin: string;
   universityOriginOther: string;
+  nextPath?: string;
 }
 
 export interface RegisterActionResult {
   success: boolean;
   message: string;
   redirectTo?: string;
+}
+
+function getSafeStudentNextPath(value: string | undefined): string {
+  const nextPath = value?.trim() ?? "";
+
+  if (
+    nextPath.startsWith("/dashboard/student/") &&
+    !nextPath.startsWith("//")
+  ) {
+    return nextPath;
+  }
+
+  return "";
 }
 
 function getRegisterErrorMessage(message: string): string {
@@ -52,6 +66,7 @@ export async function registerAction(
     data.universityOrigin,
     data.universityOriginOther,
   );
+  const nextPath = getSafeStudentNextPath(data.nextPath);
 
   if (!fullName || !phone || !email || !data.password) {
     return {
@@ -96,10 +111,18 @@ export async function registerAction(
     };
   }
 
+  const params = new URLSearchParams({
+    registered: "check-email",
+  });
+
+  if (nextPath) {
+    params.set("next", nextPath);
+  }
+
   return {
     success: true,
     message:
       "Pendaftaran berhasil. Silakan periksa email Anda untuk melakukan konfirmasi.",
-    redirectTo: "/login?registered=check-email",
+    redirectTo: `/login?${params.toString()}`,
   };
 }
