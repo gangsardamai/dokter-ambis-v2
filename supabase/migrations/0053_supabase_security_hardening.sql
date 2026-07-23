@@ -111,6 +111,36 @@ GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
 -- POLICIES THAT USE PRIVILEGED HELPERS
 -- =========================================================
 
+-- Device-session ownership remains available to each user, while
+-- cross-user reads and updates are restricted to active admins.
+DROP POLICY IF EXISTS "Users read own devices"
+ON public.device_sessions;
+
+CREATE POLICY "Users read own devices"
+ON public.device_sessions
+FOR SELECT
+TO authenticated
+USING (
+  profile_id = (SELECT auth.uid())
+  OR (SELECT private.is_active_admin())
+);
+
+DROP POLICY IF EXISTS "Users update own devices"
+ON public.device_sessions;
+
+CREATE POLICY "Users update own devices"
+ON public.device_sessions
+FOR UPDATE
+TO authenticated
+USING (
+  profile_id = (SELECT auth.uid())
+  OR (SELECT private.is_active_admin())
+)
+WITH CHECK (
+  profile_id = (SELECT auth.uid())
+  OR (SELECT private.is_active_admin())
+);
+
 DROP POLICY IF EXISTS "Admins read profiles and users read own profile"
 ON public.profiles;
 
