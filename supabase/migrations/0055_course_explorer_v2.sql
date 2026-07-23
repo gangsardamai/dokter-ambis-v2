@@ -451,6 +451,77 @@ FOR DELETE
 TO authenticated
 USING ((SELECT private.is_active_admin()));
 
+CREATE OR REPLACE FUNCTION public.set_course_mentors(
+  target_course_id UUID,
+  target_mentor_ids UUID[]
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  requested_count INTEGER;
+  valid_count INTEGER;
+BEGIN
+  IF NOT private.is_active_admin() THEN
+    RAISE EXCEPTION 'Hanya admin aktif yang dapat mengatur mentor course.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.courses
+    WHERE id = target_course_id
+  ) THEN
+    RAISE EXCEPTION 'Course tidak ditemukan.'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  SELECT COUNT(DISTINCT mentor_id)::INTEGER
+  INTO requested_count
+  FROM unnest(COALESCE(target_mentor_ids, ARRAY[]::UUID[]))
+    AS requested(mentor_id);
+
+  SELECT COUNT(DISTINCT md.id)::INTEGER
+  INTO valid_count
+  FROM public.mentor_details AS md
+  JOIN public.profiles AS profile
+    ON profile.id = md.profile_id
+  WHERE md.id = ANY(
+    COALESCE(target_mentor_ids, ARRAY[]::UUID[])
+  )
+    AND profile.role = 'mentor'
+    AND profile.status = 'active';
+
+  IF requested_count <> valid_count THEN
+    RAISE EXCEPTION 'Satu atau lebih mentor tidak valid atau tidak aktif.'
+      USING ERRCODE = '22023';
+  END IF;
+
+  DELETE FROM public.course_mentors
+  WHERE course_id = target_course_id;
+
+  INSERT INTO public.course_mentors (
+    course_id,
+    mentor_id
+  )
+  SELECT
+    target_course_id,
+    mentor_id
+  FROM (
+    SELECT DISTINCT mentor_id
+    FROM unnest(
+      COALESCE(target_mentor_ids, ARRAY[]::UUID[])
+    ) AS requested(mentor_id)
+  ) AS requested_mentors;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.set_course_mentors(UUID, UUID[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_course_mentors(UUID, UUID[]) FROM anon;
+GRANT EXECUTE ON FUNCTION public.set_course_mentors(UUID, UUID[]) TO authenticated;
+
 -- =========================================================
 -- FOLDER AND LESSON POLICIES
 -- =========================================================
