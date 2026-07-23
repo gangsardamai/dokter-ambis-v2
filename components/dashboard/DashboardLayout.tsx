@@ -8,10 +8,13 @@ import {
   useState,
 } from "react";
 
+import type { ProfileRole } from "@/lib/dashboard-menu";
+
 import Sidebar from "./Sidebar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  role: ProfileRole;
 }
 
 interface DashboardSidebarContextValue {
@@ -26,6 +29,7 @@ export function useDashboardSidebar() {
 
 export default function DashboardLayout({
   children,
+  role,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarContext = useMemo(
@@ -39,7 +43,7 @@ export default function DashboardLayout({
     <DashboardSidebarContext.Provider value={sidebarContext}>
       <div className="min-h-screen overflow-x-hidden bg-[#f4f8ff] lg:flex">
         <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">
-          <Sidebar />
+          <Sidebar role={role} />
         </div>
 
         {sidebarOpen && (
@@ -51,7 +55,10 @@ export default function DashboardLayout({
               onClick={() => setSidebarOpen(false)}
             />
             <div className="relative h-full">
-              <Sidebar onNavigate={() => setSidebarOpen(false)} />
+              <Sidebar
+                role={role}
+                onNavigate={() => setSidebarOpen(false)}
+              />
             </div>
           </div>
         )}
