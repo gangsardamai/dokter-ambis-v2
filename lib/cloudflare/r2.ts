@@ -89,15 +89,25 @@ function formatDate(date: Date): {
   };
 }
 
+function compareAscii(left: string, right: string): number {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
+
 function createCanonicalQuery(
   parameters: Record<string, string>,
 ): string {
   return Object.entries(parameters)
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(
-      ([key, value]) =>
-        `${encodeRfc3986(key)}=${encodeRfc3986(value)}`,
-    )
+    .map(([key, value]) => [
+      encodeRfc3986(key),
+      encodeRfc3986(value),
+    ] as const)
+    .sort(([leftKey, leftValue], [rightKey, rightValue]) => {
+      const keyComparison = compareAscii(leftKey, rightKey);
+      return keyComparison || compareAscii(leftValue, rightValue);
+    })
+    .map(([key, value]) => `${key}=${value}`)
     .join("&");
 }
 
@@ -164,9 +174,11 @@ export function createR2PresignedUrl({
   const canonicalHeaders: string[] = [];
 
   if (contentType) {
-    headers["Content-Type"] = contentType;
+    const normalizedContentType =
+      contentType.trim().toLowerCase();
+    headers["Content-Type"] = normalizedContentType;
     canonicalHeaders.push(
-      `content-type:${contentType.trim().toLowerCase()}\n`,
+      `content-type:${normalizedContentType}\n`,
     );
   }
 
