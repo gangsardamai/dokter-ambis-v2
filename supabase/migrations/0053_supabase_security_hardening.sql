@@ -180,7 +180,7 @@ ON public.lessons
 FOR SELECT
 TO authenticated
 USING (
-  (SELECT private.has_active_course_access(course_id))
+  private.has_active_course_access(course_id)
   OR (SELECT private.is_active_admin())
 );
 
@@ -192,7 +192,7 @@ ON public.lesson_folders
 FOR SELECT
 TO authenticated
 USING (
-  (SELECT private.has_active_course_access(course_id))
+  private.has_active_course_access(course_id)
   OR (SELECT private.is_active_admin())
 );
 
