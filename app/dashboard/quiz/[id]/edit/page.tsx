@@ -77,6 +77,21 @@ export default async function EditQuizPage({
 
                   max_attempt:
                     quiz.max_attempt,
+
+                  quiz_order:
+                    quiz.quiz_order,
+
+                  publication_status:
+                    quiz.publication_status,
+
+                  is_required:
+                    quiz.is_required,
+
+                  shuffle_questions:
+                    quiz.shuffle_questions,
+
+                  shuffle_options:
+                    quiz.shuffle_options,
                 }}
                 lessonOptions={lessons.map(
                   (lesson) => ({
