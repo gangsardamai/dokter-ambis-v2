@@ -7,8 +7,6 @@ import {
   TextInput,
 } from "@/components/ui";
 
-import { createClient } from "@/lib/supabase/client";
-
 import type { Database } from "@/supabase/types/database.types";
 
 export type FileType =
@@ -29,6 +27,14 @@ interface SelectOption {
   label: string;
 }
 
+interface R2UploadResponse {
+  uploadUrl: string;
+  headers: Record<string, string>;
+  objectKey: string;
+  filePath: string;
+  message?: string;
+}
+
 interface FileFormProps {
   initialData?: FileFormData;
   initialLessonId?: string;
@@ -38,15 +44,6 @@ interface FileFormProps {
   onSubmit: (
     data: FileFormData,
   ) => Promise<void>;
-}
-
-function sanitizeFileName(fileName: string): string {
-  return fileName
-    .normalize("NFKD")
-    .replace(/[^\w.-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase();
 }
 
 export default function FileForm({
@@ -85,6 +82,54 @@ export default function FileForm({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  async function requestR2Upload(
+    file: File,
+  ): Promise<R2UploadResponse> {
+    const response = await fetch("/api/uploads/r2", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        lessonId,
+        fileName: file.name,
+        fileSize: file.size,
+        contentType:
+          file.type || "application/octet-stream",
+      }),
+    });
+    const payload =
+      (await response.json()) as R2UploadResponse;
+
+    if (!response.ok) {
+      throw new Error(
+        payload.message ||
+          "URL upload Cloudflare R2 gagal dibuat.",
+      );
+    }
+
+    return payload;
+  }
+
+  async function cleanupR2Upload(
+    uploadedFilePath: string,
+  ): Promise<void> {
+    try {
+      await fetch("/api/uploads/r2", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lessonId,
+          filePath: uploadedFilePath,
+        }),
+      });
+    } catch {
+      // Cleanup is best-effort. The original form error remains primary.
+    }
+  }
+
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ) {
@@ -98,47 +143,40 @@ export default function FileForm({
       return;
     }
 
+    if (!lessonCourseIds[lessonId]) {
+      setErrorMessage(
+        "Course untuk lesson yang dipilih tidak ditemukan.",
+      );
+      return;
+    }
+
     if (fileOrder < 1) {
       setErrorMessage("Urutan file minimal 1.");
       return;
     }
 
     let nextFilePath = filePath;
-    let uploadedObjectPath: string | null = null;
+    let uploadedFilePath: string | null = null;
 
     setLoading(true);
 
     try {
       if (selectedFile) {
-        const courseId = lessonCourseIds[lessonId];
+        const upload = await requestR2Upload(selectedFile);
+        const uploadResponse = await fetch(upload.uploadUrl, {
+          method: "PUT",
+          headers: upload.headers,
+          body: selectedFile,
+        });
 
-        if (!courseId) {
+        if (!uploadResponse.ok) {
           throw new Error(
-            "Course untuk lesson yang dipilih tidak ditemukan.",
+            `Upload Cloudflare R2 gagal (${uploadResponse.status}).`,
           );
         }
 
-        const safeName =
-          sanitizeFileName(selectedFile.name) ||
-          "materi";
-        const objectPath =
-          `${courseId}/${lessonId}/${crypto.randomUUID()}-${safeName}`;
-        const supabase = createClient();
-
-        const { error: uploadError } =
-          await supabase.storage
-            .from("course-materials")
-            .upload(objectPath, selectedFile, {
-              cacheControl: "3600",
-              upsert: false,
-            });
-
-        if (uploadError) {
-          throw new Error(uploadError.message);
-        }
-
-        nextFilePath = objectPath;
-        uploadedObjectPath = objectPath;
+        nextFilePath = upload.filePath;
+        uploadedFilePath = upload.filePath;
       }
 
       if (!nextFilePath) {
@@ -159,11 +197,8 @@ export default function FileForm({
 
       setFilePath(nextFilePath);
     } catch (error) {
-      if (uploadedObjectPath) {
-        const supabase = createClient();
-        await supabase.storage
-          .from("course-materials")
-          .remove([uploadedObjectPath]);
+      if (uploadedFilePath) {
+        await cleanupR2Upload(uploadedFilePath);
       }
 
       setErrorMessage(
@@ -243,6 +278,7 @@ export default function FileForm({
         </span>
         <input
           type="file"
+          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.mp3"
           onChange={(event) =>
             setSelectedFile(
               event.target.files?.[0] ?? null,
@@ -251,7 +287,7 @@ export default function FileForm({
           className="mt-2 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700"
         />
         <p className="mt-2 text-xs leading-5 text-slate-500">
-          Maksimal 50 MB. File disimpan pada storage privat dan hanya dapat diunduh oleh admin, mentor yang ditugaskan, atau peserta dengan enrollment aktif.
+          Maksimal 50 MB. File baru diunggah langsung ke bucket privat Cloudflare R2 dan hanya dapat diunduh melalui pemeriksaan akses DokterAmbis.
         </p>
         {filePath && !selectedFile && (
           <p className="mt-2 text-xs font-bold text-emerald-700">
