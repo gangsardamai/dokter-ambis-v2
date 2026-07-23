@@ -19,7 +19,7 @@ export function mapCourseForm(
       formData.get("title") as string,
 
     slug:
-      formData.get("slug") as string,
+      (formData.get("slug") as string).toLowerCase(),
 
     description:
       (formData.get("description") as string) || null,

@@ -8,6 +8,8 @@ interface PrimaryButtonProps {
 
   type?: "button" | "submit";
 
+  className?: string;
+
 }
 
 export default function PrimaryButton({
@@ -17,6 +19,8 @@ export default function PrimaryButton({
   children,
 
   type = "button",
+
+  className = "",
 
 }: PrimaryButtonProps) {
 
@@ -28,7 +32,7 @@ export default function PrimaryButton({
 
         href={href}
 
-        className="rounded-lg bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
+        className={`inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${className}`}
 
       >
 
@@ -46,7 +50,7 @@ export default function PrimaryButton({
 
       type={type}
 
-      className="rounded-lg bg-blue-600 px-5 py-2 text-white transition hover:bg-blue-700"
+      className={`inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${className}`}
 
     >
 

@@ -1,7 +1,6 @@
 import type { Database } from "@/supabase/types/database.types";
 
-export type ProfileRole =
-  Database["public"]["Enums"]["profile_role"];
+export type ProfileRole = Database["public"]["Enums"]["profile_role"];
 
 export interface DashboardMenuItem {
   title: string;
@@ -13,13 +12,19 @@ export interface DashboardMenuSection {
   items: DashboardMenuItem[];
 }
 
-export const dashboardMenus: Record<
-  ProfileRole,
-  DashboardMenuSection[]
-> = {
+export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
   admin: [
     {
-      title: "MASTER DATA",
+      title: "Dashboard",
+      items: [
+        {
+          title: "Ringkasan Admin",
+          href: "/dashboard/admin",
+        },
+      ],
+    },
+    {
+      title: "Master Data",
       items: [
         {
           title: "Universitas",
@@ -35,40 +40,29 @@ export const dashboardMenus: Record<
         },
       ],
     },
-
     {
-  title: "PEMBELAJARAN",
-  items: [
-    {
-      title: "Explorer",
-      href: "/dashboard/admin/explorer",
+      title: "Pembelajaran",
+      items: [
+        {
+          title: "Lesson",
+          href: "/dashboard/admin/lesson",
+        },
+        {
+          title: "Video",
+          href: "/dashboard/admin/video",
+        },
+        {
+          title: "File",
+          href: "/dashboard/admin/file",
+        },
+        {
+          title: "Live Class",
+          href: "/dashboard/admin/live-class",
+        },
+      ],
     },
     {
-      title: "Lesson",
-      href: "/dashboard/admin/lesson",
-    },
-    {
-      title: "Video",
-      href: "/dashboard/admin/video",
-    },
-    {
-      title: "File",
-      href: "/dashboard/admin/file",
-    },
-    {
-      title: "Quiz",
-      href: "/dashboard/admin/quiz",
-    },
-    {
-      title: "Live Class",
-      href: "/dashboard/admin/live-class",
-    },
-  ],
-},
-   
-
-    {
-      title: "OPERASIONAL",
+      title: "Operasional",
       items: [
         {
           title: "Promotion",
@@ -77,44 +71,6 @@ export const dashboardMenus: Record<
         {
           title: "Enrollment",
           href: "/dashboard/admin/enrollment",
-        },
-        {
-          title: "Pembayaran",
-          href: "/dashboard/admin/payment",
-        },
-        {
-          title: "Peserta",
-          href: "/dashboard/admin/participant",
-        },
-      ],
-    },
-
-    {
-      title: "SDM",
-      items: [
-        {
-          title: "Mentor",
-          href: "/dashboard/admin/mentor",
-        },
-      ],
-    },
-
-    {
-      title: "LAPORAN",
-      items: [
-        {
-          title: "Laporan",
-          href: "/dashboard/admin/report",
-        },
-      ],
-    },
-
-    {
-      title: "PENGATURAN",
-      items: [
-        {
-          title: "Settings",
-          href: "/dashboard/admin/settings",
         },
       ],
     },

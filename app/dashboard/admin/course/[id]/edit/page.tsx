@@ -97,7 +97,7 @@ export default async function EditCoursePage({
         organizationOptions={
           organizations.map(
             (item) => ({
-              label: item.title,
+              label: item.is_general ? `${item.title} (Umum)` : item.title,
               value: item.id,
             })
           )
@@ -107,6 +107,7 @@ export default async function EditCoursePage({
             (item) => ({
               label: item.title,
               value: item.id,
+              organizationId: item.organization_id,
             })
           )
         }

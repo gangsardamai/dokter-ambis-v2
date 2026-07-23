@@ -200,6 +200,13 @@ export type Database = {
             referencedRelation: "programs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_courses_program_organization"
+            columns: ["program_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id", "organization_id"]
+          },
         ]
       }
       device_sessions: {
@@ -548,6 +555,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_general?: boolean
           lesson_id: string
           meeting_date: string
           meeting_link?: string | null
@@ -558,6 +566,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_general?: boolean
           lesson_id?: string
           meeting_date?: string
           meeting_link?: string | null
@@ -620,6 +629,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_general: boolean
           logo_path: string | null
           short_name: string
           slug: string
@@ -630,6 +640,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_general?: boolean
           logo_path?: string | null
           short_name: string
           slug: string
@@ -640,6 +651,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_general?: boolean
           logo_path?: string | null
           short_name?: string
           slug?: string
@@ -718,6 +730,7 @@ export type Database = {
           phone: string
           role: Database["public"]["Enums"]["profile_role"]
           status: Database["public"]["Enums"]["profile_status"]
+          university_origin: string | null
           updated_at: string
         }
         Insert: {
@@ -728,6 +741,7 @@ export type Database = {
           phone: string
           role?: Database["public"]["Enums"]["profile_role"]
           status?: Database["public"]["Enums"]["profile_status"]
+          university_origin?: string | null
           updated_at?: string
         }
         Update: {
@@ -738,6 +752,7 @@ export type Database = {
           phone?: string
           role?: Database["public"]["Enums"]["profile_role"]
           status?: Database["public"]["Enums"]["profile_status"]
+          university_origin?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -747,6 +762,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          organization_id: string
           slug: string
           status: Database["public"]["Enums"]["program_status"]
           thumbnail_path: string | null
@@ -757,6 +773,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          organization_id: string
           slug: string
           status?: Database["public"]["Enums"]["program_status"]
           thumbnail_path?: string | null
@@ -767,13 +784,22 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          organization_id?: string
           slug?: string
           status?: Database["public"]["Enums"]["program_status"]
           thumbnail_path?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_programs_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotions: {
         Row: {
@@ -1177,7 +1203,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_active_course_access: {
+        Args: { target_course_id: string }
+        Returns: boolean
+      }
+      is_active_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       course_status: "draft" | "active" | "archived"

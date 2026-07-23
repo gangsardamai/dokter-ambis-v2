@@ -3,47 +3,33 @@ import { notFound } from "next/navigation";
 import { ExplorerPage } from "@/components/admin/explorer";
 
 import {
-
-    courseService,
-
-    folderService,
-
+  courseService,
+  folderService,
+  lessonService,
 } from "@/services";
 
 export default async function Page({
-
-    params,
-
+  params,
 }: {
-
-    params: Promise<{ id: string }>;
-
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
 
-    const { id } = await params;
+  const [course, folders, lessons] = await Promise.all([
+    courseService.getCourseById(id),
+    folderService.getFoldersByCourse(id),
+    lessonService.getLessonsByCourse(id),
+  ]);
 
-    const course =
-        await courseService.getCourseById(id);
+  if (!course) {
+    notFound();
+  }
 
-    if (!course) {
-
-        notFound();
-
-    }
-
-    const folders =
-        await folderService.getFoldersByCourse(id);
-
-    return (
-
-        <ExplorerPage
-
-            course={course}
-
-            folders={folders}
-
-        />
-
-    );
-
+  return (
+    <ExplorerPage
+      course={course}
+      folders={folders}
+      lessonCount={lessons.length}
+    />
+  );
 }

@@ -2,14 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 
 import type { Database } from "@/supabase/types/database.types";
 
-type Profile =
+export type Profile =
   Database["public"]["Tables"]["profiles"]["Row"];
 
-type ProfileInsert =
+export type ProfileInsert =
   Database["public"]["Tables"]["profiles"]["Insert"];
 
-type ProfileUpdate =
+export type ProfileUpdate =
   Database["public"]["Tables"]["profiles"]["Update"];
+
+export type ProfileRole =
+  Database["public"]["Enums"]["profile_role"];
 
 export class ProfileRepository {
 
@@ -69,6 +72,29 @@ export class ProfileRepository {
     }
 
     return data;
+
+  }
+
+  async countByRole(
+    role: ProfileRole
+  ): Promise<number> {
+
+    const supabase =
+      await createClient();
+
+    const { count, error } = await supabase
+      .from("profiles")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("role", role);
+
+    if (error) {
+      throw error;
+    }
+
+    return count ?? 0;
 
   }
 

@@ -17,20 +17,24 @@ type OrganizationStatus =
 interface OrganizationActionMenuProps {
   organizationId: string;
   status: OrganizationStatus;
+  isGeneral: boolean;
 }
+
+const actionBase =
+  "inline-flex min-h-10 items-center rounded-xl px-4 py-2 text-sm font-bold transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function OrganizationActionMenu({
   organizationId,
   status,
+  isGeneral,
 }: OrganizationActionMenuProps) {
   const [isPending, startTransition] = useTransition();
-
   const isActive = status === "active";
 
   function handleActivate() {
     startTransition(async () => {
       const result = await activateOrganizationAction(
-        organizationId
+        organizationId,
       );
 
       if (!result.success) {
@@ -42,7 +46,7 @@ export default function OrganizationActionMenu({
   function handleDeactivate() {
     startTransition(async () => {
       const result = await deactivateOrganizationAction(
-        organizationId
+        organizationId,
       );
 
       if (!result.success) {
@@ -53,14 +57,16 @@ export default function OrganizationActionMenu({
 
   function handleDelete() {
     const confirmed = window.confirm(
-      "Apakah Anda yakin ingin menghapus universitas ini?"
+      "Apakah Anda yakin ingin menghapus universitas ini?",
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     startTransition(async () => {
       const result = await deleteOrganizationAction(
-        organizationId
+        organizationId,
       );
 
       if (!result.success) {
@@ -70,33 +76,17 @@ export default function OrganizationActionMenu({
   }
 
   return (
-    <div className="flex flex-wrap justify-center gap-2">
-
+    <div className="flex flex-wrap gap-2">
       <Link
         href={`/dashboard/admin/organization/${organizationId}`}
-        className="
-          rounded
-          border
-          px-3
-          py-1
-          text-sm
-          hover:bg-gray-100
-        "
+        className={`${actionBase} bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-200`}
       >
         Detail
       </Link>
 
       <Link
         href={`/dashboard/admin/organization/${organizationId}/edit`}
-        className="
-          rounded
-          bg-blue-600
-          px-3
-          py-1
-          text-sm
-          text-white
-          hover:bg-blue-700
-        "
+        className={`${actionBase} bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200`}
       >
         Edit
       </Link>
@@ -106,16 +96,7 @@ export default function OrganizationActionMenu({
           type="button"
           disabled={isPending}
           onClick={handleDeactivate}
-          className="
-            rounded
-            bg-yellow-500
-            px-3
-            py-1
-            text-sm
-            text-white
-            hover:bg-yellow-600
-            disabled:opacity-50
-          "
+          className={`${actionBase} bg-amber-50 text-amber-700 hover:bg-amber-100 focus:ring-amber-200`}
         >
           Nonaktifkan
         </button>
@@ -124,39 +105,22 @@ export default function OrganizationActionMenu({
           type="button"
           disabled={isPending}
           onClick={handleActivate}
-          className="
-            rounded
-            bg-green-600
-            px-3
-            py-1
-            text-sm
-            text-white
-            hover:bg-green-700
-            disabled:opacity-50
-          "
+          className={`${actionBase} bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus:ring-emerald-200`}
         >
           Aktifkan
         </button>
       )}
 
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={handleDelete}
-        className="
-          rounded
-          bg-red-600
-          px-3
-          py-1
-          text-sm
-          text-white
-          hover:bg-red-700
-          disabled:opacity-50
-        "
-      >
-        {isPending ? "Memproses..." : "Hapus"}
-      </button>
-
+      {!isGeneral ? (
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={handleDelete}
+          className={`${actionBase} bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-200`}
+        >
+          {isPending ? "Memproses..." : "Hapus"}
+        </button>
+      ) : null}
     </div>
   );
 }

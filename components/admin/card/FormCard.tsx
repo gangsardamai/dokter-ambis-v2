@@ -14,11 +14,14 @@ export default function FormCard({
 
     <div
       className="
-        rounded-xl
+        rounded-3xl
         border
+        border-blue-100/80
         bg-white
-        p-8
+        p-4
         shadow-sm
+        sm:p-6
+        lg:p-8
       "
     >
 

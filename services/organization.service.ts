@@ -21,6 +21,10 @@ export class OrganizationService {
     return await organizationRepository.getActive();
   }
 
+  async getActiveUniversities() {
+    return await organizationRepository.getActiveUniversities();
+  }
+
   async getOrganizationById(
     id: string
   ) {
@@ -35,6 +39,10 @@ export class OrganizationService {
 
   async countOrganizations() {
     return await organizationRepository.count();
+  }
+
+  async countUniversities() {
+    return await organizationRepository.countUniversities();
   }
 
 
@@ -101,6 +109,19 @@ export class OrganizationService {
   async deleteOrganization(
     id: string
   ) {
+    const organization =
+      await organizationRepository.getById(id);
+
+    if (!organization) {
+      throw new Error("Organization tidak ditemukan.");
+    }
+
+    if (organization.is_general) {
+      throw new Error(
+        "Organization Umum / Nasional tidak dapat dihapus."
+      );
+    }
+
     return await organizationRepository.delete(
       id
     );

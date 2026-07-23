@@ -1,5 +1,6 @@
 "use server";
 
+import { resolveUniversityOrigin } from "@/lib/university-options";
 import { authService } from "@/services";
 
 export interface RegisterActionInput {
@@ -7,6 +8,8 @@ export interface RegisterActionInput {
   phone: string;
   email: string;
   password: string;
+  universityOrigin: string;
+  universityOriginOther: string;
 }
 
 export interface RegisterActionResult {
@@ -15,15 +18,10 @@ export interface RegisterActionResult {
   redirectTo?: string;
 }
 
-function getRegisterErrorMessage(
-  message: string,
-): string {
+function getRegisterErrorMessage(message: string): string {
   const normalized = message.toLowerCase();
 
-  if (
-    normalized.includes("password") &&
-    normalized.includes("6")
-  ) {
+  if (normalized.includes("password") && normalized.includes("6")) {
     return "Password minimal terdiri dari 6 karakter.";
   }
 
@@ -50,11 +48,22 @@ export async function registerAction(
   const fullName = data.fullName.trim();
   const phone = data.phone.trim();
   const email = data.email.trim();
+  const universityOrigin = resolveUniversityOrigin(
+    data.universityOrigin,
+    data.universityOriginOther,
+  );
 
   if (!fullName || !phone || !email || !data.password) {
     return {
       success: false,
       message: "Nama, email, nomor WhatsApp, dan password wajib diisi.",
+    };
+  }
+
+  if (!universityOrigin) {
+    return {
+      success: false,
+      message: "Silakan pilih atau tuliskan universitas asal Anda.",
     };
   }
 
@@ -70,14 +79,13 @@ export async function registerAction(
     phone,
     email,
     password: data.password,
+    universityOrigin,
   });
 
   if (result.error) {
     return {
       success: false,
-      message: getRegisterErrorMessage(
-        result.error.message,
-      ),
+      message: getRegisterErrorMessage(result.error.message),
     };
   }
 
@@ -90,7 +98,8 @@ export async function registerAction(
 
   return {
     success: true,
-    message: "Pendaftaran berhasil. Silakan periksa email Anda untuk melakukan konfirmasi.",
+    message:
+      "Pendaftaran berhasil. Silakan periksa email Anda untuk melakukan konfirmasi.",
     redirectTo: "/login?registered=check-email",
   };
 }

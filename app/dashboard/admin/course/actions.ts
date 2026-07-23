@@ -35,7 +35,11 @@ export async function createCourseAction(
     return failure(validation.message!);
   }
 
-  await courseService.createCourse(data);
+  try {
+    await courseService.createCourse(data);
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Course gagal dibuat.");
+  }
 
   revalidatePath("/dashboard/admin/course");
 
@@ -59,10 +63,14 @@ export async function updateCourseAction(
     return failure(validation.message!);
   }
 
-  await courseService.updateCourse(
-    id,
-    data
-  );
+  try {
+    await courseService.updateCourse(
+      id,
+      data
+    );
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Course gagal diperbarui.");
+  }
 
   revalidatePath("/dashboard/admin/course");
 

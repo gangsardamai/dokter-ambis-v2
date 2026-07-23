@@ -69,7 +69,7 @@ export default async function CreateCoursePage() {
         organizationOptions={
           organizations.map(
             (item) => ({
-              label: item.title,
+              label: item.is_general ? `${item.title} (Umum)` : item.title,
               value: item.id,
             })
           )
@@ -80,6 +80,7 @@ export default async function CreateCoursePage() {
             (item) => ({
               label: item.title,
               value: item.id,
+              organizationId: item.organization_id,
             })
           )
         }

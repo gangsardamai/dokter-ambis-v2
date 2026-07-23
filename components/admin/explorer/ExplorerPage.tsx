@@ -16,18 +16,20 @@ type Folder =
 interface ExplorerPageProps {
   course: Course;
   folders: Folder[];
+  lessonCount: number;
 }
 
 export function ExplorerPage({
   course,
   folders,
+  lessonCount,
 }: ExplorerPageProps) {
   return (
-    <div className="space-y-6">
-
+    <main className="mx-auto w-full max-w-7xl space-y-6 overflow-x-hidden p-4 sm:p-6 lg:p-8">
       <ExplorerHeader
         course={course}
         folderCount={folders.length}
+        lessonCount={lessonCount}
       />
 
       <ExplorerToolbar
@@ -44,7 +46,6 @@ export function ExplorerPage({
           folders={folders}
         />
       )}
-
-    </div>
+    </main>
   );
 }

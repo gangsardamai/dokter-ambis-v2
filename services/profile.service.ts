@@ -1,5 +1,7 @@
 import { profileRepository } from "@/repositories";
 
+import type { ProfileRole } from "@/repositories/profile.repository";
+
 export class ProfileService {
 
   async getCurrentProfile() {
@@ -14,6 +16,16 @@ export class ProfileService {
 
     return await profileRepository.getById(
       id
+    );
+
+  }
+
+  async countProfilesByRole(
+    role: ProfileRole
+  ): Promise<number> {
+
+    return await profileRepository.countByRole(
+      role
     );
 
   }

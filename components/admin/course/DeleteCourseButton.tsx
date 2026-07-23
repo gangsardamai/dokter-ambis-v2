@@ -64,8 +64,8 @@ export default function DeleteCourseButton({
       {
 
         pending
-          ? "Deleting..."
-          : "Delete"
+          ? "Menghapus..."
+          : "Hapus"
 
       }
 

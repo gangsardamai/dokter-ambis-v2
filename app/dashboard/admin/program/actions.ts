@@ -33,6 +33,7 @@ export async function createProgramAction(
     validateProgram({
       title: data.title,
       slug: data.slug,
+      organization_id: data.organization_id,
     });
 
   if (!validation.valid) {
@@ -70,6 +71,7 @@ export async function updateProgramAction(
     validateProgram({
       title: data.title ?? "",
       slug: data.slug ?? "",
+      organization_id: data.organization_id ?? "",
     });
 
   if (!validation.valid) {
