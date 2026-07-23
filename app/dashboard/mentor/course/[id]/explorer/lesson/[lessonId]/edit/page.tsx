@@ -10,12 +10,18 @@ export default async function MentorEditLessonPage({
 }: {
   params: Promise<{ id: string; lessonId: string }>;
 }) {
-  const { lessonId } = await params;
+  const { id: courseId, lessonId } = await params;
   const lesson = await lessonService.getLessonById(lessonId);
 
-  if (!lesson || !lesson.folder_id) notFound();
+  if (!lesson || lesson.course_id !== courseId) {
+    notFound();
+  }
 
-  const action = updateMentorLessonAction.bind(null, lessonId);
+  const action = updateMentorLessonAction.bind(
+    null,
+    courseId,
+    lessonId,
+  );
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
