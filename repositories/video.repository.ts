@@ -44,11 +44,31 @@ export class VideoRepository extends BaseRepository {
       .from("videos")
       .select("*")
       .eq("lesson_id", lessonId)
-      .order("created_at");
+      .order("video_order");
 
     if (error) this.handleError(error);
 
     return data ?? [];
+  }
+
+  async getByCourse(
+    courseId: string
+  ): Promise<Video[]> {
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("videos")
+      .select("*, lessons!inner(course_id)")
+      .eq("lessons.course_id", courseId)
+      .order("video_order");
+
+    if (error) this.handleError(error);
+
+    return (data ?? []).map((row) => {
+      const { lessons: _lessons, ...video } = row;
+      void _lessons;
+      return video;
+    });
   }
 
   async exists(id: string): Promise<boolean> {
