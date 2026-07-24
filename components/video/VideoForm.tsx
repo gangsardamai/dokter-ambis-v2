@@ -79,31 +79,27 @@ export default function VideoForm({
   const [errorMessage, setErrorMessage] =
     useState("");
 
-  const providerOptions = useMemo(() => {
-    const options: SelectOption[] = [
-      {
-        value: "youtube",
-        label: "YouTube",
-      },
-      {
-        value: "google_drive",
-        label: "Google Drive",
-      },
-    ];
+  const providerOptions: SelectOption[] = [
+    {
+      value: "youtube",
+      label: "YouTube",
+    },
+    {
+      value: "google_drive",
+      label: "Google Drive",
+    },
+  ];
 
-    if (
-      initialData?.provider &&
-      initialData.provider !== "youtube" &&
-      initialData.provider !== "google_drive"
-    ) {
-      options.push({
-        value: initialData.provider,
-        label: `${initialData.provider} (lama)`,
-      });
-    }
-
-    return options;
-  }, [initialData?.provider]);
+  if (
+    initialData?.provider &&
+    initialData.provider !== "youtube" &&
+    initialData.provider !== "google_drive"
+  ) {
+    providerOptions.push({
+      value: initialData.provider,
+      label: `${initialData.provider} (lama)`,
+    });
+  }
 
   const sourceValidation = useMemo(() => {
     if (!sourceInput.trim()) {
