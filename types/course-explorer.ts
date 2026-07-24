@@ -80,7 +80,9 @@ export interface QuizReviewQuestion {
   id: string;
   question_order: number;
   question: string;
+  image_path: string | null;
   explanation: string | null;
+  explanation_image_path: string | null;
   selected_option_id: string | null;
   options: QuizReviewOption[];
 }
