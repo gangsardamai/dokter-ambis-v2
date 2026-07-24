@@ -5,12 +5,54 @@ import {
   getR2BucketName,
   parseR2FilePath,
 } from "@/lib/cloudflare/r2";
+import {
+  getGoogleDriveDownloadUrl,
+  parseGoogleDriveFilePath,
+} from "@/lib/file/file-source";
 import { createClient } from "@/lib/supabase/server";
 
 interface MaterialRouteContext {
   params: Promise<{
     fileId: string;
   }>;
+}
+
+function downloadErrorResponse(
+  status: number,
+  detail: string,
+): Response {
+  const html = `<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>File tidak dapat diunduh</title>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f8fafc; color: #0f172a; font-family: Arial, sans-serif; }
+      main { width: min(92vw, 560px); border: 1px solid #e2e8f0; border-radius: 20px; background: white; padding: 28px; box-shadow: 0 18px 50px rgba(15, 23, 42, .08); }
+      h1 { margin: 0 0 12px; font-size: 24px; }
+      p { margin: 8px 0; line-height: 1.65; color: #475569; }
+      .detail { border-radius: 12px; background: #fff7ed; padding: 12px 14px; color: #9a3412; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>File tidak dapat diunduh</h1>
+      <p class="detail">${detail}</p>
+      <p>Link mungkin sudah tidak aktif atau izin file telah berubah. Silakan hubungi Admin Dokter Ambis.</p>
+      <p>Anda dapat menutup tab ini dan kembali ke halaman materi.</p>
+    </main>
+  </body>
+</html>`;
+
+  return new Response(html, {
+    status,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "private, no-store, max-age=0",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }
 
 export async function GET(
@@ -27,12 +69,18 @@ export async function GET(
     .maybeSingle();
 
   if (error || !file) {
-    return NextResponse.json(
-      {
-        message:
-          "File tidak ditemukan atau Anda tidak memiliki akses.",
-      },
-      { status: 404 },
+    return downloadErrorResponse(
+      404,
+      "File tidak ditemukan atau Anda tidak memiliki akses.",
+    );
+  }
+
+  const googleDriveFileId =
+    parseGoogleDriveFilePath(file.file_path);
+
+  if (googleDriveFileId) {
+    return NextResponse.redirect(
+      getGoogleDriveDownloadUrl(googleDriveFileId),
     );
   }
 
@@ -40,9 +88,9 @@ export async function GET(
 
   if (r2File) {
     if (r2File.bucket !== getR2BucketName()) {
-      return NextResponse.json(
-        { message: "Bucket file tidak valid." },
-        { status: 500 },
+      return downloadErrorResponse(
+        500,
+        "Lokasi penyimpanan file tidak valid.",
       );
     }
 
@@ -55,21 +103,19 @@ export async function GET(
       });
 
       return NextResponse.redirect(signed.url);
-    } catch (r2Error) {
-      return NextResponse.json(
-        {
-          message:
-            r2Error instanceof Error
-              ? r2Error.message
-              : "Tautan unduhan R2 gagal dibuat.",
-        },
-        { status: 500 },
+    } catch {
+      return downloadErrorResponse(
+        500,
+        "Tautan unduhan sementara gagal dibuat.",
       );
     }
   }
 
   if (/^https?:\/\//i.test(file.file_path)) {
-    return NextResponse.redirect(file.file_path);
+    return downloadErrorResponse(
+      400,
+      "Sumber file eksternal tidak diizinkan.",
+    );
   }
 
   const objectPath = file.file_path.startsWith(
@@ -86,11 +132,9 @@ export async function GET(
       });
 
   if (signedUrlError || !data?.signedUrl) {
-    return NextResponse.json(
-      {
-        message: "Tautan unduhan gagal dibuat.",
-      },
-      { status: 500 },
+    return downloadErrorResponse(
+      500,
+      "Tautan unduhan sementara gagal dibuat.",
     );
   }
 
