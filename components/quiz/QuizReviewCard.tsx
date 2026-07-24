@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import type { QuizReviewPayload } from "@/types/course-explorer";
 
 interface QuizReviewCardProps {
@@ -29,6 +31,19 @@ export default function QuizReviewCard({
           <h3 className="mt-3 whitespace-pre-wrap font-black leading-7 text-slate-950">
             {question.question}
           </h3>
+
+          {question.image_path && (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+              <Image
+                src={`/api/quiz-images/${review.quiz_id}/${question.id}?kind=question`}
+                alt={`Gambar soal ${index + 1}`}
+                width={1200}
+                height={800}
+                unoptimized
+                className="h-auto max-h-[560px] w-full object-contain"
+              />
+            </div>
+          )}
 
           <div className="mt-4 space-y-2">
             {question.options.map((option) => {
@@ -62,6 +77,19 @@ export default function QuizReviewCard({
               {question.explanation ??
                 "Pembahasan belum ditambahkan."}
             </p>
+
+            {question.explanation_image_path && (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-blue-100 bg-white">
+                <Image
+                  src={`/api/quiz-images/${review.quiz_id}/${question.id}?kind=explanation`}
+                  alt={`Gambar pembahasan soal ${index + 1}`}
+                  width={1200}
+                  height={800}
+                  unoptimized
+                  className="h-auto max-h-[560px] w-full object-contain"
+                />
+              </div>
+            )}
           </div>
         </article>
       ))}
