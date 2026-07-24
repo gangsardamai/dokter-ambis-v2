@@ -11,14 +11,6 @@ type PromotionInsert =
 type PromotionUpdate =
   Database["public"]["Tables"]["promotions"]["Update"];
 
-export interface PromotionApplicationResult {
-  promotion_id: string;
-  promotion_code: string;
-  promotion_name: string;
-  discount_amount: number;
-  final_amount: number;
-}
-
 export class PromotionRepository {
   async getAll(): Promise<Promotion[]> {
     const supabase = await createClient();
@@ -52,26 +44,6 @@ export class PromotionRepository {
     }
 
     return data;
-  }
-
-  async applyCode(
-    enrollmentId: string,
-    code: string,
-  ): Promise<PromotionApplicationResult> {
-    const supabase = await createClient();
-    const { data, error } = await supabase.rpc(
-      "apply_promotion_code",
-      {
-        target_enrollment_id: enrollmentId,
-        submitted_code: code,
-      },
-    );
-
-    if (error) {
-      throw error;
-    }
-
-    return data as unknown as PromotionApplicationResult;
   }
 
   async create(
