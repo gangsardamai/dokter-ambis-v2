@@ -96,7 +96,11 @@ export function filterAdminEnrollments(
   filters: AdminEnrollmentFilters,
 ): EnrollmentDetail[] {
   return enrollments.filter((enrollment) => {
-    const profile = enrollment.profiles;
+    const profile = enrollment.profiles as
+      | (NonNullable<EnrollmentDetail["profiles"]> & {
+          university_origin?: string | null;
+        })
+      | null;
     const course = enrollment.courses;
     const organization = course?.organizations;
     const program = course?.programs;
