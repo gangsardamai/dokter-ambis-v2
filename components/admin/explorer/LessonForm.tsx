@@ -17,6 +17,7 @@ type LessonFormProps = {
   action: (
     formData: FormData,
   ) => Promise<void>;
+  showOrder?: boolean;
 };
 
 const inputClass =
@@ -26,6 +27,7 @@ export function LessonForm({
   defaultValues,
   submitLabel,
   action,
+  showOrder = true,
 }: LessonFormProps) {
   return (
     <form
@@ -81,22 +83,30 @@ export function LessonForm({
         />
       </label>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <label className="block">
-          <span className="mb-2 block text-sm font-bold text-slate-700">
-            Urutan
-          </span>
-          <input
-            type="number"
-            name="lesson_order"
-            min={1}
-            required
-            defaultValue={
-              defaultValues.lesson_order ?? 1
-            }
-            className={inputClass}
-          />
-        </label>
+      <div
+        className={`grid gap-4 ${
+          showOrder
+            ? "sm:grid-cols-3"
+            : "sm:grid-cols-2"
+        }`}
+      >
+        {showOrder ? (
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-slate-700">
+              Urutan
+            </span>
+            <input
+              type="number"
+              name="lesson_order"
+              min={1}
+              required
+              defaultValue={
+                defaultValues.lesson_order ?? 1
+              }
+              className={inputClass}
+            />
+          </label>
+        ) : null}
 
         <label className="block">
           <span className="mb-2 block text-sm font-bold text-slate-700">
