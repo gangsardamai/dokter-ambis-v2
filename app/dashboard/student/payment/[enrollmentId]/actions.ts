@@ -15,20 +15,17 @@ import {
   paymentService,
   profileService,
 } from "@/services";
+import {
+  studentCheckoutService,
+} from "@/services/student-checkout.service";
 
-export async function uploadPaymentProofAction(
+async function getOwnedPendingEnrollment(
   enrollmentId: string,
-  formData: FormData,
-): Promise<void> {
+) {
   const profile =
-    await profileService
-      .getCurrentProfile();
+    await profileService.getCurrentProfile();
 
-  const user =
-    await authService
-      .getCurrentUser();
-
-  if (!profile || !user) {
+  if (!profile) {
     redirect("/login");
   }
 
@@ -40,10 +37,9 @@ export async function uploadPaymentProofAction(
   }
 
   const enrollment =
-    await enrollmentService
-      .getEnrollmentById(
-        enrollmentId,
-      );
+    await enrollmentService.getEnrollmentById(
+      enrollmentId,
+    );
 
   if (
     !enrollment ||
@@ -56,9 +52,128 @@ export async function uploadPaymentProofAction(
     );
   }
 
-  if (
-    enrollment.status === "active"
-  ) {
+  return {
+    profile,
+    enrollment,
+  };
+}
+
+export async function applyPromotionCodeAction(
+  enrollmentId: string,
+  formData: FormData,
+): Promise<void> {
+  const { enrollment } =
+    await getOwnedPendingEnrollment(enrollmentId);
+
+  if (enrollment.status !== "pending_payment") {
+    redirect(
+      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+        "Kode promosi hanya dapat digunakan sebelum bukti pembayaran dikirim.",
+      )}`,
+    );
+  }
+
+  const promotionCode = String(
+    formData.get("promotionCode") ?? "",
+  ).trim();
+
+  let promotionName = "Promosi";
+
+  try {
+    const result =
+      await studentCheckoutService.applyPromotionCode(
+        enrollmentId,
+        promotionCode,
+      );
+
+    promotionName = result.promotion_name;
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Kode promosi gagal diterapkan.";
+
+    redirect(
+      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+        message,
+      )}`,
+    );
+  }
+
+  revalidatePath(
+    `/dashboard/student/payment/${enrollmentId}`,
+  );
+  revalidatePath(
+    "/dashboard/admin/enrollment",
+  );
+
+  redirect(
+    `/dashboard/student/payment/${enrollmentId}?success=${encodeURIComponent(
+      `${promotionName} berhasil diterapkan.`,
+    )}`,
+  );
+}
+
+export async function submitZeroPaymentAction(
+  enrollmentId: string,
+): Promise<void> {
+  const { enrollment } =
+    await getOwnedPendingEnrollment(enrollmentId);
+
+  if (enrollment.status !== "pending_payment") {
+    redirect(
+      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+        "Enrollment ini sudah dikirim atau tidak dapat diproses.",
+      )}`,
+    );
+  }
+
+  try {
+    await studentCheckoutService.submitZeroPayment(
+      enrollmentId,
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Pendaftaran gratis gagal dikirim.";
+
+    redirect(
+      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+        message,
+      )}`,
+    );
+  }
+
+  revalidatePath(
+    `/dashboard/student/payment/${enrollmentId}`,
+  );
+  revalidatePath(
+    "/dashboard/admin/enrollment",
+  );
+
+  redirect(
+    `/dashboard/student/payment/${enrollmentId}?success=${encodeURIComponent(
+      "Pendaftaran berhasil dikirim dan sedang menunggu verifikasi Admin.",
+    )}`,
+  );
+}
+
+export async function uploadPaymentProofAction(
+  enrollmentId: string,
+  formData: FormData,
+): Promise<void> {
+  const { enrollment } =
+    await getOwnedPendingEnrollment(enrollmentId);
+
+  const user =
+    await authService.getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (enrollment.status === "active") {
     redirect(
       `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
         "Enrollment ini sudah aktif.",
@@ -73,6 +188,20 @@ export async function uploadPaymentProofAction(
     redirect(
       `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
         "Enrollment sudah tidak dapat diproses.",
+      )}`,
+    );
+  }
+
+  const totalPayment = Math.max(
+    enrollment.price_snapshot -
+      enrollment.discount_amount,
+    0,
+  );
+
+  if (totalPayment === 0) {
+    redirect(
+      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+        "Total pembayaran Rp0. Gunakan tombol Kirim Pendaftaran Gratis.",
       )}`,
     );
   }
@@ -93,26 +222,17 @@ export async function uploadPaymentProofAction(
 
   try {
     const paymentProofPath =
-      await paymentProofService
-        .uploadPaymentProof(
-          user.id,
-          enrollment.id,
-          fileValue,
-        );
-
-    const totalPayment =
-      Math.max(
-        enrollment.price_snapshot -
-          enrollment.discount_amount,
-        0,
-      );
-
-    await paymentService
-      .submitPaymentProof(
+      await paymentProofService.uploadPaymentProof(
+        user.id,
         enrollment.id,
-        totalPayment,
-        paymentProofPath,
+        fileValue,
       );
+
+    await paymentService.submitPaymentProof(
+      enrollment.id,
+      totalPayment,
+      paymentProofPath,
+    );
   } catch (error) {
     const message =
       error instanceof Error
@@ -129,7 +249,6 @@ export async function uploadPaymentProofAction(
   revalidatePath(
     `/dashboard/student/payment/${enrollmentId}`,
   );
-
   revalidatePath(
     "/dashboard/admin/enrollment",
   );
