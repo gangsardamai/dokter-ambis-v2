@@ -1,5 +1,7 @@
 import { Card } from "@/components/ui";
-
+import VideoPlayer from "@/components/video/VideoPlayer";
+import VideoProviderBadge from "@/components/video/VideoProviderBadge";
+import type { SupportedVideoProvider } from "@/lib/video/video-source";
 import type { Database } from "@/supabase/types/database.types";
 
 type Video =
@@ -12,8 +14,9 @@ interface VideoInfoCardProps {
 export default function VideoInfoCard({
   video,
 }: VideoInfoCardProps) {
-  const isYoutube =
-    video.provider === "youtube";
+  const provider =
+    video.provider as SupportedVideoProvider;
+  const isYoutube = provider === "youtube";
 
   return (
     <Card>
@@ -22,33 +25,19 @@ export default function VideoInfoCard({
           Video Pembelajaran
         </h2>
 
-        {isYoutube ? (
-          <div className="mt-6">
-            <div className="overflow-hidden rounded-xl bg-black">
-              <div className="aspect-video">
-                <iframe
-                  src={`https://www.youtube.com/embed/${video.provider_video_id}`}
-                  title={video.title}
-                  className="h-full w-full"
-                  loading="lazy"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-            Player untuk provider {video.provider} belum diaktifkan.
-          </div>
-        )}
+        <div className="mt-6">
+          <VideoPlayer
+            provider={provider}
+            videoId={video.provider_video_id}
+            title={video.title}
+          />
+        </div>
 
         <div className="mt-6 space-y-5">
           <div>
             <p className="text-sm text-gray-500">
               Judul video
             </p>
-
             <p className="mt-1 font-medium">
               {video.title}
             </p>
@@ -58,17 +47,17 @@ export default function VideoInfoCard({
             <p className="text-sm text-gray-500">
               Provider
             </p>
-
-            <p className="mt-1 font-medium capitalize">
-              {video.provider}
-            </p>
+            <div className="mt-2">
+              <VideoProviderBadge
+                provider={provider}
+              />
+            </div>
           </div>
 
           <div>
             <p className="text-sm text-gray-500">
               Video ID
             </p>
-
             <p className="mt-1 break-all text-gray-700">
               {video.provider_video_id}
             </p>
@@ -78,7 +67,6 @@ export default function VideoInfoCard({
             <p className="text-sm text-gray-500">
               Durasi
             </p>
-
             <p className="mt-1 font-medium">
               {video.duration} menit
             </p>
