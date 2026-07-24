@@ -91,10 +91,12 @@ export function parseAdminEnrollmentFilters(
   };
 }
 
-export function filterAdminEnrollments(
-  enrollments: EnrollmentDetail[],
+export function filterAdminEnrollments<
+  T extends EnrollmentDetail,
+>(
+  enrollments: T[],
   filters: AdminEnrollmentFilters,
-): EnrollmentDetail[] {
+): T[] {
   return enrollments.filter((enrollment) => {
     const profile = enrollment.profiles as
       | (NonNullable<EnrollmentDetail["profiles"]> & {
