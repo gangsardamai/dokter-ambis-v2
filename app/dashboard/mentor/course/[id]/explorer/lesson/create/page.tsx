@@ -34,7 +34,6 @@ export default async function MentorCreateLessonPage({
         defaultValues={{
           course_id: course.id,
           folder_id: folderId,
-          lesson_order: 1,
           duration: 10,
           is_free: false,
           is_required: true,
@@ -42,6 +41,7 @@ export default async function MentorCreateLessonPage({
         }}
         submitLabel="Simpan Lesson"
         action={createMentorLessonAction}
+        showOrder={false}
       />
     </main>
   );
