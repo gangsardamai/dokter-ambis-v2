@@ -40,8 +40,8 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const user = await this.getCurrentUser();
-    return user !== null;
+    const userId = await authRepository.getAuthenticatedUserId();
+    return userId !== null;
   }
 }
 
