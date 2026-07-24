@@ -11,55 +11,54 @@ type PromotionUpdate =
   Database["public"]["Tables"]["promotions"]["Update"];
 
 export class PromotionService {
-
   async getAll() {
-
-    return await promotionRepository.getAll();
-
+    return promotionRepository.getAll();
   }
 
   async getById(
-    id: string
+    id: string,
   ) {
+    return promotionRepository.getById(id);
+  }
 
-    return await promotionRepository.getById(
-      id
+  async applyCode(
+    enrollmentId: string,
+    code: string,
+  ) {
+    const normalizedCode = code.trim();
+
+    if (!enrollmentId) {
+      throw new Error("Enrollment tidak ditemukan.");
+    }
+
+    if (!normalizedCode) {
+      throw new Error("Kode promosi wajib diisi.");
+    }
+
+    return promotionRepository.applyCode(
+      enrollmentId,
+      normalizedCode,
     );
-
   }
 
   async create(
-    data: PromotionInsert
+    data: PromotionInsert,
   ) {
-
-    return await promotionRepository.create(
-      data
-    );
-
+    return promotionRepository.create(data);
   }
 
   async update(
     id: string,
-    data: PromotionUpdate
+    data: PromotionUpdate,
   ) {
-
-    return await promotionRepository.update(
-      id,
-      data
-    );
-
+    return promotionRepository.update(id, data);
   }
 
   async delete(
-    id: string
+    id: string,
   ) {
-
-    return await promotionRepository.delete(
-      id
-    );
-
+    return promotionRepository.delete(id);
   }
-
 }
 
 export const promotionService =
