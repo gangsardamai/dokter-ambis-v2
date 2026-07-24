@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import VideoPlayer from "@/components/video/VideoPlayer";
+import { isGoogleDriveFilePath } from "@/lib/file/file-source";
 
 import type {
   CourseExplorerContent,
@@ -171,9 +172,12 @@ function FileItem({
   file: ExplorerFile;
   mode: ExplorerMode;
 }) {
+  const isGoogleDrive =
+    isGoogleDriveFilePath(file.file_path);
+
   return (
     <article className="flex min-w-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-start gap-3">
         <ContentIcon type="file" />
         <div className="min-w-0">
           <p className="break-words text-sm font-black text-slate-950">
@@ -181,16 +185,32 @@ function FileItem({
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
             <span>{file.file_type.toUpperCase()}</span>
+            {isGoogleDrive && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                Google Drive
+              </span>
+            )}
             {mode === "manager" && (
               <StatusBadge status={file.publication_status} />
             )}
           </div>
+          {mode === "student" && isGoogleDrive && (
+            <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
+              Jika unduhan tidak dimulai atau Google Drive menampilkan error, silakan hubungi Admin Dokter Ambis.
+            </p>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <a
           href={`/api/materials/${file.id}`}
+          target={isGoogleDrive ? "_blank" : undefined}
+          rel={
+            isGoogleDrive
+              ? "noopener noreferrer"
+              : undefined
+          }
           className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 sm:flex-none"
         >
           Download
