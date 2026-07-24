@@ -233,7 +233,9 @@ export async function createQuestionAction(
   const { data: createdQuestion, error: questionError } =
     await supabase
       .from("quiz_questions")
-      .insert(questionInsert)
+      // Runtime schema already includes explanation_image_path via migration 0059.
+      // This bridge can be removed after regenerating local Supabase types.
+      .insert(questionInsert as never)
       .select("id")
       .single();
 
