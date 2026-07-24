@@ -1,11 +1,10 @@
 export { default as VideoPlayer } from "./VideoPlayer";
 
 export { default as YoutubePlayer } from "./YoutubePlayer";
-
+export { default as GoogleDrivePlayer } from "./GoogleDrivePlayer";
 export { default as BunnyPlayer } from "./BunnyPlayer";
 
 export { default as VideoCard } from "./VideoCard";
-
 export { default as VideoList } from "./VideoList";
 export { default as VideoForm } from "./VideoForm";
 
