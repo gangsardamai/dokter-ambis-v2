@@ -12,6 +12,7 @@ export interface RegisterData {
   email: string;
   password: string;
   universityOrigin: string;
+  nextPath?: string;
 }
 
 function getSiteUrl(): string {
@@ -26,15 +27,34 @@ function getSiteUrl(): string {
   return siteUrl.replace(/\/+$/, "");
 }
 
+function getSafeStudentNextPath(value: string | undefined): string {
+  const nextPath = value?.trim() ?? "";
+
+  if (
+    nextPath.startsWith("/dashboard/student/") &&
+    !nextPath.startsWith("//")
+  ) {
+    return nextPath;
+  }
+
+  return "";
+}
+
 export class AuthRepository {
   async signUp(data: RegisterData): Promise<AuthResponse> {
     const supabase = await createClient();
+    const params = new URLSearchParams({ confirmed: "true" });
+    const nextPath = getSafeStudentNextPath(data.nextPath);
+
+    if (nextPath) {
+      params.set("next", nextPath);
+    }
 
     return await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: `${getSiteUrl()}/login?confirmed=true`,
+        emailRedirectTo: `${getSiteUrl()}/login?${params.toString()}`,
         data: {
           full_name: data.fullName,
           phone: data.phone,
@@ -63,6 +83,21 @@ export class AuthRepository {
     if (error) {
       throw error;
     }
+  }
+
+  async getAuthenticatedUserId(): Promise<string | null> {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getClaims();
+
+    if (error) {
+      if (error.name === "AuthSessionMissingError") {
+        return null;
+      }
+
+      throw error;
+    }
+
+    return data?.claims?.sub ?? null;
   }
 
   async getUser(): Promise<User | null> {

@@ -6,30 +6,28 @@ import {
 } from "react";
 
 import type { Database } from "@/supabase/types/database.types";
-
-import {
-  loginAction,
-} from "@/app/actions/auth.actions";
+import { loginAction } from "@/app/actions/auth.actions";
 
 type DeviceType =
   Database["public"]["Enums"]["device_type"];
+
+interface LoginFormProps {
+  nextPath?: string;
+}
 
 const DEVICE_STORAGE_KEY =
   "dokter_ambis_device_identifier";
 
 function createDeviceIdentifier(): string {
-  const existing =
-    window.localStorage.getItem(
-      DEVICE_STORAGE_KEY,
-    );
+  const existing = window.localStorage.getItem(
+    DEVICE_STORAGE_KEY,
+  );
 
   if (existing) {
     return existing;
   }
 
-  const identifier =
-    window.crypto.randomUUID();
-
+  const identifier = window.crypto.randomUUID();
   window.localStorage.setItem(
     DEVICE_STORAGE_KEY,
     identifier,
@@ -39,24 +37,16 @@ function createDeviceIdentifier(): string {
 }
 
 function detectDeviceType(): DeviceType {
-  const userAgent =
-    navigator.userAgent.toLowerCase();
+  const userAgent = navigator.userAgent.toLowerCase();
 
   if (
     /ipad|tablet/.test(userAgent) ||
-    (
-      /android/.test(userAgent) &&
-      !/mobile/.test(userAgent)
-    )
+    (/android/.test(userAgent) && !/mobile/.test(userAgent))
   ) {
     return "tablet";
   }
 
-  if (
-    /iphone|ipod|mobile|android/.test(
-      userAgent,
-    )
-  ) {
+  if (/iphone|ipod|mobile|android/.test(userAgent)) {
     return "mobile";
   }
 
@@ -64,77 +54,45 @@ function detectDeviceType(): DeviceType {
 }
 
 function detectBrowser(): string {
-  const userAgent =
-    navigator.userAgent;
+  const userAgent = navigator.userAgent;
 
-  if (userAgent.includes("Edg/")) {
-    return "Edge";
-  }
-
+  if (userAgent.includes("Edg/")) return "Edge";
   if (
     userAgent.includes("Chrome/") &&
     !userAgent.includes("Edg/")
   ) {
     return "Chrome";
   }
-
   if (
     userAgent.includes("Safari/") &&
     !userAgent.includes("Chrome/")
   ) {
     return "Safari";
   }
-
-  if (userAgent.includes("Firefox/")) {
-    return "Firefox";
-  }
+  if (userAgent.includes("Firefox/")) return "Firefox";
 
   return "Browser";
 }
 
 function detectOperatingSystem(): string {
-  const userAgent =
-    navigator.userAgent;
+  const userAgent = navigator.userAgent;
 
-  if (/Windows/i.test(userAgent)) {
-    return "Windows";
-  }
-
-  if (/Android/i.test(userAgent)) {
-    return "Android";
-  }
-
-  if (
-    /iPhone|iPad|iPod/i.test(
-      userAgent,
-    )
-  ) {
-    return "iOS";
-  }
-
-  if (/Macintosh|Mac OS/i.test(userAgent)) {
-    return "macOS";
-  }
-
-  if (/Linux/i.test(userAgent)) {
-    return "Linux";
-  }
+  if (/Windows/i.test(userAgent)) return "Windows";
+  if (/Android/i.test(userAgent)) return "Android";
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return "iOS";
+  if (/Macintosh|Mac OS/i.test(userAgent)) return "macOS";
+  if (/Linux/i.test(userAgent)) return "Linux";
 
   return "Perangkat";
 }
 
-export default function LoginForm() {
-  const deviceIdentifierRef =
-    useRef<HTMLInputElement>(null);
-
-  const deviceNameRef =
-    useRef<HTMLInputElement>(null);
-
-  const deviceTypeRef =
-    useRef<HTMLInputElement>(null);
-
-  const submitButtonRef =
-    useRef<HTMLButtonElement>(null);
+export default function LoginForm({
+  nextPath = "",
+}: LoginFormProps) {
+  const deviceIdentifierRef = useRef<HTMLInputElement>(null);
+  const deviceNameRef = useRef<HTMLInputElement>(null);
+  const deviceTypeRef = useRef<HTMLInputElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (deviceIdentifierRef.current) {
@@ -148,8 +106,7 @@ export default function LoginForm() {
     }
 
     if (deviceTypeRef.current) {
-      deviceTypeRef.current.value =
-        detectDeviceType();
+      deviceTypeRef.current.value = detectDeviceType();
     }
 
     if (submitButtonRef.current) {
@@ -158,27 +115,23 @@ export default function LoginForm() {
   }, []);
 
   return (
-    <form
-      action={loginAction}
-      className="space-y-5"
-    >
+    <form action={loginAction} className="space-y-5">
       <input
         ref={deviceIdentifierRef}
         type="hidden"
         name="deviceIdentifier"
       />
-
       <input
         ref={deviceNameRef}
         type="hidden"
         name="deviceName"
       />
-
       <input
         ref={deviceTypeRef}
         type="hidden"
         name="deviceType"
       />
+      <input type="hidden" name="next" value={nextPath} />
 
       <div>
         <label
@@ -187,7 +140,6 @@ export default function LoginForm() {
         >
           Email
         </label>
-
         <input
           id="email"
           name="email"
@@ -206,7 +158,6 @@ export default function LoginForm() {
         >
           Password
         </label>
-
         <input
           id="password"
           name="password"

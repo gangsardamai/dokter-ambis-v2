@@ -76,6 +76,10 @@ export default async function EditLessonPage({
             lesson.duration,
           is_free:
             lesson.is_free,
+          is_required:
+            lesson.is_required,
+          publication_status:
+            lesson.publication_status,
         }}
         submitLabel="Update Lesson"
         action={action}

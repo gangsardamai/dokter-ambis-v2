@@ -10,8 +10,22 @@ import { organizationService } from "@/services";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const organizations =
-    await organizationService.getActiveUniversities();
+  const [activeOrganizations, activeUniversities] =
+    await Promise.all([
+      organizationService.getActiveOrganizations(),
+      organizationService.getActiveUniversities(),
+    ]);
+
+  const generalOrganization = activeOrganizations.find(
+    (organization) => organization.is_general,
+  );
+  const featuredUniversities = activeOrganizations
+    .filter((organization) => !organization.is_general)
+    .sort((a, b) => a.title.localeCompare(b.title, "id-ID"))
+    .slice(0, generalOrganization ? 3 : 4);
+  const featuredOrganizations = generalOrganization
+    ? [generalOrganization, ...featuredUniversities]
+    : featuredUniversities;
 
   return (
     <>
@@ -19,14 +33,13 @@ export default async function Home() {
       <Hero />
 
       <Stats
-        organizationCount={organizations.length}
+        organizationCount={activeUniversities.length}
       />
 
       <Universities
-        organizations={organizations}
+        organizations={featuredOrganizations}
       />
 
-     
       <Mentors />
       <Footer />
     </>

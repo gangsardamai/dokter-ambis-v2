@@ -1,49 +1,59 @@
+import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
+import MentorCourseContentAccordion from "@/components/course-explorer/MentorCourseContentAccordion";
+
 import type { Database } from "@/supabase/types/database.types";
+import type { CourseExplorerContent } from "@/types/course-explorer";
 
 import {
-  EmptyExplorer,
   ExplorerHeader,
   ExplorerToolbar,
-  ExplorerTree,
 } from ".";
 
 type Course =
   Database["public"]["Tables"]["courses"]["Row"];
 
-type Folder =
-  Database["public"]["Tables"]["lesson_folders"]["Row"];
-
 interface ExplorerPageProps {
   course: Course;
-  folders: Folder[];
-  lessonCount: number;
+  content: CourseExplorerContent;
+  managerRole?: "admin" | "mentor";
 }
 
 export function ExplorerPage({
   course,
-  folders,
-  lessonCount,
+  content,
+  managerRole = "admin",
 }: ExplorerPageProps) {
+  const folderCount = content.folders.length;
+  const lessonCount =
+    content.ungroupedLessons.length +
+    content.folders.reduce(
+      (total, folder) => total + folder.lessons.length,
+      0,
+    );
+
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 overflow-x-hidden p-4 sm:p-6 lg:p-8">
       <ExplorerHeader
         course={course}
-        folderCount={folders.length}
+        folderCount={folderCount}
         lessonCount={lessonCount}
       />
 
       <ExplorerToolbar
         courseId={course.id}
+        managerRole={managerRole}
       />
 
-      {folders.length === 0 ? (
-        <EmptyExplorer
-          createFolderHref={`/dashboard/admin/course/${course.id}/explorer/folder/create`}
+      {managerRole === "mentor" ? (
+        <MentorCourseContentAccordion
+          courseId={course.id}
+          content={content}
         />
       ) : (
-        <ExplorerTree
+        <CourseContentAccordion
           courseId={course.id}
-          folders={folders}
+          content={content}
+          mode="manager"
         />
       )}
     </main>

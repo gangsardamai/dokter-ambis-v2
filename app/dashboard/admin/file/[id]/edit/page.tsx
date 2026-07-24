@@ -41,6 +41,9 @@ export default async function EditFilePage({
   const lessons =
     await lessonService.getLessons();
 
+  const updateCurrentFileAction =
+    updateFileAction.bind(null, file.id);
+
   return (
 
     <Container>
@@ -71,7 +74,22 @@ export default async function EditFilePage({
 
                   file_path:
                     file.file_path,
+
+                  file_order:
+                    file.file_order,
+
+                  publication_status:
+                    file.publication_status,
+
+                  is_required:
+                    file.is_required,
                 }}
+                lessonCourseIds={Object.fromEntries(
+                  lessons.map((lesson) => [
+                    lesson.id,
+                    lesson.course_id,
+                  ]),
+                )}
                 lessonOptions={lessons.map(
                   (lesson) => ({
                     value: lesson.id,
@@ -79,14 +97,7 @@ export default async function EditFilePage({
                   })
                 )}
                 submitLabel="Simpan Perubahan"
-                onSubmit={async (data) => {
-
-                  await updateFileAction(
-                    file.id,
-                    data
-                  );
-
-                }}
+                onSubmit={updateCurrentFileAction}
               />
 
             </div>
@@ -106,5 +117,4 @@ export default async function EditFilePage({
     </Container>
 
   );
-
 }

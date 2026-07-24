@@ -11,55 +11,34 @@ type PromotionUpdate =
   Database["public"]["Tables"]["promotions"]["Update"];
 
 export class PromotionService {
-
   async getAll() {
-
-    return await promotionRepository.getAll();
-
+    return promotionRepository.getAll();
   }
 
   async getById(
-    id: string
+    id: string,
   ) {
-
-    return await promotionRepository.getById(
-      id
-    );
-
+    return promotionRepository.getById(id);
   }
 
   async create(
-    data: PromotionInsert
+    data: PromotionInsert,
   ) {
-
-    return await promotionRepository.create(
-      data
-    );
-
+    return promotionRepository.create(data);
   }
 
   async update(
     id: string,
-    data: PromotionUpdate
+    data: PromotionUpdate,
   ) {
-
-    return await promotionRepository.update(
-      id,
-      data
-    );
-
+    return promotionRepository.update(id, data);
   }
 
   async delete(
-    id: string
+    id: string,
   ) {
-
-    return await promotionRepository.delete(
-      id
-    );
-
+    return promotionRepository.delete(id);
   }
-
 }
 
 export const promotionService =

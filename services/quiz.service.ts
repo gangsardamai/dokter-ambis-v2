@@ -32,6 +32,14 @@ export class QuizService {
     );
   }
 
+  async getQuizzesByCourse(
+    courseId: string
+  ) {
+    return await quizRepository.getByCourse(
+      courseId
+    );
+  }
+
   async countQuizzes() {
     return await quizRepository.count();
   }

@@ -8,6 +8,11 @@ type LessonInsert =
 type LessonUpdate =
   Database["public"]["Tables"]["lessons"]["Update"];
 
+type AutomaticLessonInsert = Omit<
+  LessonInsert,
+  "lesson_order"
+>;
+
 export class LessonService {
 
   /* ========================================
@@ -69,6 +74,14 @@ export class LessonService {
   ) {
     return await lessonRepository.create(
       data
+    );
+  }
+
+  async createLessonWithNextOrder(
+    data: AutomaticLessonInsert,
+  ) {
+    return await lessonRepository.createWithNextOrder(
+      data,
     );
   }
 

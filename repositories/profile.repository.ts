@@ -15,32 +15,31 @@ export type ProfileRole =
   Database["public"]["Enums"]["profile_role"];
 
 export class ProfileRepository {
-
   async getCurrentProfile(): Promise<Profile | null> {
-
-    const supabase =
-      await createClient();
-
+    const supabase = await createClient();
     const {
-      data: { user },
+      data: claimsData,
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getClaims();
 
     if (authError) {
+      if (authError.name === "AuthSessionMissingError") {
+        return null;
+      }
+
       throw authError;
     }
 
-    if (!user) {
+    const profileId = claimsData?.claims?.sub;
+
+    if (!profileId) {
       return null;
     }
 
-    const {
-      data,
-      error,
-    } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", profileId)
       .maybeSingle();
 
     if (error) {
@@ -48,20 +47,13 @@ export class ProfileRepository {
     }
 
     return data;
-
   }
 
   async getById(
-    id: string
+    id: string,
   ): Promise<Profile | null> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data,
-      error,
-    } = await supabase
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", id)
@@ -72,16 +64,12 @@ export class ProfileRepository {
     }
 
     return data;
-
   }
 
   async countByRole(
-    role: ProfileRole
+    role: ProfileRole,
   ): Promise<number> {
-
-    const supabase =
-      await createClient();
-
+    const supabase = await createClient();
     const { count, error } = await supabase
       .from("profiles")
       .select("*", {
@@ -95,20 +83,13 @@ export class ProfileRepository {
     }
 
     return count ?? 0;
-
   }
 
   async create(
-    profile: ProfileInsert
+    profile: ProfileInsert,
   ): Promise<Profile> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data,
-      error,
-    } = await supabase
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("profiles")
       .insert(profile)
       .select()
@@ -119,21 +100,14 @@ export class ProfileRepository {
     }
 
     return data;
-
   }
 
   async update(
     id: string,
-    profile: ProfileUpdate
+    profile: ProfileUpdate,
   ): Promise<Profile> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data,
-      error,
-    } = await supabase
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("profiles")
       .update(profile)
       .eq("id", id)
@@ -145,9 +119,7 @@ export class ProfileRepository {
     }
 
     return data;
-
   }
-
 }
 
 export const profileRepository =

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 interface ExplorerToolbarProps {
   courseId: string;
+  managerRole?: "admin" | "mentor";
 }
 
 function PlusIcon() {
@@ -24,12 +25,16 @@ function PlusIcon() {
 
 export function ExplorerToolbar({
   courseId,
+  managerRole = "admin",
 }: ExplorerToolbarProps) {
+  const explorerBase =
+    `/dashboard/${managerRole}/course/${courseId}/explorer`;
+
   return (
     <div className="rounded-3xl border border-blue-100/80 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Link
-          href={`/dashboard/admin/course/${courseId}/explorer/folder/create`}
+          href={`${explorerBase}/folder/create`}
           className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 sm:w-auto"
         >
           <PlusIcon />

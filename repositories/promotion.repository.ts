@@ -12,45 +12,28 @@ type PromotionUpdate =
   Database["public"]["Tables"]["promotions"]["Update"];
 
 export class PromotionRepository {
-
   async getAll(): Promise<Promotion[]> {
-
-  const supabase =
-    await createClient();
-
-  const {
-    data,
-    error,
-  } = await supabase
-    .from("promotions")
-    .select("*")
-    .order("priority")
-    .order(
-      "created_at",
-      {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("promotions")
+      .select("*")
+      .order("priority")
+      .order("created_at", {
         ascending: false,
-      }
-    );
+      });
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
   }
 
-  return data ?? [];
-
-}
-
   async getById(
-    id: string
+    id: string,
   ): Promise<Promotion | null> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data,
-      error,
-    } = await supabase
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("promotions")
       .select("*")
       .eq("id", id)
@@ -61,20 +44,13 @@ export class PromotionRepository {
     }
 
     return data;
-
   }
 
   async create(
-    promotion: PromotionInsert
+    promotion: PromotionInsert,
   ): Promise<Promotion> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data,
-      error,
-    } = await supabase
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("promotions")
       .insert(promotion)
       .select()
@@ -85,21 +61,14 @@ export class PromotionRepository {
     }
 
     return data;
-
   }
 
   async update(
     id: string,
-    promotion: PromotionUpdate
+    promotion: PromotionUpdate,
   ): Promise<Promotion> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data,
-      error,
-    } = await supabase
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("promotions")
       .update(promotion)
       .eq("id", id)
@@ -111,28 +80,21 @@ export class PromotionRepository {
     }
 
     return data;
-
   }
 
   async delete(
-    id: string
+    id: string,
   ): Promise<void> {
-
-    const supabase =
-      await createClient();
-
-    const { error } =
-      await supabase
-        .from("promotions")
-        .delete()
-        .eq("id", id);
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("promotions")
+      .delete()
+      .eq("id", id);
 
     if (error) {
       throw error;
     }
-
   }
-
 }
 
 export const promotionRepository =

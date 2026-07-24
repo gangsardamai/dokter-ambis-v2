@@ -1,13 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
 
 import {
-  redirect,
-} from "next/navigation";
-
-import {
+  courseExplorerService,
   enrollmentService,
-  folderService,
-  lessonService,
   profileService,
 } from "@/services";
 
@@ -20,28 +18,22 @@ interface StudentMyCoursePageProps {
 export default async function StudentMyCoursePage({
   params,
 }: StudentMyCoursePageProps) {
-  const { courseId } =
-    await params;
+  const { courseId } = await params;
 
   const profile =
-    await profileService
-      .getCurrentProfile();
+    await profileService.getCurrentProfile();
 
   if (!profile) {
     redirect("/login");
   }
 
   const enrollment =
-    await enrollmentService
-      .getActiveCourseEnrollment(
-        profile.id,
-        courseId,
-      );
+    await enrollmentService.getActiveCourseEnrollment(
+      profile.id,
+      courseId,
+    );
 
-  if (
-    !enrollment ||
-    !enrollment.courses
-  ) {
+  if (!enrollment || !enrollment.courses) {
     redirect(
       `/dashboard/student?error=${encodeURIComponent(
         "Anda belum memiliki akses aktif ke blok tersebut.",
@@ -49,215 +41,60 @@ export default async function StudentMyCoursePage({
     );
   }
 
-  const [
-    folders,
-    lessons,
-  ] = await Promise.all([
-    folderService
-      .getFoldersByCourse(
-        courseId,
-      ),
+  const content =
+    await courseExplorerService.getCourseContent(courseId);
 
-    lessonService
-      .getLessonsByCourse(
-        courseId,
-      ),
-  ]);
-
-  const lessonsByFolder =
-    new Map<
-      string | null,
-      typeof lessons
-    >();
-
-  for (const lesson of lessons) {
-    const folderId =
-      lesson.folder_id ?? null;
-
-    const currentLessons =
-      lessonsByFolder.get(
-        folderId,
-      ) ?? [];
-
-    currentLessons.push(
-      lesson,
-    );
-
-    lessonsByFolder.set(
-      folderId,
-      currentLessons,
-    );
-  }
-
-  const course =
-    enrollment.courses;
-
-  const lessonsWithoutFolder =
-    lessonsByFolder.get(null) ?? [];
+  const course = enrollment.courses;
 
   return (
-    <main className="mx-auto max-w-5xl p-8">
+    <main className="mx-auto w-full max-w-6xl space-y-7 overflow-x-hidden p-4 sm:p-6 lg:p-8">
       <Link
         href="/dashboard/student"
-        className="text-sm font-medium text-blue-600 hover:underline"
+        className="inline-flex min-h-10 items-center rounded-xl bg-white px-4 py-2 text-sm font-black text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
       >
         ← Kembali ke dashboard
       </Link>
 
-      <section className="mt-6 rounded-2xl bg-blue-600 p-8 text-white">
-        <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
+      <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
+        <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
           Blok Aktif
         </span>
 
-        <h1 className="mt-5 text-3xl font-bold">
+        <h1 className="mt-5 break-words text-3xl font-black tracking-tight sm:text-4xl">
           {course.title}
         </h1>
 
-        <p className="mt-3 text-blue-100">
-          {course.organizations?.title ??
-            "Universitas belum tersedia"}
-        </p>
-
-        <p className="mt-1 text-sm text-blue-100">
-          {course.programs?.title ??
-            "Program belum tersedia"}
-        </p>
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
+          <span>
+            {course.organizations?.title ??
+              "Universitas belum tersedia"}
+          </span>
+          <span>
+            {course.programs?.title ??
+              "Program belum tersedia"}
+          </span>
+        </div>
       </section>
 
-      <section className="mt-10">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
+      <section>
+        <div className="mb-5">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+            Course Explorer
+          </p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
             Materi Pembelajaran
           </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Pilih materi sesuai urutan folder pembelajaran.
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Buka folder, pilih lesson, lalu akses file, video, atau quiz sesuai urutan pembelajaran.
           </p>
         </div>
 
-        {folders.length === 0 &&
-        lessons.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <h3 className="font-semibold text-gray-900">
-              Materi belum tersedia
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Admin atau mentor belum menambahkan materi pada blok ini.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {folders.map(
-              (folder) => {
-                const folderLessons =
-                  lessonsByFolder.get(
-                    folder.id,
-                  ) ?? [];
-
-                return (
-                  <section
-                    key={folder.id}
-                    className={`rounded-2xl border bg-white p-6 shadow-sm ${
-                      folder.parent_folder_id
-                        ? "ml-6"
-                        : ""
-                    }`}
-                  >
-                    <div className="border-b pb-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
-                        Folder {folder.folder_order}
-                      </p>
-
-                      <h3 className="mt-1 text-xl font-bold text-gray-900">
-                        {folder.title}
-                      </h3>
-
-                      {folder.description && (
-                        <p className="mt-2 text-sm leading-6 text-gray-500">
-                          {folder.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {folderLessons.length ===
-                    0 ? (
-                      <p className="mt-5 text-sm text-gray-500">
-                        Belum ada lesson di dalam folder ini.
-                      </p>
-                    ) : (
-                      <div className="mt-5 divide-y">
-                        {folderLessons.map(
-                          (lesson) => (
-                            <div
-                              key={lesson.id}
-                              className="flex items-center justify-between gap-4 py-4"
-                            >
-                              <div>
-                                <p className="text-xs font-medium text-gray-400">
-                                  Materi {lesson.lesson_order}
-                                </p>
-
-                                <h4 className="mt-1 font-semibold text-gray-900">
-                                  {lesson.title}
-                                </h4>
-
-                                <p className="mt-1 text-xs text-gray-500">
-                                  {lesson.duration
-                                    ? `${lesson.duration} menit`
-                                    : "Durasi belum tersedia"}
-                                </p>
-                              </div>
-
-                              <span className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-500">
-                                Materi
-                              </span>
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </section>
-                );
-              },
-            )}
-
-            {lessonsWithoutFolder.length >
-              0 && (
-              <section className="rounded-2xl border bg-white p-6 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Materi Lainnya
-                </h3>
-
-                <div className="mt-5 divide-y">
-                  {lessonsWithoutFolder.map(
-                    (lesson) => (
-                      <div
-                        key={lesson.id}
-                        className="flex items-center justify-between gap-4 py-4"
-                      >
-                        <div>
-                          <p className="text-xs font-medium text-gray-400">
-                            Materi {lesson.lesson_order}
-                          </p>
-
-                          <h4 className="mt-1 font-semibold text-gray-900">
-                            {lesson.title}
-                          </h4>
-                        </div>
-
-                        <span className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-500">
-                          Materi
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </section>
-            )}
-          </div>
-        )}
+        <CourseContentAccordion
+          courseId={courseId}
+          content={content}
+          mode="student"
+        />
       </section>
     </main>
   );
-}   
+}

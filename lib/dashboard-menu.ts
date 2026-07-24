@@ -78,19 +78,15 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
 
   mentor: [
     {
-      title: "MENTOR",
+      title: "Mentor",
       items: [
         {
-          title: "Dashboard",
+          title: "Course Ditugaskan",
           href: "/dashboard/mentor",
         },
         {
-          title: "Materi Saya",
-          href: "/dashboard/mentor/course",
-        },
-        {
-          title: "Live Class",
-          href: "/dashboard/mentor/live-class",
+          title: "Profil",
+          href: "/dashboard/mentor/profile",
         },
       ],
     },
@@ -98,19 +94,19 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
 
   student: [
     {
-      title: "MAHASISWA",
+      title: "Student",
       items: [
         {
-          title: "Dashboard",
+          title: "Course Dimiliki",
           href: "/dashboard/student",
         },
         {
-          title: "Program Saya",
-          href: "/dashboard/student/program",
+          title: "Cari Course",
+          href: "/dashboard/student/course",
         },
         {
-          title: "Progress",
-          href: "/dashboard/student/progress",
+          title: "Profil",
+          href: "/dashboard/student/profile",
         },
       ],
     },

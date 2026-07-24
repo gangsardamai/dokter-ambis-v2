@@ -64,19 +64,20 @@ export default async function Page({
         defaultValues={{
           course_id: course.id,
           folder_id: folderId,
-          lesson_order: 1,
           duration: 10,
           is_free: false,
+          is_required: true,
+          publication_status: "draft",
         }}
 
         submitLabel="Simpan Lesson"
 
         action={createLessonFormAction}
 
+        showOrder={false}
+
       />
 
     </div>
-
   );
-
 }

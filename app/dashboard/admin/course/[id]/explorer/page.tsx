@@ -3,9 +3,8 @@ import { notFound } from "next/navigation";
 import { ExplorerPage } from "@/components/admin/explorer";
 
 import {
+  courseExplorerService,
   courseService,
-  folderService,
-  lessonService,
 } from "@/services";
 
 export default async function Page({
@@ -15,10 +14,9 @@ export default async function Page({
 }) {
   const { id } = await params;
 
-  const [course, folders, lessons] = await Promise.all([
+  const [course, content] = await Promise.all([
     courseService.getCourseById(id),
-    folderService.getFoldersByCourse(id),
-    lessonService.getLessonsByCourse(id),
+    courseExplorerService.getCourseContent(id),
   ]);
 
   if (!course) {
@@ -28,8 +26,7 @@ export default async function Page({
   return (
     <ExplorerPage
       course={course}
-      folders={folders}
-      lessonCount={lessons.length}
+      content={content}
     />
   );
 }

@@ -17,7 +17,14 @@ import {
   lessonService,
 } from "@/services";
 
-export default async function NewVideoPage() {
+export default async function NewVideoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    lessonId?: string;
+  }>;
+}) {
+  const { lessonId } = await searchParams;
 
   const lessons =
     await lessonService.getLessons();
@@ -36,6 +43,7 @@ export default async function NewVideoPage() {
         <div className="p-6">
 
           <VideoForm
+  initialLessonId={lessonId}
   lessonOptions={lessons.map(
     (lesson) => ({
       value: lesson.id,

@@ -41,6 +41,9 @@ export default async function EditQuizPage({
   const lessons =
     await lessonService.getLessons();
 
+  const updateCurrentQuizAction =
+    updateQuizAction.bind(null, quiz.id);
+
   return (
 
     <Container>
@@ -77,6 +80,21 @@ export default async function EditQuizPage({
 
                   max_attempt:
                     quiz.max_attempt,
+
+                  quiz_order:
+                    quiz.quiz_order,
+
+                  publication_status:
+                    quiz.publication_status,
+
+                  is_required:
+                    quiz.is_required,
+
+                  shuffle_questions:
+                    quiz.shuffle_questions,
+
+                  shuffle_options:
+                    quiz.shuffle_options,
                 }}
                 lessonOptions={lessons.map(
                   (lesson) => ({
@@ -85,14 +103,7 @@ export default async function EditQuizPage({
                   })
                 )}
                 submitLabel="Simpan Perubahan"
-                onSubmit={async (data) => {
-
-                  await updateQuizAction(
-                    quiz.id,
-                    data
-                  );
-
-                }}
+                onSubmit={updateCurrentQuizAction}
               />
 
             </div>
@@ -112,5 +123,4 @@ export default async function EditQuizPage({
     </Container>
 
   );
-
 }

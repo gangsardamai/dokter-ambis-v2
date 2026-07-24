@@ -18,43 +18,28 @@ interface DashboardRootLayoutProps {
 export default async function DashboardRootLayout({
   children,
 }: DashboardRootLayoutProps) {
-
   const authenticated =
     await authService.isAuthenticated();
 
   if (!authenticated) {
-
     redirect("/login");
-
   }
 
   const profile =
     await profileService.getCurrentProfile();
 
   if (!profile) {
-
     redirect("/login");
-
   }
 
   if (profile.status !== "active") {
-
     redirect("/login");
-
   }
 
   return (
-
-    <DashboardLayout>
-
-      <DashboardHeader
-        profile={profile}
-      />
-
+    <DashboardLayout role={profile.role}>
+      <DashboardHeader profile={profile} />
       {children}
-
     </DashboardLayout>
-
   );
-
 }

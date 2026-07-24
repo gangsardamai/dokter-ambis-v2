@@ -78,6 +78,15 @@ const updateCurrentVideoAction =
 
                   duration:
                     video.duration,
+
+                  video_order:
+                    video.video_order,
+
+                  publication_status:
+                    video.publication_status,
+
+                  is_required:
+                    video.is_required,
                 }}
                 lessonOptions={lessons.map(
                   (lesson) => ({

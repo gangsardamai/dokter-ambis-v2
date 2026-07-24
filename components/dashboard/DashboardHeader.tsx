@@ -9,6 +9,18 @@ interface DashboardHeaderProps {
   onMenuClick?: () => void;
 }
 
+const titleByRole = {
+  admin: "Admin DokterAmbis",
+  mentor: "Mentor DokterAmbis",
+  student: "Student DokterAmbis",
+} as const;
+
+const roleLabel = {
+  admin: "Admin",
+  mentor: "Mentor",
+  student: "Mahasiswa",
+} as const;
+
 export default function DashboardHeader({
   profile,
   onMenuClick,
@@ -48,7 +60,7 @@ export default function DashboardHeader({
               Dashboard
             </p>
             <h1 className="truncate text-lg font-extrabold tracking-[-0.03em] text-[#061827] sm:text-xl">
-              Admin DokterAmbis
+              {titleByRole[profile.role]}
             </h1>
           </div>
         </div>
@@ -58,8 +70,8 @@ export default function DashboardHeader({
             <p className="truncate text-sm font-bold text-[#061827]">
               {profile.full_name}
             </p>
-            <p className="text-xs font-semibold capitalize text-slate-500">
-              {profile.role}
+            <p className="text-xs font-semibold text-slate-500">
+              {roleLabel[profile.role]}
             </p>
           </div>
 

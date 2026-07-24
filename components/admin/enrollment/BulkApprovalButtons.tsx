@@ -33,6 +33,25 @@ function CheckIcon() {
   );
 }
 
+function DownloadIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
+    </svg>
+  );
+}
+
 export function BulkApprovalButtons() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -84,9 +103,51 @@ export function BulkApprovalButtons() {
     });
   }
 
+  function downloadExcel() {
+    const currentParams = new URLSearchParams(
+      window.location.search,
+    );
+    const exportParams = new URLSearchParams();
+
+    for (const key of [
+      "q",
+      "enrollmentStatus",
+      "paymentStatus",
+    ]) {
+      const value = currentParams.get(key);
+
+      if (value) {
+        exportParams.set(key, value);
+      }
+    }
+
+    const query = exportParams.toString();
+    const downloadUrl =
+      `/api/admin/enrollments/export${
+        query ? `?${query}` : ""
+      }`;
+    const anchor = document.createElement("a");
+
+    anchor.href = downloadUrl;
+    anchor.download = "";
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+
   return (
     <div className="w-full space-y-3 sm:w-auto">
       <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+        <button
+          type="button"
+          onClick={downloadExcel}
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:w-auto"
+        >
+          <DownloadIcon />
+          Download Excel
+        </button>
+
         <button
           type="button"
           disabled={isPending}

@@ -44,11 +44,31 @@ export class LessonFileRepository extends BaseRepository {
       .from("lesson_files")
       .select("*")
       .eq("lesson_id", lessonId)
-      .order("created_at");
+      .order("file_order");
 
     if (error) this.handleError(error);
 
     return data ?? [];
+  }
+
+  async getByCourse(
+    courseId: string
+  ): Promise<LessonFile[]> {
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("lesson_files")
+      .select("*, lessons!inner(course_id)")
+      .eq("lessons.course_id", courseId)
+      .order("file_order");
+
+    if (error) this.handleError(error);
+
+    return (data ?? []).map((row) => {
+      const { lessons: _lessons, ...file } = row;
+      void _lessons;
+      return file;
+    });
   }
 
   async exists(id: string): Promise<boolean> {
