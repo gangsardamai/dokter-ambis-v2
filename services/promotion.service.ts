@@ -21,26 +21,6 @@ export class PromotionService {
     return promotionRepository.getById(id);
   }
 
-  async applyCode(
-    enrollmentId: string,
-    code: string,
-  ) {
-    const normalizedCode = code.trim();
-
-    if (!enrollmentId) {
-      throw new Error("Enrollment tidak ditemukan.");
-    }
-
-    if (!normalizedCode) {
-      throw new Error("Kode promosi wajib diisi.");
-    }
-
-    return promotionRepository.applyCode(
-      enrollmentId,
-      normalizedCode,
-    );
-  }
-
   async create(
     data: PromotionInsert,
   ) {
