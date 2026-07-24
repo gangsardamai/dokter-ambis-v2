@@ -215,6 +215,7 @@ export function getPaymentMethodLabel(
 
   const labels: Record<PaymentMethod, string> = {
     bank_transfer: "Transfer Bank",
+    qris: "QRIS",
     free: "Gratis",
   };
 
