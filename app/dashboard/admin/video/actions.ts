@@ -3,15 +3,17 @@
 import {
   revalidatePath,
 } from "next/cache";
-
 import {
   redirect,
 } from "next/navigation";
 
 import {
+  normalizeVideoSource,
+  type VideoFormPayload,
+} from "@/lib/video/video-source";
+import {
   videoService,
 } from "@/services";
-
 import type { Database } from "@/supabase/types/database.types";
 
 type VideoInsert =
@@ -20,109 +22,68 @@ type VideoInsert =
 type VideoUpdate =
   Database["public"]["Tables"]["videos"]["Update"];
 
-function extractYoutubeVideoId(
-  value: string,
-): string {
-  const input =
-    value.trim();
+function validateVideoPayload(
+  data: VideoFormPayload,
+): void {
+  if (!data.lesson_id.trim()) {
+    throw new Error("Materi wajib dipilih.");
+  }
+
+  if (!data.title.trim()) {
+    throw new Error("Judul video wajib diisi.");
+  }
 
   if (
-    /^[a-zA-Z0-9_-]{11}$/.test(
-      input,
-    )
+    !Number.isFinite(data.duration) ||
+    data.duration < 0
   ) {
-    return input;
+    throw new Error("Durasi video tidak valid.");
   }
 
-  try {
-    const url =
-      new URL(input);
-
-    const hostname =
-      url.hostname
-        .replace(/^www\./, "")
-        .toLowerCase();
-
-    if (hostname === "youtu.be") {
-      const id =
-        url.pathname
-          .split("/")
-          .filter(Boolean)[0];
-
-      if (
-        id &&
-        /^[a-zA-Z0-9_-]{11}$/.test(id)
-      ) {
-        return id;
-      }
-    }
-
-    if (
-      hostname === "youtube.com" ||
-      hostname === "m.youtube.com"
-    ) {
-      const watchId =
-        url.searchParams.get("v");
-
-      if (
-        watchId &&
-        /^[a-zA-Z0-9_-]{11}$/.test(
-          watchId,
-        )
-      ) {
-        return watchId;
-      }
-
-      const pathParts =
-        url.pathname
-          .split("/")
-          .filter(Boolean);
-
-      if (
-        pathParts[0] === "embed" ||
-        pathParts[0] === "shorts" ||
-        pathParts[0] === "live"
-      ) {
-        const id =
-          pathParts[1];
-
-        if (
-          id &&
-          /^[a-zA-Z0-9_-]{11}$/.test(id)
-        ) {
-          return id;
-        }
-      }
-    }
-  } catch {
-    /*
-     * Error URL diproses di bawah.
-     */
+  if (
+    !Number.isInteger(data.video_order) ||
+    data.video_order < 0
+  ) {
+    throw new Error(
+      "Urutan video harus berupa bilangan bulat 0 atau lebih.",
+    );
   }
+}
 
-  throw new Error(
-    "URL YouTube tidak valid.",
+function normalizeVideoPayload(
+  data: VideoFormPayload,
+): VideoInsert {
+  validateVideoPayload(data);
+
+  const source = normalizeVideoSource(
+    data.provider,
+    data.provider_video_id,
   );
+
+  return {
+    lesson_id: data.lesson_id.trim(),
+    title: data.title.trim(),
+    provider:
+      source.provider as VideoInsert["provider"],
+    provider_video_id: source.providerVideoId,
+    duration: data.duration,
+    video_order: data.video_order,
+    publication_status: data.publication_status,
+    is_required: data.is_required,
+  };
 }
 
 export async function createVideoAction(
-  data: VideoInsert,
+  data: VideoFormPayload,
 ) {
   const video =
-    await videoService.createVideo({
-      ...data,
-      provider:
-        "youtube",
-      provider_video_id:
-        extractYoutubeVideoId(
-          data.provider_video_id,
-        ),
-    });
+    await videoService.createVideo(
+      normalizeVideoPayload(data),
+    );
 
   revalidatePath(
     "/dashboard/admin/video",
   );
-
   revalidatePath(
     `/dashboard/admin/video/${video.id}`,
   );
@@ -134,35 +95,35 @@ export async function createVideoAction(
 
 export async function updateVideoAction(
   id: string,
-  data: VideoUpdate,
+  data: VideoFormPayload,
 ) {
-  const normalizedData:
-    VideoUpdate = {
-      ...data,
-      provider:
-        "youtube",
-    };
+  const normalized =
+    normalizeVideoPayload(data);
 
-  if (data.provider_video_id) {
-    normalizedData.provider_video_id =
-      extractYoutubeVideoId(
-        data.provider_video_id,
-      );
-  }
+  const updateData: VideoUpdate = {
+    lesson_id: normalized.lesson_id,
+    title: normalized.title,
+    provider: normalized.provider,
+    provider_video_id:
+      normalized.provider_video_id,
+    duration: normalized.duration,
+    video_order: normalized.video_order,
+    publication_status:
+      normalized.publication_status,
+    is_required: normalized.is_required,
+  };
 
   await videoService.updateVideo(
     id,
-    normalizedData,
+    updateData,
   );
 
   revalidatePath(
     "/dashboard/admin/video",
   );
-
   revalidatePath(
     `/dashboard/admin/video/${id}`,
   );
-
   revalidatePath(
     `/dashboard/admin/video/${id}/edit`,
   );
@@ -175,9 +136,7 @@ export async function updateVideoAction(
 export async function deleteVideoAction(
   id: string,
 ) {
-  await videoService.deleteVideo(
-    id,
-  );
+  await videoService.deleteVideo(id);
 
   revalidatePath(
     "/dashboard/admin/video",
