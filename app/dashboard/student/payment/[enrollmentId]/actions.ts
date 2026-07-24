@@ -3,13 +3,11 @@
 import {
   revalidatePath,
 } from "next/cache";
-
 import {
   redirect,
 } from "next/navigation";
 
 import {
-  authService,
   enrollmentService,
   paymentProofService,
   paymentService,
@@ -19,11 +17,99 @@ import {
   studentCheckoutService,
 } from "@/services/student-checkout.service";
 
+function isSupabaseConnectionError(
+  error: unknown,
+): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const details = error as {
+    name?: unknown;
+    message?: unknown;
+    code?: unknown;
+    cause?: unknown;
+  };
+  const cause =
+    details.cause && typeof details.cause === "object"
+      ? details.cause as {
+          code?: unknown;
+          message?: unknown;
+        }
+      : null;
+  const errorName =
+    typeof details.name === "string"
+      ? details.name
+      : "";
+  const errorCode =
+    typeof details.code === "string"
+      ? details.code
+      : "";
+  const causeCode =
+    typeof cause?.code === "string"
+      ? cause.code
+      : "";
+  const combinedMessage = [
+    details.message,
+    cause?.message,
+  ]
+    .filter((value): value is string =>
+      typeof value === "string",
+    )
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    errorName === "AuthRetryableFetchError" ||
+    errorCode === "UND_ERR_CONNECT_TIMEOUT" ||
+    causeCode === "UND_ERR_CONNECT_TIMEOUT" ||
+    combinedMessage.includes("fetch failed") ||
+    combinedMessage.includes("connect timeout")
+  );
+}
+
+function getActionErrorMessage(
+  error: unknown,
+  fallback: string,
+): string {
+  if (isSupabaseConnectionError(error)) {
+    return "Koneksi ke server sedang tidak stabil. Data belum diubah. Silakan coba lagi setelah koneksi membaik.";
+  }
+
+  return error instanceof Error
+    ? error.message
+    : fallback;
+}
+
+function paymentPageUrl(
+  enrollmentId: string,
+  type: "error" | "success",
+  message: string,
+): string {
+  return `/dashboard/student/payment/${enrollmentId}?${type}=${encodeURIComponent(
+    message,
+  )}`;
+}
+
 async function getOwnedPendingEnrollment(
   enrollmentId: string,
 ) {
-  const profile =
-    await profileService.getCurrentProfile();
+  let profile;
+
+  try {
+    profile = await profileService.getCurrentProfile();
+  } catch (error) {
+    redirect(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
+        getActionErrorMessage(
+          error,
+          "Gagal memeriksa sesi pengguna.",
+        ),
+      ),
+    );
+  }
 
   if (!profile) {
     redirect("/login");
@@ -36,10 +122,24 @@ async function getOwnedPendingEnrollment(
     redirect("/dashboard");
   }
 
-  const enrollment =
-    await enrollmentService.getEnrollmentById(
+  let enrollment;
+
+  try {
+    enrollment = await enrollmentService.getEnrollmentById(
       enrollmentId,
     );
+  } catch (error) {
+    redirect(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
+        getActionErrorMessage(
+          error,
+          "Gagal memeriksa data enrollment.",
+        ),
+      ),
+    );
+  }
 
   if (
     !enrollment ||
@@ -67,9 +167,11 @@ export async function applyPromotionCodeAction(
 
   if (enrollment.status !== "pending_payment") {
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
         "Kode promosi hanya dapat digunakan sebelum bukti pembayaran dikirim.",
-      )}`,
+      ),
     );
   }
 
@@ -88,15 +190,15 @@ export async function applyPromotionCodeAction(
 
     promotionName = result.promotion_name;
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Kode promosi gagal diterapkan.";
-
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
-        message,
-      )}`,
+      paymentPageUrl(
+        enrollmentId,
+        "error",
+        getActionErrorMessage(
+          error,
+          "Kode promosi gagal diterapkan.",
+        ),
+      ),
     );
   }
 
@@ -108,9 +210,11 @@ export async function applyPromotionCodeAction(
   );
 
   redirect(
-    `/dashboard/student/payment/${enrollmentId}?success=${encodeURIComponent(
+    paymentPageUrl(
+      enrollmentId,
+      "success",
       `${promotionName} berhasil diterapkan.`,
-    )}`,
+    ),
   );
 }
 
@@ -122,9 +226,11 @@ export async function submitZeroPaymentAction(
 
   if (enrollment.status !== "pending_payment") {
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
         "Enrollment ini sudah dikirim atau tidak dapat diproses.",
-      )}`,
+      ),
     );
   }
 
@@ -133,15 +239,15 @@ export async function submitZeroPaymentAction(
       enrollmentId,
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Pendaftaran gratis gagal dikirim.";
-
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
-        message,
-      )}`,
+      paymentPageUrl(
+        enrollmentId,
+        "error",
+        getActionErrorMessage(
+          error,
+          "Pendaftaran gratis gagal dikirim.",
+        ),
+      ),
     );
   }
 
@@ -153,9 +259,11 @@ export async function submitZeroPaymentAction(
   );
 
   redirect(
-    `/dashboard/student/payment/${enrollmentId}?success=${encodeURIComponent(
+    paymentPageUrl(
+      enrollmentId,
+      "success",
       "Pendaftaran berhasil dikirim dan sedang menunggu verifikasi Admin.",
-    )}`,
+    ),
   );
 }
 
@@ -163,21 +271,16 @@ export async function uploadPaymentProofAction(
   enrollmentId: string,
   formData: FormData,
 ): Promise<void> {
-  const { enrollment } =
+  const { profile, enrollment } =
     await getOwnedPendingEnrollment(enrollmentId);
-
-  const user =
-    await authService.getCurrentUser();
-
-  if (!user) {
-    redirect("/login");
-  }
 
   if (enrollment.status === "active") {
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
         "Enrollment ini sudah aktif.",
-      )}`,
+      ),
     );
   }
 
@@ -186,9 +289,11 @@ export async function uploadPaymentProofAction(
     enrollment.status === "expired"
   ) {
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
         "Enrollment sudah tidak dapat diproses.",
-      )}`,
+      ),
     );
   }
 
@@ -200,9 +305,11 @@ export async function uploadPaymentProofAction(
 
   if (totalPayment === 0) {
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
         "Total pembayaran Rp0. Gunakan tombol Kirim Pendaftaran Gratis.",
-      )}`,
+      ),
     );
   }
 
@@ -214,16 +321,18 @@ export async function uploadPaymentProofAction(
     fileValue.size === 0
   ) {
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
+      paymentPageUrl(
+        enrollmentId,
+        "error",
         "Silakan pilih bukti pembayaran.",
-      )}`,
+      ),
     );
   }
 
   try {
     const paymentProofPath =
       await paymentProofService.uploadPaymentProof(
-        user.id,
+        profile.id,
         enrollment.id,
         fileValue,
       );
@@ -234,15 +343,15 @@ export async function uploadPaymentProofAction(
       paymentProofPath,
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Gagal mengunggah bukti pembayaran.";
-
     redirect(
-      `/dashboard/student/payment/${enrollmentId}?error=${encodeURIComponent(
-        message,
-      )}`,
+      paymentPageUrl(
+        enrollmentId,
+        "error",
+        getActionErrorMessage(
+          error,
+          "Gagal mengunggah bukti pembayaran.",
+        ),
+      ),
     );
   }
 
@@ -254,8 +363,10 @@ export async function uploadPaymentProofAction(
   );
 
   redirect(
-    `/dashboard/student/payment/${enrollmentId}?success=${encodeURIComponent(
+    paymentPageUrl(
+      enrollmentId,
+      "success",
       "Bukti pembayaran berhasil dikirim.",
-    )}`,
+    ),
   );
 }
