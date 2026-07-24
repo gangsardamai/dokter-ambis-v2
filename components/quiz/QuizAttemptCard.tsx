@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -57,7 +58,6 @@ export default function QuizAttemptCard({
               answers[question.id] ?? null,
           })),
         );
-
       setResult(submission);
       setAnswers({});
 
@@ -142,6 +142,19 @@ export default function QuizAttemptCard({
               <h2 className="mt-3 whitespace-pre-wrap text-base font-black leading-7 text-slate-950 sm:text-lg">
                 {question.question}
               </h2>
+
+              {question.image_path && (
+                <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                  <Image
+                    src={`/api/quiz-images/${quiz.id}/${question.id}?kind=question`}
+                    alt={`Gambar soal ${index + 1}`}
+                    width={1200}
+                    height={800}
+                    unoptimized
+                    className="h-auto max-h-[560px] w-full object-contain"
+                  />
+                </div>
+              )}
 
               <div className="mt-5 space-y-3">
                 {question.options.map((option) => {
