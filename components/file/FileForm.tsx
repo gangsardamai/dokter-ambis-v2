@@ -6,22 +6,22 @@ import {
   SelectField,
   TextInput,
 } from "@/components/ui";
+import {
+  extractGoogleDriveFileId,
+  getGoogleDriveInputUrl,
+  parseGoogleDriveFilePath,
+  type CourseFileType,
+  type FileFormPayload,
+  type FileSourceProvider,
+} from "@/lib/file/file-source";
 import { createClient } from "@/lib/supabase/client";
 
-import type { Database } from "@/supabase/types/database.types";
+export type FileType = CourseFileType;
 
-export type FileType =
-  Database["public"]["Enums"]["file_type"];
-
-export type FileFormData = {
-  lesson_id: string;
-  title: string;
-  file_type: FileType;
-  file_path: string;
-  file_order: number;
-  publication_status: string;
-  is_required: boolean;
-};
+export type FileFormData = Omit<
+  FileFormPayload,
+  "source_provider"
+>;
 
 interface SelectOption {
   value: string;
@@ -45,7 +45,7 @@ interface FileFormProps {
   lessonCourseIds: Record<string, string>;
   submitLabel?: string;
   onSubmit: (
-    data: FileFormData,
+    data: FileFormPayload,
   ) => Promise<void>;
 }
 
@@ -57,6 +57,14 @@ export default function FileForm({
   submitLabel = "Simpan",
   onSubmit,
 }: FileFormProps) {
+  const initialGoogleDriveId = initialData
+    ? parseGoogleDriveFilePath(initialData.file_path)
+    : null;
+  const initialSourceProvider: FileSourceProvider =
+    initialGoogleDriveId
+      ? "google_drive"
+      : "upload";
+
   const [lessonId, setLessonId] = useState(
     initialData?.lesson_id ?? initialLessonId ?? "",
   );
@@ -67,9 +75,21 @@ export default function FileForm({
     useState<FileType>(
       initialData?.file_type ?? "pdf",
     );
+  const [sourceProvider, setSourceProvider] =
+    useState<FileSourceProvider>(
+      initialSourceProvider,
+    );
   const [filePath, setFilePath] = useState(
-    initialData?.file_path ?? "",
+    initialSourceProvider === "upload"
+      ? initialData?.file_path ?? ""
+      : "",
   );
+  const [googleDriveUrl, setGoogleDriveUrl] =
+    useState(
+      initialGoogleDriveId
+        ? getGoogleDriveInputUrl(initialGoogleDriveId)
+        : "",
+    );
   const [fileOrder, setFileOrder] = useState(
     initialData?.file_order ?? 1,
   );
@@ -84,6 +104,17 @@ export default function FileForm({
     useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const googleDriveFileId =
+    extractGoogleDriveFileId(googleDriveUrl);
+
+  function handleSourceProviderChange(
+    value: string,
+  ) {
+    setSourceProvider(value as FileSourceProvider);
+    setSelectedFile(null);
+    setErrorMessage("");
+  }
 
   async function requestStorageUpload(
     file: File,
@@ -120,14 +151,19 @@ export default function FileForm({
   ): Promise<void> {
     if (upload.provider === "r2") {
       if (!upload.uploadUrl) {
-        throw new Error("URL upload Cloudflare R2 tidak tersedia.");
+        throw new Error(
+          "URL upload Cloudflare R2 tidak tersedia.",
+        );
       }
 
-      const uploadResponse = await fetch(upload.uploadUrl, {
-        method: "PUT",
-        headers: upload.headers ?? {},
-        body: file,
-      });
+      const uploadResponse = await fetch(
+        upload.uploadUrl,
+        {
+          method: "PUT",
+          headers: upload.headers ?? {},
+          body: file,
+        },
+      );
 
       if (!uploadResponse.ok) {
         throw new Error(
@@ -139,14 +175,15 @@ export default function FileForm({
     }
 
     const supabase = createClient();
-    const { error: uploadError } = await supabase.storage
-      .from(upload.bucket ?? "course-materials")
-      .upload(upload.objectPath, file, {
-        cacheControl: "3600",
-        contentType:
-          file.type || "application/octet-stream",
-        upsert: false,
-      });
+    const { error: uploadError } =
+      await supabase.storage
+        .from(upload.bucket ?? "course-materials")
+        .upload(upload.objectPath, file, {
+          cacheControl: "3600",
+          contentType:
+            file.type || "application/octet-stream",
+          upsert: false,
+        });
 
     if (uploadError) {
       throw new Error(uploadError.message);
@@ -192,19 +229,41 @@ export default function FileForm({
       return;
     }
 
-    if (fileOrder < 1) {
-      setErrorMessage("Urutan file minimal 1.");
+    if (
+      !Number.isInteger(fileOrder) ||
+      fileOrder < 1
+    ) {
+      setErrorMessage(
+        "Urutan file harus berupa bilangan bulat minimal 1.",
+      );
       return;
     }
 
-    let nextFilePath = filePath;
+    if (
+      sourceProvider === "google_drive" &&
+      !googleDriveFileId
+    ) {
+      setErrorMessage(
+        "URL Google Drive tidak valid. Gunakan link file drive.google.com, bukan link folder.",
+      );
+      return;
+    }
+
+    let nextFilePath =
+      sourceProvider === "google_drive"
+        ? googleDriveUrl.trim()
+        : filePath;
     let uploadedFilePath: string | null = null;
 
     setLoading(true);
 
     try {
-      if (selectedFile) {
-        const upload = await requestStorageUpload(selectedFile);
+      if (
+        sourceProvider === "upload" &&
+        selectedFile
+      ) {
+        const upload =
+          await requestStorageUpload(selectedFile);
         await uploadSelectedFile(selectedFile, upload);
         nextFilePath = upload.filePath;
         uploadedFilePath = upload.filePath;
@@ -212,7 +271,9 @@ export default function FileForm({
 
       if (!nextFilePath) {
         throw new Error(
-          "Pilih file materi yang akan diunggah.",
+          sourceProvider === "google_drive"
+            ? "Masukkan URL file Google Drive."
+            : "Pilih file materi yang akan diunggah.",
         );
       }
 
@@ -220,14 +281,17 @@ export default function FileForm({
         lesson_id: lessonId,
         title: title.trim(),
         file_type: fileType,
+        source_provider: sourceProvider,
         file_path: nextFilePath,
         file_order: fileOrder,
         publication_status: publicationStatus,
         is_required: isRequired,
       });
 
-      setFilePath(nextFilePath);
-      setSelectedFile(null);
+      if (sourceProvider === "upload") {
+        setFilePath(nextFilePath);
+        setSelectedFile(null);
+      }
     } catch (error) {
       if (uploadedFilePath) {
         await cleanupUpload(uploadedFilePath);
@@ -274,6 +338,22 @@ export default function FileForm({
         onChange={setTitle}
       />
 
+      <SelectField
+        label="Sumber File"
+        value={sourceProvider}
+        onChange={handleSourceProviderChange}
+        options={[
+          {
+            value: "upload",
+            label: "Upload File",
+          },
+          {
+            value: "google_drive",
+            label: "Google Drive",
+          },
+        ]}
+      />
+
       <div className="grid gap-5 sm:grid-cols-2">
         <SelectField
           label="Tipe File"
@@ -304,29 +384,48 @@ export default function FileForm({
         />
       </div>
 
-      <label className="block">
-        <span className="text-sm font-bold text-slate-700">
-          Upload File
-        </span>
-        <input
-          type="file"
-          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.mp3"
-          onChange={(event) =>
-            setSelectedFile(
-              event.target.files?.[0] ?? null,
-            )
-          }
-          className="mt-2 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700"
-        />
-        <p className="mt-2 text-xs leading-5 text-slate-500">
-          Maksimal 50 MB. Sistem memakai Cloudflare R2 saat tersedia dan otomatis kembali ke Supabase Storage selama R2 belum dikonfigurasi.
-        </p>
-        {filePath && !selectedFile && (
-          <p className="mt-2 text-xs font-bold text-emerald-700">
-            File tersimpan saat ini tetap digunakan.
+      {sourceProvider === "upload" ? (
+        <label className="block">
+          <span className="text-sm font-bold text-slate-700">
+            Upload File
+          </span>
+          <input
+            type="file"
+            accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,.mp3"
+            onChange={(event) =>
+              setSelectedFile(
+                event.target.files?.[0] ?? null,
+              )
+            }
+            className="mt-2 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700"
+          />
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Maksimal 50 MB. Sistem memakai Cloudflare R2 saat tersedia dan otomatis kembali ke Supabase Storage selama R2 belum dikonfigurasi.
           </p>
-        )}
-      </label>
+          {filePath && !selectedFile && (
+            <p className="mt-2 text-xs font-bold text-emerald-700">
+              File upload yang tersimpan saat ini tetap digunakan.
+            </p>
+          )}
+        </label>
+      ) : (
+        <div>
+          <TextInput
+            label="URL File Google Drive"
+            required
+            value={googleDriveUrl}
+            onChange={setGoogleDriveUrl}
+          />
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Gunakan link file drive.google.com. Pastikan General access adalah Anyone with the link sebagai Viewer dan opsi download diizinkan. File yang diterima: PDF, PPT/PPTX, DOC/DOCX, XLS/XLSX, ZIP, dan MP3.
+          </p>
+          {googleDriveUrl && !googleDriveFileId && (
+            <p className="mt-2 text-sm font-semibold text-red-600">
+              URL Google Drive belum valid atau merupakan link folder.
+            </p>
+          )}
+        </div>
+      )}
 
       <SelectField
         label="Status Publikasi"
@@ -355,10 +454,18 @@ export default function FileForm({
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={
+          loading ||
+          (sourceProvider === "google_drive" &&
+            !googleDriveFileId)
+        }
         className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
-        {loading ? "Mengunggah..." : submitLabel}
+        {loading
+          ? sourceProvider === "upload"
+            ? "Mengunggah..."
+            : "Menyimpan..."
+          : submitLabel}
       </button>
     </form>
   );
