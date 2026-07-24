@@ -6,6 +6,7 @@ import {
   SelectField,
   TextInput,
 } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -27,10 +28,12 @@ interface SelectOption {
   label: string;
 }
 
-interface R2UploadResponse {
-  uploadUrl: string;
-  headers: Record<string, string>;
-  objectKey: string;
+interface StorageUploadResponse {
+  provider: "r2" | "supabase";
+  bucket?: string;
+  uploadUrl?: string;
+  headers?: Record<string, string>;
+  objectPath: string;
   filePath: string;
   message?: string;
 }
@@ -82,9 +85,9 @@ export default function FileForm({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function requestR2Upload(
+  async function requestStorageUpload(
     file: File,
-  ): Promise<R2UploadResponse> {
+  ): Promise<StorageUploadResponse> {
     const response = await fetch("/api/uploads/r2", {
       method: "POST",
       headers: {
@@ -99,19 +102,58 @@ export default function FileForm({
       }),
     });
     const payload =
-      (await response.json()) as R2UploadResponse;
+      (await response.json()) as StorageUploadResponse;
 
     if (!response.ok) {
       throw new Error(
         payload.message ||
-          "URL upload Cloudflare R2 gagal dibuat.",
+          "Lokasi upload materi gagal dibuat.",
       );
     }
 
     return payload;
   }
 
-  async function cleanupR2Upload(
+  async function uploadSelectedFile(
+    file: File,
+    upload: StorageUploadResponse,
+  ): Promise<void> {
+    if (upload.provider === "r2") {
+      if (!upload.uploadUrl) {
+        throw new Error("URL upload Cloudflare R2 tidak tersedia.");
+      }
+
+      const uploadResponse = await fetch(upload.uploadUrl, {
+        method: "PUT",
+        headers: upload.headers ?? {},
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(
+          `Upload Cloudflare R2 gagal (${uploadResponse.status}).`,
+        );
+      }
+
+      return;
+    }
+
+    const supabase = createClient();
+    const { error: uploadError } = await supabase.storage
+      .from(upload.bucket ?? "course-materials")
+      .upload(upload.objectPath, file, {
+        cacheControl: "3600",
+        contentType:
+          file.type || "application/octet-stream",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+  }
+
+  async function cleanupUpload(
     uploadedFilePath: string,
   ): Promise<void> {
     try {
@@ -126,7 +168,7 @@ export default function FileForm({
         }),
       });
     } catch {
-      // Cleanup is best-effort. The original form error remains primary.
+      // Cleanup is best-effort. The form error remains primary.
     }
   }
 
@@ -162,19 +204,8 @@ export default function FileForm({
 
     try {
       if (selectedFile) {
-        const upload = await requestR2Upload(selectedFile);
-        const uploadResponse = await fetch(upload.uploadUrl, {
-          method: "PUT",
-          headers: upload.headers,
-          body: selectedFile,
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error(
-            `Upload Cloudflare R2 gagal (${uploadResponse.status}).`,
-          );
-        }
-
+        const upload = await requestStorageUpload(selectedFile);
+        await uploadSelectedFile(selectedFile, upload);
         nextFilePath = upload.filePath;
         uploadedFilePath = upload.filePath;
       }
@@ -196,9 +227,10 @@ export default function FileForm({
       });
 
       setFilePath(nextFilePath);
+      setSelectedFile(null);
     } catch (error) {
       if (uploadedFilePath) {
-        await cleanupR2Upload(uploadedFilePath);
+        await cleanupUpload(uploadedFilePath);
       }
 
       setErrorMessage(
@@ -287,7 +319,7 @@ export default function FileForm({
           className="mt-2 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700"
         />
         <p className="mt-2 text-xs leading-5 text-slate-500">
-          Maksimal 50 MB. File baru diunggah langsung ke bucket privat Cloudflare R2 dan hanya dapat diunduh melalui pemeriksaan akses DokterAmbis.
+          Maksimal 50 MB. Sistem memakai Cloudflare R2 saat tersedia dan otomatis kembali ke Supabase Storage selama R2 belum dikonfigurasi.
         </p>
         {filePath && !selectedFile && (
           <p className="mt-2 text-xs font-bold text-emerald-700">
@@ -326,7 +358,7 @@ export default function FileForm({
         disabled={loading}
         className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
-        {loading ? "Menyimpan..." : submitLabel}
+        {loading ? "Mengunggah..." : submitLabel}
       </button>
     </form>
   );
