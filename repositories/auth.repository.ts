@@ -85,6 +85,21 @@ export class AuthRepository {
     }
   }
 
+  async getAuthenticatedUserId(): Promise<string | null> {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getClaims();
+
+    if (error) {
+      if (error.name === "AuthSessionMissingError") {
+        return null;
+      }
+
+      throw error;
+    }
+
+    return data?.claims?.sub ?? null;
+  }
+
   async getUser(): Promise<User | null> {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.getUser();
