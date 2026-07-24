@@ -4,10 +4,12 @@ import {
   createR2FilePath,
   createR2PresignedUrl,
   getR2BucketName,
+  isR2Configured,
   parseR2FilePath,
 } from "@/lib/cloudflare/r2";
 import { createClient } from "@/lib/supabase/server";
 
+const MATERIAL_BUCKET = "course-materials";
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set([
   "pdf",
@@ -55,6 +57,7 @@ async function getAuthorizedLesson(lessonId: string) {
 
   if (!user) {
     return {
+      supabase,
       error: NextResponse.json(
         { message: "Silakan masuk terlebih dahulu." },
         { status: 401 },
@@ -74,6 +77,7 @@ async function getAuthorizedLesson(lessonId: string) {
     !["admin", "mentor"].includes(profile.role)
   ) {
     return {
+      supabase,
       error: NextResponse.json(
         { message: "Anda tidak memiliki akses upload." },
         { status: 403 },
@@ -89,6 +93,7 @@ async function getAuthorizedLesson(lessonId: string) {
 
   if (!lesson) {
     return {
+      supabase,
       error: NextResponse.json(
         {
           message:
@@ -108,6 +113,7 @@ async function getAuthorizedLesson(lessonId: string) {
 
     if (!mentor) {
       return {
+        supabase,
         error: NextResponse.json(
           { message: "Data mentor tidak ditemukan." },
           { status: 403 },
@@ -124,6 +130,7 @@ async function getAuthorizedLesson(lessonId: string) {
 
     if (!assignment) {
       return {
+        supabase,
         error: NextResponse.json(
           {
             message:
@@ -135,7 +142,7 @@ async function getAuthorizedLesson(lessonId: string) {
     }
   }
 
-  return { lesson };
+  return { lesson, supabase };
 }
 
 export async function POST(request: Request) {
@@ -194,32 +201,51 @@ export async function POST(request: Request) {
   }
 
   const { lesson } = authorization;
-  const safeName = sanitizeFileName(originalFileName) ||
-    `materi.${extension}`;
+  const safeName =
+    sanitizeFileName(originalFileName) || `materi.${extension}`;
   const folderSegment = lesson.folder_id ?? "ungrouped";
-  const objectKey = [
+  const objectName = `${crypto.randomUUID()}-${safeName}`;
+  const r2ObjectKey = [
     "courses",
     lesson.course_id,
     "folders",
     folderSegment,
     "lessons",
     lesson.id,
-    `${crypto.randomUUID()}-${safeName}`,
+    objectName,
   ].join("/");
+  const supabaseObjectPath = [
+    lesson.course_id,
+    "folders",
+    folderSegment,
+    "lessons",
+    lesson.id,
+    objectName,
+  ].join("/");
+
+  if (!isR2Configured()) {
+    return NextResponse.json({
+      provider: "supabase",
+      bucket: MATERIAL_BUCKET,
+      objectPath: supabaseObjectPath,
+      filePath: supabaseObjectPath,
+    });
+  }
 
   try {
     const signed = createR2PresignedUrl({
       method: "PUT",
-      key: objectKey,
+      key: r2ObjectKey,
       expiresIn: 300,
       contentType,
     });
 
     return NextResponse.json({
+      provider: "r2",
       uploadUrl: signed.url,
       headers: signed.headers,
-      objectKey,
-      filePath: createR2FilePath(objectKey),
+      objectPath: r2ObjectKey,
+      filePath: createR2FilePath(r2ObjectKey),
     });
   } catch (error) {
     return NextResponse.json(
@@ -262,18 +288,9 @@ export async function DELETE(request: Request) {
     return authorization.error;
   }
 
-  const parsed = parseR2FilePath(filePath);
-
-  if (!parsed || parsed.bucket !== getR2BucketName()) {
-    return NextResponse.json(
-      { message: "Path file R2 tidak valid." },
-      { status: 400 },
-    );
-  }
-
-  const { lesson } = authorization;
+  const { lesson, supabase } = authorization;
   const folderSegment = lesson.folder_id ?? "ungrouped";
-  const allowedPrefix = [
+  const r2Prefix = [
     "courses",
     lesson.course_id,
     "folders",
@@ -282,39 +299,74 @@ export async function DELETE(request: Request) {
     lesson.id,
     "",
   ].join("/");
+  const supabasePrefix = [
+    lesson.course_id,
+    "folders",
+    folderSegment,
+    "lessons",
+    lesson.id,
+    "",
+  ].join("/");
+  const parsedR2Path = parseR2FilePath(filePath);
 
-  if (!parsed.key.startsWith(allowedPrefix)) {
+  if (parsedR2Path) {
+    if (
+      !isR2Configured() ||
+      parsedR2Path.bucket !== getR2BucketName() ||
+      !parsedR2Path.key.startsWith(r2Prefix)
+    ) {
+      return NextResponse.json(
+        { message: "Path file R2 tidak valid." },
+        { status: 400 },
+      );
+    }
+
+    try {
+      const signed = createR2PresignedUrl({
+        method: "DELETE",
+        key: parsedR2Path.key,
+        expiresIn: 120,
+      });
+      const deleteResponse = await fetch(signed.url, {
+        method: "DELETE",
+        cache: "no-store",
+      });
+
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        throw new Error("Object R2 gagal dihapus.");
+      }
+
+      return new NextResponse(null, { status: 204 });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          message:
+            error instanceof Error
+              ? error.message
+              : "Object R2 gagal dihapus.",
+        },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (!filePath.startsWith(supabasePrefix)) {
     return NextResponse.json(
       { message: "File tidak termasuk lesson ini." },
       { status: 403 },
     );
   }
 
-  try {
-    const signed = createR2PresignedUrl({
-      method: "DELETE",
-      key: parsed.key,
-      expiresIn: 120,
-    });
-    const deleteResponse = await fetch(signed.url, {
-      method: "DELETE",
-      cache: "no-store",
-    });
+  const { error: removeError } = await supabase.storage
+    .from(MATERIAL_BUCKET)
+    .remove([filePath]);
 
-    if (!deleteResponse.ok && deleteResponse.status !== 404) {
-      throw new Error("Object R2 gagal dihapus.");
-    }
-
-    return new NextResponse(null, { status: 204 });
-  } catch (error) {
+  if (removeError) {
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Object R2 gagal dihapus.",
-      },
+      { message: removeError.message },
       { status: 500 },
     );
   }
+
+  return new NextResponse(null, { status: 204 });
 }
