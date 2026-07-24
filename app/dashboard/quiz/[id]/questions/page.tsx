@@ -1,12 +1,15 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+import QuizQuestionCreateForm from "@/components/quiz/QuizQuestionCreateForm";
+import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/supabase/types/database.types";
 
 import {
   createQuestionAction,
   deleteQuestionAction,
 } from "./actions";
-
-import { createClient } from "@/lib/supabase/server";
 
 interface QuizQuestionsPageProps {
   params: Promise<{
@@ -14,8 +17,23 @@ interface QuizQuestionsPageProps {
   }>;
 }
 
-const inputClass =
-  "min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100";
+type QuizQuestionRow =
+  Database["public"]["Tables"]["quiz_questions"]["Row"];
+type QuizOptionRow =
+  Database["public"]["Tables"]["quiz_options"]["Row"];
+
+interface QuizQuestionWithImages extends QuizQuestionRow {
+  explanation_image_path: string | null;
+  quiz_options: Array<
+    Pick<
+      QuizOptionRow,
+      | "id"
+      | "option_order"
+      | "option_text"
+      | "is_correct"
+    >
+  >;
+}
 
 export default async function QuizQuestionsPage({
   params,
@@ -33,7 +51,7 @@ export default async function QuizQuestionsPage({
       supabase
         .from("quiz_questions")
         .select(
-          "id, question_order, question, explanation, points, quiz_options(id, option_order, option_text, is_correct)",
+          "*, quiz_options(id, option_order, option_text, is_correct)",
         )
         .eq("quiz_id", id)
         .order("question_order"),
@@ -48,7 +66,8 @@ export default async function QuizQuestionsPage({
   }
 
   const quiz = quizResult.data;
-  const questions = questionsResult.data ?? [];
+  const questions = (questionsResult.data ?? []) as unknown as
+    QuizQuestionWithImages[];
   const createAction =
     createQuestionAction.bind(null, quiz.id);
 
@@ -83,87 +102,13 @@ export default async function QuizQuestionsPage({
           Tambah Soal Pilihan Ganda
         </h2>
         <p className="mt-2 text-sm text-slate-500">
-          Isi empat pilihan dan tandai tepat satu jawaban benar.
+          Isi empat pilihan, tandai satu jawaban benar, lalu tambahkan foto soal atau foto pembahasan bila diperlukan.
         </p>
 
-        <form action={createAction} className="mt-6 space-y-5">
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">
-              Pertanyaan
-            </span>
-            <textarea
-              name="question"
-              required
-              rows={4}
-              className={`${inputClass} mt-2 resize-y`}
-            />
-          </label>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[0, 1, 2, 3].map((index) => (
-              <div
-                key={index}
-                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-              >
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">
-                    Pilihan {String.fromCharCode(65 + index)}
-                  </span>
-                  <input
-                    name={`option_${index}`}
-                    required
-                    className={`${inputClass} mt-2`}
-                  />
-                </label>
-
-                <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 text-sm font-bold text-emerald-700">
-                  <input
-                    type="radio"
-                    name="correct_option"
-                    value={index}
-                    required
-                    className="h-4 w-4 accent-emerald-600"
-                  />
-                  Jadikan kunci jawaban
-                </label>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">
-                Pembahasan
-              </span>
-              <textarea
-                name="explanation"
-                rows={3}
-                className={`${inputClass} mt-2 resize-y`}
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">
-                Skor
-              </span>
-              <input
-                type="number"
-                name="points"
-                min={1}
-                defaultValue={1}
-                required
-                className={`${inputClass} mt-2`}
-              />
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 sm:w-auto"
-          >
-            Simpan Soal
-          </button>
-        </form>
+        <QuizQuestionCreateForm
+          quizId={quiz.id}
+          action={createAction}
+        />
       </section>
 
       <section className="space-y-4">
@@ -222,6 +167,19 @@ export default async function QuizQuestionsPage({
                     </form>
                   </div>
 
+                  {question.image_path && (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      <Image
+                        src={`/api/quiz-images/${quiz.id}/${question.id}?kind=question`}
+                        alt={`Gambar soal ${question.question_order}`}
+                        width={1200}
+                        height={800}
+                        unoptimized
+                        className="h-auto max-h-[560px] w-full object-contain"
+                      />
+                    </div>
+                  )}
+
                   <div className="mt-5 grid gap-2 sm:grid-cols-2">
                     {sortedOptions.map((option) => (
                       <div
@@ -239,12 +197,29 @@ export default async function QuizQuestionsPage({
                     ))}
                   </div>
 
-                  {question.explanation && (
+                  {(question.explanation ||
+                    question.explanation_image_path) && (
                     <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-slate-700">
-                      <span className="font-black text-blue-800">
-                        Pembahasan:{" "}
-                      </span>
-                      {question.explanation}
+                      <p>
+                        <span className="font-black text-blue-800">
+                          Pembahasan:{" "}
+                        </span>
+                        {question.explanation ??
+                          "Pembahasan menggunakan gambar."}
+                      </p>
+
+                      {question.explanation_image_path && (
+                        <div className="mt-4 overflow-hidden rounded-2xl border border-blue-100 bg-white">
+                          <Image
+                            src={`/api/quiz-images/${quiz.id}/${question.id}?kind=explanation`}
+                            alt={`Gambar pembahasan soal ${question.question_order}`}
+                            width={1200}
+                            height={800}
+                            unoptimized
+                            className="h-auto max-h-[560px] w-full object-contain"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </article>
