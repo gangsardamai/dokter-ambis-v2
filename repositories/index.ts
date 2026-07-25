@@ -21,3 +21,4 @@ export * from "./payment.repository";
 export * from "./payment-proof.repository";
 export * from "./device.repository";
 export * from "./student-course-progress.repository";
+export * from "./lesson-message.repository";
