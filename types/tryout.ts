@@ -52,7 +52,7 @@ export interface CreateTryoutInput {
   createdBy: string;
 }
 
-export interface UpdateTryoutInput extends Omit<CreateTryoutInput, "createdBy"> {}
+export type UpdateTryoutInput = Omit<CreateTryoutInput, "createdBy">;
 
 export interface CreateTryoutQuestionInput {
   tryoutId: string;
