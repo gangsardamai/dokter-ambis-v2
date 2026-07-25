@@ -5,6 +5,7 @@ export * from "./video.service";
 export * from "./file.service";
 export * from "./live-class.service";
 export * from "./quiz.service";
+export * from "./tryout.service";
 export * from "./program.service";
 export * from "./auth.service";
 export * from "./profile.service";
