@@ -17,6 +17,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Export Try Out migrations
+        uses: actions/upload-artifact@v4
+        with:
+          name: tryout-migrations
+          path: |
+            supabase/migrations/0068_course_tryout_mvp.sql
+            supabase/migrations/0069_course_tryout_hardening.sql
+          retention-days: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
