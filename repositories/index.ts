@@ -20,3 +20,4 @@ export * from "./enrollment.repository";
 export * from "./payment.repository";
 export * from "./payment-proof.repository";
 export * from "./device.repository";
+export * from "./student-course-progress.repository";
