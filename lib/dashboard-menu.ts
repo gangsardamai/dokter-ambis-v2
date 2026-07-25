@@ -59,6 +59,10 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
           title: "Live Class",
           href: "/dashboard/admin/live-class",
         },
+        {
+          title: "Try Out",
+          href: "/dashboard/admin/tryout",
+        },
       ],
     },
     {
