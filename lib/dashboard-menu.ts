@@ -65,6 +65,10 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
       title: "Operasional",
       items: [
         {
+          title: "Kotak Pesan",
+          href: "/dashboard/admin/messages",
+        },
+        {
           title: "Promotion",
           href: "/dashboard/admin/promotion",
         },
