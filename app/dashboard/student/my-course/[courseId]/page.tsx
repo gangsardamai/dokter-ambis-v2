@@ -2,11 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
+import StudentCourseInsights, {
+  CourseProgressSummaryCards,
+} from "@/components/student/course/StudentCourseStatistics";
 
 import {
   courseExplorerService,
   enrollmentService,
   profileService,
+  studentCourseProgressService,
 } from "@/services";
 
 interface StudentMyCoursePageProps {
@@ -20,18 +24,16 @@ export default async function StudentMyCoursePage({
 }: StudentMyCoursePageProps) {
   const { courseId } = await params;
 
-  const profile =
-    await profileService.getCurrentProfile();
+  const profile = await profileService.getCurrentProfile();
 
   if (!profile) {
     redirect("/login");
   }
 
-  const enrollment =
-    await enrollmentService.getActiveCourseEnrollment(
-      profile.id,
-      courseId,
-    );
+  const enrollment = await enrollmentService.getActiveCourseEnrollment(
+    profile.id,
+    courseId,
+  );
 
   if (!enrollment || !enrollment.courses) {
     redirect(
@@ -41,8 +43,10 @@ export default async function StudentMyCoursePage({
     );
   }
 
-  const content =
-    await courseExplorerService.getCourseContent(courseId);
+  const [content, progressSummary] = await Promise.all([
+    courseExplorerService.getCourseContent(courseId),
+    studentCourseProgressService.getCourseProgress(profile.id, courseId),
+  ]);
 
   const course = enrollment.courses;
 
@@ -56,25 +60,32 @@ export default async function StudentMyCoursePage({
       </Link>
 
       <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
-        <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
-          Blok Aktif
-        </span>
+        <div className="grid min-w-0 gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="min-w-0">
+            <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
+              Blok Aktif
+            </span>
 
-        <h1 className="mt-5 break-words text-3xl font-black tracking-tight sm:text-4xl">
-          {course.title}
-        </h1>
+            <h1 className="mt-5 break-words text-3xl font-black tracking-tight sm:text-4xl">
+              {course.title}
+            </h1>
 
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
-          <span>
-            {course.organizations?.title ??
-              "Universitas belum tersedia"}
-          </span>
-          <span>
-            {course.programs?.title ??
-              "Program belum tersedia"}
-          </span>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
+              <span>
+                {course.organizations?.title ??
+                  "Universitas belum tersedia"}
+              </span>
+              <span>
+                {course.programs?.title ?? "Program belum tersedia"}
+              </span>
+            </div>
+          </div>
+
+          <CourseProgressSummaryCards summary={progressSummary} />
         </div>
       </section>
+
+      <StudentCourseInsights summary={progressSummary} />
 
       <section>
         <div className="mb-5">
@@ -93,6 +104,7 @@ export default async function StudentMyCoursePage({
           courseId={courseId}
           content={content}
           mode="student"
+          completedLessonIds={progressSummary.completedLessonIds}
         />
       </section>
     </main>
