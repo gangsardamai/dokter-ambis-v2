@@ -50,14 +50,14 @@ export class TryoutRepository extends BaseRepository {
         courses:course_id(
           id,
           title,
-          organizations(title),
-          programs(title)
+          organizations!fk_courses_organization(title),
+          programs!fk_courses_program(title)
         )
       `)
       .order("created_at", { ascending: false });
 
     if (error) this.handleError(error);
-    return (data ?? []) as TryoutWithCourseRow[];
+    return (data ?? []) as unknown as TryoutWithCourseRow[];
   }
 
   async getById(id: string): Promise<TryoutWithCourseRow | null> {
@@ -69,15 +69,15 @@ export class TryoutRepository extends BaseRepository {
         courses:course_id(
           id,
           title,
-          organizations(title),
-          programs(title)
+          organizations!fk_courses_organization(title),
+          programs!fk_courses_program(title)
         )
       `)
       .eq("id", id)
       .maybeSingle();
 
     if (error) this.handleError(error);
-    return data as TryoutWithCourseRow | null;
+    return data as unknown as TryoutWithCourseRow | null;
   }
 
   async getByCourse(courseId: string): Promise<Tryout[]> {
@@ -337,7 +337,10 @@ export class TryoutRepository extends BaseRepository {
         total_unanswered,
         duration_seconds,
         submitted_at,
-        profiles:profile_id(full_name, university_origin)
+        profiles!tryout_attempts_profile_id_fkey(
+          full_name,
+          university_origin
+        )
       `)
       .eq("tryout_id", tryoutId)
       .neq("status", "in_progress")
@@ -345,7 +348,7 @@ export class TryoutRepository extends BaseRepository {
 
     if (error) this.handleError(error);
 
-    return ((data ?? []) as AttemptWithProfileRow[]).map((row) => ({
+    return ((data ?? []) as unknown as AttemptWithProfileRow[]).map((row) => ({
       attemptId: row.id,
       studentName: row.profiles?.full_name ?? "Peserta",
       universityOrigin: row.profiles?.university_origin ?? null,
