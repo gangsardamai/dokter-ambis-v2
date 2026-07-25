@@ -23,7 +23,8 @@ function mapCourse(
   return {
     id: course.id,
     title: course.title,
-    organizationTitle: course.organizations?.title ?? "Universitas belum tersedia",
+    organizationTitle:
+      course.organizations?.title ?? "Universitas belum tersedia",
     programTitle: course.programs?.title ?? "Program belum tersedia",
   };
 }
@@ -37,7 +38,10 @@ function getAvailabilityLabel(
   const opens = openAt ? new Date(openAt).getTime() : null;
   const closes = closeAt ? new Date(closeAt).getTime() : null;
 
-  if (publicationStatus === "closed" || (closes !== null && now >= closes)) {
+  if (
+    publicationStatus === "closed" ||
+    (closes !== null && now >= closes)
+  ) {
     return { available: false, label: "Periode telah berakhir" };
   }
 
@@ -45,7 +49,7 @@ function getAvailabilityLabel(
     return { available: false, label: "Belum dibuka" };
   }
 
-  if (!['scheduled', 'published'].includes(publicationStatus)) {
+  if (!["scheduled", "published"].includes(publicationStatus)) {
     return { available: false, label: "Belum tersedia" };
   }
 
@@ -68,7 +72,9 @@ export class TryoutService {
     }));
   }
 
-  async getEditorPayload(tryoutId: string): Promise<TryoutEditorPayload | null> {
+  async getEditorPayload(
+    tryoutId: string,
+  ): Promise<TryoutEditorPayload | null> {
     const tryout = await tryoutRepository.getById(tryoutId);
     if (!tryout) return null;
 
@@ -155,6 +161,20 @@ export class TryoutService {
           : availability.label,
       };
     });
+  }
+
+  async getStudentTryoutDetail(profileId: string, tryoutId: string) {
+    const row = await tryoutRepository.getById(tryoutId);
+    if (!row) return null;
+
+    const items = await this.getStudentTryouts(profileId, row.course_id);
+    const tryout = items.find((item) => item.id === tryoutId);
+    if (!tryout) return null;
+
+    return {
+      tryout,
+      course: mapCourse(row.courses),
+    };
   }
 
   async startAttempt(tryoutId: string) {
