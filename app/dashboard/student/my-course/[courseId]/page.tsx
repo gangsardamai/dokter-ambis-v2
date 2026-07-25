@@ -9,6 +9,7 @@ import StudentCourseInsights, {
 import {
   courseExplorerService,
   enrollmentService,
+  lessonMessageService,
   profileService,
   studentCourseProgressService,
 } from "@/services";
@@ -43,9 +44,10 @@ export default async function StudentMyCoursePage({
     );
   }
 
-  const [content, progressSummary] = await Promise.all([
+  const [content, progressSummary, lessonMessages] = await Promise.all([
     courseExplorerService.getCourseContent(courseId),
     studentCourseProgressService.getCourseProgress(profile.id, courseId),
+    lessonMessageService.getStudentCourseThreads(profile.id, courseId),
   ]);
 
   const course = enrollment.courses;
@@ -85,9 +87,37 @@ export default async function StudentMyCoursePage({
         </div>
       </section>
 
-      <div className="[&>section>section:first-child]:hidden [&>section>div:nth-child(2)]:!mt-0">
-        <StudentCourseInsights summary={progressSummary} />
-      </div>
+      <details className="group rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5">
+        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-6">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+              Statistik Belajar
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              Buka grafik nilai dan rekomendasi materi yang perlu dipelajari ulang.
+            </p>
+          </div>
+          <span className="rounded-xl bg-blue-50 p-2 text-blue-700 transition-transform group-open:rotate-180">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </summary>
+        <div className="border-t border-blue-100 p-4 sm:p-5 [&>section>section:first-child]:hidden [&>section>div:nth-child(2)]:!mt-0">
+          <StudentCourseInsights summary={progressSummary} />
+        </div>
+      </details>
 
       <section>
         <div className="mb-5">
@@ -98,7 +128,7 @@ export default async function StudentMyCoursePage({
             Materi Pembelajaran
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Buka folder, pilih lesson, lalu akses file, video, atau quiz sesuai urutan pembelajaran.
+            Buka folder, pilih lesson, lalu akses file, video, quiz, atau kirim pertanyaan sesuai urutan pembelajaran.
           </p>
         </div>
 
@@ -107,6 +137,7 @@ export default async function StudentMyCoursePage({
           content={content}
           mode="student"
           completedLessonIds={progressSummary.completedLessonIds}
+          lessonMessages={lessonMessages}
         />
       </section>
     </main>
