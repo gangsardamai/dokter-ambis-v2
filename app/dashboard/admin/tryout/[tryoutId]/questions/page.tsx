@@ -15,6 +15,7 @@ interface TryoutQuestionsPageProps {
     error?: string | string[];
     created?: string | string[];
     added?: string | string[];
+    saved?: string | string[];
     deleted?: string | string[];
   }>;
 }
@@ -25,6 +26,14 @@ function getParam(value: string | string[] | undefined): string {
 
 const inputClass =
   "min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const labelClass = "mb-1.5 block text-sm font-black text-slate-700";
+const optionFields = [
+  ["optionA", "A"],
+  ["optionB", "B"],
+  ["optionC", "C"],
+  ["optionD", "D"],
+  ["optionE", "E"],
+] as const;
 
 export default async function TryoutQuestionsPage({
   params,
@@ -37,6 +46,16 @@ export default async function TryoutQuestionsPage({
   if (!payload) notFound();
 
   const createAction = createTryoutQuestionAction.bind(null, tryoutId);
+  const successMessage =
+    getParam(query.created) === "true"
+      ? "Try Out berhasil dibuat. Silakan tambahkan soal."
+      : getParam(query.added) === "true"
+        ? "Soal berhasil ditambahkan."
+        : getParam(query.saved) === "true"
+          ? "Perubahan soal berhasil disimpan."
+          : getParam(query.deleted) === "true"
+            ? "Soal berhasil dihapus."
+            : "";
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-7 p-4 sm:p-6 lg:p-8">
@@ -68,17 +87,9 @@ export default async function TryoutQuestionsPage({
         description={`${payload.tryout.title} · ${payload.questions.length} soal`}
       />
 
-      {(getParam(query.created) === "true" ||
-        getParam(query.added) === "true") && (
+      {successMessage && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
-          {getParam(query.created) === "true"
-            ? "Try Out berhasil dibuat. Silakan tambahkan soal."
-            : "Soal berhasil ditambahkan."}
-        </div>
-      )}
-      {getParam(query.deleted) === "true" && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
-          Soal berhasil dihapus.
+          {successMessage}
         </div>
       )}
       {getParam(query.error) && (
@@ -96,13 +107,13 @@ export default async function TryoutQuestionsPage({
             Tambahkan Pertanyaan
           </h2>
           <p className="mt-2 text-sm text-slate-500">
-            Gunakan lima pilihan A–E dan tentukan tepat satu jawaban benar.
+            Isi pilihan A–E dan tentukan tepat satu jawaban benar. Konten soal terkunci setelah attempt pertama dimulai.
           </p>
         </div>
 
         <form action={createAction} className="space-y-5">
           <div>
-            <label htmlFor="question" className="mb-1.5 block text-sm font-black text-slate-700">
+            <label htmlFor="question" className={labelClass}>
               Pertanyaan
             </label>
             <textarea
@@ -117,106 +128,49 @@ export default async function TryoutQuestionsPage({
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label htmlFor="topic" className="mb-1.5 block text-sm font-black text-slate-700">
-                Topik
-              </label>
-              <input
-                id="topic"
-                name="topic"
-                required
-                defaultValue="Umum"
-                className={inputClass}
-              />
+              <label htmlFor="topic" className={labelClass}>Topik</label>
+              <input id="topic" name="topic" required defaultValue="Umum" className={inputClass} />
             </div>
             <div>
-              <label htmlFor="difficulty" className="mb-1.5 block text-sm font-black text-slate-700">
-                Kesulitan
-              </label>
-              <select
-                id="difficulty"
-                name="difficulty"
-                defaultValue="medium"
-                className={inputClass}
-              >
+              <label htmlFor="difficulty" className={labelClass}>Kesulitan</label>
+              <select id="difficulty" name="difficulty" defaultValue="medium" className={inputClass}>
                 <option value="easy">Mudah</option>
                 <option value="medium">Sedang</option>
                 <option value="hard">Sulit</option>
               </select>
             </div>
             <div>
-              <label htmlFor="points" className="mb-1.5 block text-sm font-black text-slate-700">
-                Bobot
-              </label>
-              <input
-                id="points"
-                name="points"
-                type="number"
-                min={1}
-                defaultValue={1}
-                required
-                className={inputClass}
-              />
+              <label htmlFor="points" className={labelClass}>Bobot</label>
+              <input id="points" name="points" type="number" min={1} defaultValue={1} required className={inputClass} />
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              ["optionA", "A"],
-              ["optionB", "B"],
-              ["optionC", "C"],
-              ["optionD", "D"],
-              ["optionE", "E"],
-            ].map(([name, label]) => (
+            {optionFields.map(([name, label]) => (
               <div key={name}>
-                <label htmlFor={name} className="mb-1.5 block text-sm font-black text-slate-700">
-                  Pilihan {label}
-                </label>
-                <input
-                  id={name}
-                  name={name}
-                  required
-                  className={inputClass}
-                />
+                <label htmlFor={name} className={labelClass}>Pilihan {label}</label>
+                <input id={name} name={name} required className={inputClass} />
               </div>
             ))}
           </div>
 
-          <div>
-            <label htmlFor="correctOptionIndex" className="mb-1.5 block text-sm font-black text-slate-700">
-              Jawaban Benar
-            </label>
-            <select
-              id="correctOptionIndex"
-              name="correctOptionIndex"
-              defaultValue="1"
-              className={inputClass}
-            >
-              <option value="1">A</option>
-              <option value="2">B</option>
-              <option value="3">C</option>
-              <option value="4">D</option>
-              <option value="5">E</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="explanation" className="mb-1.5 block text-sm font-black text-slate-700">
-              Pembahasan
-            </label>
-            <textarea
-              id="explanation"
-              name="explanation"
-              rows={4}
-              className={`${inputClass} py-3`}
-              placeholder="Jelaskan alasan jawaban benar dan mengapa pilihan lain kurang tepat."
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="correctOptionIndex" className={labelClass}>Jawaban Benar</label>
+              <select id="correctOptionIndex" name="correctOptionIndex" defaultValue="1" className={inputClass}>
+                {[1, 2, 3, 4, 5].map((index) => (
+                  <option key={index} value={index}>{String.fromCharCode(64 + index)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="explanation" className={labelClass}>Pembahasan</label>
+              <textarea id="explanation" name="explanation" rows={3} className={`${inputClass} py-3`} />
+            </div>
           </div>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-blue-600 to-[#033b63] px-6 py-2.5 text-sm font-black text-white"
-            >
+            <button type="submit" className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-blue-600 to-[#033b63] px-6 py-2.5 text-sm font-black text-white">
               Tambahkan Soal
             </button>
           </div>
@@ -225,12 +179,8 @@ export default async function TryoutQuestionsPage({
 
       <section className="space-y-4">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
-            Daftar Soal
-          </p>
-          <h2 className="mt-2 text-xl font-black text-slate-950">
-            {payload.questions.length} Soal Tersimpan
-          </h2>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Daftar Soal</p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">{payload.questions.length} Soal Tersimpan</h2>
         </div>
 
         {payload.questions.length === 0 ? (
@@ -239,43 +189,33 @@ export default async function TryoutQuestionsPage({
           </div>
         ) : (
           payload.questions.map((question) => {
-            const deleteAction = deleteTryoutQuestionAction.bind(
-              null,
-              tryoutId,
-              question.id,
-            );
+            const deleteAction = deleteTryoutQuestionAction.bind(null, tryoutId, question.id);
 
             return (
-              <article
-                key={question.id}
-                className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6"
-              >
+              <article key={question.id} className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-wide">
-                      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
-                        Soal {question.question_order}
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-                        {question.topic}
-                      </span>
-                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
-                        {question.difficulty}
-                      </span>
+                      <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">Soal {question.question_order}</span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">{question.topic}</span>
+                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">{question.difficulty}</span>
                     </div>
-                    <p className="mt-4 whitespace-pre-wrap text-sm font-bold leading-7 text-slate-900">
-                      {question.question}
-                    </p>
+                    <p className="mt-4 whitespace-pre-wrap text-sm font-bold leading-7 text-slate-900">{question.question}</p>
                   </div>
 
-                  <form action={deleteAction}>
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-10 shrink-0 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-black text-red-700 hover:bg-red-100"
+                  <div className="flex shrink-0 gap-2">
+                    <Link
+                      href={`/dashboard/admin/tryout/${tryoutId}/questions/${question.id}/edit`}
+                      className="inline-flex min-h-10 items-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100"
                     >
-                      Hapus
-                    </button>
-                  </form>
+                      Edit
+                    </Link>
+                    <form action={deleteAction}>
+                      <button type="submit" className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-black text-red-700 hover:bg-red-100">
+                        Hapus
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -288,25 +228,17 @@ export default async function TryoutQuestionsPage({
                           : "border-slate-200 bg-slate-50 text-slate-700"
                       }`}
                     >
-                      <span className="mr-2 font-black">
-                        {String.fromCharCode(65 + index)}.
-                      </span>
+                      <span className="mr-2 font-black">{String.fromCharCode(65 + index)}.</span>
                       {option.option_text}
-                      {option.is_correct && (
-                        <span className="ml-2 text-xs font-black">✓ Benar</span>
-                      )}
+                      {option.is_correct && <span className="ml-2 text-xs font-black">✓ Benar</span>}
                     </div>
                   ))}
                 </div>
 
                 {question.explanation && (
                   <div className="mt-5 rounded-2xl bg-blue-50/70 p-4">
-                    <p className="text-xs font-black uppercase tracking-wide text-blue-700">
-                      Pembahasan
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                      {question.explanation}
-                    </p>
+                    <p className="text-xs font-black uppercase tracking-wide text-blue-700">Pembahasan</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{question.explanation}</p>
                   </div>
                 )}
               </article>
