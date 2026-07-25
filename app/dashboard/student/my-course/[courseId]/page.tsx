@@ -85,7 +85,9 @@ export default async function StudentMyCoursePage({
         </div>
       </section>
 
-      <StudentCourseInsights summary={progressSummary} />
+      <div className="[&>section>section:first-child]:hidden [&>section>div:nth-child(2)]:!mt-0">
+        <StudentCourseInsights summary={progressSummary} />
+      </div>
 
       <section>
         <div className="mb-5">
