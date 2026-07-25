@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import LessonCompletionButton from "@/components/student/course/LessonCompletionButton";
+import LessonMessageThread from "@/components/student/course/LessonMessageThread";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import { isGoogleDriveFilePath } from "@/lib/file/file-source";
 
@@ -14,6 +15,7 @@ import type {
   ExplorerQuiz,
   ExplorerVideo,
 } from "@/types/course-explorer";
+import type { StudentLessonMessageThread } from "@/types/lesson-messages";
 
 type ExplorerMode = "manager" | "student";
 
@@ -22,6 +24,7 @@ interface CourseContentAccordionProps {
   content: CourseExplorerContent;
   mode: ExplorerMode;
   completedLessonIds?: string[];
+  lessonMessages?: Record<string, StudentLessonMessageThread>;
 }
 
 interface ActionMenuProps {
@@ -303,11 +306,13 @@ function LessonPanel({
   content,
   mode,
   completed,
+  messageThread,
 }: {
   courseId: string;
   content: ExplorerLessonContent;
   mode: ExplorerMode;
   completed: boolean;
+  messageThread?: StudentLessonMessageThread;
 }) {
   const { lesson, files, videos, quizzes } = content;
   const itemCount = files.length + videos.length + quizzes.length;
@@ -327,6 +332,11 @@ function LessonPanel({
               <StatusBadge status={lesson.publication_status} />
             )}
             {mode === "student" && completed && <CompletionBadge />}
+            {mode === "student" && messageThread?.status === "open" && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-amber-700">
+                Pesan Menunggu
+              </span>
+            )}
           </div>
           <p className="mt-1 text-xs font-semibold text-slate-500">
             {itemCount} konten · {lesson.duration ?? 0} menit
@@ -396,23 +406,31 @@ function LessonPanel({
         )}
 
         {mode === "student" && (
-          <div className="mt-4 border-t border-blue-100 pt-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-black text-slate-800">
-                  Sudah memahami lesson ini?
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Status progres hanya berubah setelah peserta menekan tombol.
-                </p>
+          <>
+            <div className="mt-4 border-t border-blue-100 pt-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-800">
+                    Sudah memahami lesson ini?
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Status progres hanya berubah setelah peserta menekan tombol.
+                  </p>
+                </div>
+                <LessonCompletionButton
+                  courseId={courseId}
+                  lessonId={lesson.id}
+                  initialCompleted={completed}
+                />
               </div>
-              <LessonCompletionButton
-                courseId={courseId}
-                lessonId={lesson.id}
-                initialCompleted={completed}
-              />
             </div>
-          </div>
+
+            <LessonMessageThread
+              courseId={courseId}
+              lessonId={lesson.id}
+              thread={messageThread}
+            />
+          </>
         )}
       </div>
     </details>
@@ -424,6 +442,7 @@ export default function CourseContentAccordion({
   content,
   mode,
   completedLessonIds = [],
+  lessonMessages = {},
 }: CourseContentAccordionProps) {
   const isEmpty =
     content.folders.length === 0 &&
@@ -526,6 +545,9 @@ export default function CourseContentAccordion({
                     completed={completedLessonSet.has(
                       lessonContent.lesson.id,
                     )}
+                    messageThread={
+                      lessonMessages[lessonContent.lesson.id]
+                    }
                   />
                 ))}
               </div>
@@ -549,6 +571,9 @@ export default function CourseContentAccordion({
                 completed={completedLessonSet.has(
                   lessonContent.lesson.id,
                 )}
+                messageThread={
+                  lessonMessages[lessonContent.lesson.id]
+                }
               />
             ))}
           </div>
