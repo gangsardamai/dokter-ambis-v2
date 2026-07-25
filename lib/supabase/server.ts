@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 import { createServerClient } from "@supabase/ssr";
 
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.app.types";
 
 export async function createClient() {
 
@@ -20,10 +20,6 @@ export async function createClient() {
 
         setAll(cookiesToSet) {
 
-          // Pada Server Component Next.js 16
-          // cookie tidak boleh dimodifikasi.
-          // Session refresh akan ditangani middleware.
-
           try {
 
             cookiesToSet.forEach(
@@ -39,10 +35,8 @@ export async function createClient() {
             );
 
           } catch {
-
-            // Abaikan error.
-            // Middleware akan menangani update cookie.
-
+            // Session refresh is handled by middleware when cookies
+            // cannot be changed from a Server Component.
           }
 
         },
