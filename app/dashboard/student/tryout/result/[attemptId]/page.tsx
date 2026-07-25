@@ -132,9 +132,17 @@ export default async function TryoutResultPage({
         <h2 className="text-xl font-black text-slate-950">Pembahasan</h2>
         <p className="mt-3 text-sm leading-7 text-slate-500">
           {result.review_available
-            ? "Pembahasan sudah tersedia dan akan ditampilkan pada halaman review Try Out."
+            ? "Pembahasan sudah tersedia. Periksa jawaban, pilihan benar, dan penjelasan setiap soal."
             : "Pembahasan belum tersedia. Admin dapat menjadwalkannya setelah periode Try Out berakhir."}
         </p>
+        {result.review_available && (
+          <Link
+            href={`/dashboard/student/tryout/review/${attemptId}`}
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-700"
+          >
+            Buka Pembahasan
+          </Link>
+        )}
       </section>
     </main>
   );
