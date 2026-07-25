@@ -9,6 +9,11 @@ import type {
 
 export type { Json };
 
+export type LessonMessageThreadStatus =
+  | "open"
+  | "answered"
+  | "closed";
+
 type GeneratedPublic =
   GeneratedDatabase["public"];
 type GeneratedVideos =
@@ -41,7 +46,109 @@ type VideosWithGoogleDrive = {
     GeneratedVideos["Relationships"];
 };
 
-type PublicWithGoogleDrive = Omit<
+type LessonMessageThreads = {
+  Row: {
+    id: string;
+    student_profile_id: string;
+    course_id: string;
+    lesson_id: string;
+    status: LessonMessageThreadStatus;
+    last_message_at: string;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    id?: string;
+    student_profile_id: string;
+    course_id: string;
+    lesson_id: string;
+    status?: LessonMessageThreadStatus;
+    last_message_at?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: {
+    id?: string;
+    student_profile_id?: string;
+    course_id?: string;
+    lesson_id?: string;
+    status?: LessonMessageThreadStatus;
+    last_message_at?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Relationships: [
+    {
+      foreignKeyName: "lesson_message_threads_student_profile_id_fkey";
+      columns: ["student_profile_id"];
+      isOneToOne: false;
+      referencedRelation: "profiles";
+      referencedColumns: ["id"];
+    },
+    {
+      foreignKeyName: "lesson_message_threads_course_id_fkey";
+      columns: ["course_id"];
+      isOneToOne: false;
+      referencedRelation: "courses";
+      referencedColumns: ["id"];
+    },
+    {
+      foreignKeyName: "lesson_message_threads_lesson_id_fkey";
+      columns: ["lesson_id"];
+      isOneToOne: false;
+      referencedRelation: "lessons";
+      referencedColumns: ["id"];
+    },
+  ];
+};
+
+type LessonMessageEntries = {
+  Row: {
+    id: string;
+    thread_id: string;
+    sender_profile_id: string;
+    sender_role: GeneratedPublic["Enums"]["profile_role"];
+    message: string;
+    read_at: string | null;
+    created_at: string;
+  };
+  Insert: {
+    id?: string;
+    thread_id: string;
+    sender_profile_id: string;
+    sender_role: GeneratedPublic["Enums"]["profile_role"];
+    message: string;
+    read_at?: string | null;
+    created_at?: string;
+  };
+  Update: {
+    id?: string;
+    thread_id?: string;
+    sender_profile_id?: string;
+    sender_role?: GeneratedPublic["Enums"]["profile_role"];
+    message?: string;
+    read_at?: string | null;
+    created_at?: string;
+  };
+  Relationships: [
+    {
+      foreignKeyName: "lesson_message_entries_thread_id_fkey";
+      columns: ["thread_id"];
+      isOneToOne: false;
+      referencedRelation: "lesson_message_threads";
+      referencedColumns: ["id"];
+    },
+    {
+      foreignKeyName: "lesson_message_entries_sender_profile_id_fkey";
+      columns: ["sender_profile_id"];
+      isOneToOne: false;
+      referencedRelation: "profiles";
+      referencedColumns: ["id"];
+    },
+  ];
+};
+
+type PublicWithApplicationExtensions = Omit<
   GeneratedPublic,
   "Tables" | "Enums"
 > & {
@@ -50,6 +157,8 @@ type PublicWithGoogleDrive = Omit<
     "videos"
   > & {
     videos: VideosWithGoogleDrive;
+    lesson_message_threads: LessonMessageThreads;
+    lesson_message_entries: LessonMessageEntries;
   };
   Enums: Omit<
     GeneratedPublic["Enums"],
@@ -63,7 +172,7 @@ export type Database = Omit<
   GeneratedDatabase,
   "public"
 > & {
-  public: PublicWithGoogleDrive;
+  public: PublicWithApplicationExtensions;
 };
 
 type DatabaseWithoutInternals = Omit<
