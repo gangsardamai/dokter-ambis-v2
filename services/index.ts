@@ -17,3 +17,4 @@ export * from "./payment.service";
 export * from "./payment-proof.service";
 export * from "./device.service";
 export * from "./course-explorer.service";
+export * from "./student-course-progress.service";
