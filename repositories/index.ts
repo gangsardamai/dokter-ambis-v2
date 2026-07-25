@@ -8,6 +8,7 @@ export * from "./video.repository";
 export * from "./file.repository";
 export * from "./live-class.repository";
 export * from "./quiz.repository";
+export * from "./tryout.repository";
 
 export * from "./program.repository";
 export { courseRepository } from "./course.repository";
