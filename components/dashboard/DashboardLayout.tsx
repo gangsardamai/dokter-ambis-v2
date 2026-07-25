@@ -15,6 +15,7 @@ import Sidebar from "./Sidebar";
 interface DashboardLayoutProps {
   children: ReactNode;
   role: ProfileRole;
+  messageUnreadCount?: number;
 }
 
 interface DashboardSidebarContextValue {
@@ -30,6 +31,7 @@ export function useDashboardSidebar() {
 export default function DashboardLayout({
   children,
   role,
+  messageUnreadCount = 0,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarContext = useMemo(
@@ -43,7 +45,10 @@ export default function DashboardLayout({
     <DashboardSidebarContext.Provider value={sidebarContext}>
       <div className="min-h-screen overflow-x-hidden bg-[#f4f8ff] lg:flex">
         <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">
-          <Sidebar role={role} />
+          <Sidebar
+            role={role}
+            messageUnreadCount={messageUnreadCount}
+          />
         </div>
 
         {sidebarOpen && (
@@ -57,6 +62,7 @@ export default function DashboardLayout({
             <div className="relative h-full">
               <Sidebar
                 role={role}
+                messageUnreadCount={messageUnreadCount}
                 onNavigate={() => setSidebarOpen(false)}
               />
             </div>
