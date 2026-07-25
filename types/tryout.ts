@@ -65,10 +65,20 @@ export interface CreateTryoutQuestionInput {
   correctOptionIndex: number;
 }
 
+export interface StudentTryoutSummary {
+  tryout_id: string;
+  attempts_used: number;
+  best_score: number | null;
+  passed: boolean;
+  result_released: boolean;
+  active_attempt_id: string | null;
+}
+
 export interface StudentTryoutListItem extends Tryout {
   attemptsUsed: number;
   bestScore: number | null;
   passed: boolean;
+  resultReleased: boolean;
   activeAttemptId: string | null;
   isAvailable: boolean;
   availabilityLabel: string;
@@ -123,6 +133,37 @@ export interface TryoutResultPayload {
   total_unanswered?: number;
   duration_seconds?: number;
   review_available?: boolean;
+}
+
+export interface TryoutReviewOption {
+  id: string;
+  option_text: string;
+  image_path: string | null;
+  is_correct: boolean;
+}
+
+export interface TryoutReviewQuestion {
+  id: string;
+  question_order: number;
+  question: string;
+  image_path: string | null;
+  topic: string;
+  difficulty: TryoutDifficulty;
+  explanation: string | null;
+  explanation_image_path: string | null;
+  selected_option_id: string | null;
+  is_correct: boolean;
+  options: TryoutReviewOption[];
+}
+
+export interface TryoutReviewPayload {
+  released: boolean;
+  message?: string;
+  attempt_id?: string;
+  tryout_id?: string;
+  title?: string;
+  score?: number;
+  questions?: TryoutReviewQuestion[];
 }
 
 export interface AdminTryoutResultItem {
