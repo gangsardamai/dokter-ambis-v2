@@ -90,6 +90,15 @@ function getTryoutInput(
   if (openAt && closeAt && new Date(closeAt) <= new Date(openAt)) {
     throw new Error("Waktu tutup harus setelah waktu buka.");
   }
+  if (
+    !closeAt &&
+    (resultReleaseMode === "after_close" ||
+      reviewReleaseMode === "after_close")
+  ) {
+    throw new Error(
+      "Waktu tutup wajib diisi jika nilai atau pembahasan dirilis setelah periode berakhir.",
+    );
+  }
 
   return {
     courseId,
@@ -106,6 +115,43 @@ function getTryoutInput(
     shuffleOptions: formData.get("shuffleOptions") === "on",
     publicationStatus,
   };
+}
+
+function getQuestionInput(
+  tryoutId: string,
+  formData: FormData,
+): CreateTryoutQuestionInput {
+  const options = ["optionA", "optionB", "optionC", "optionD", "optionE"]
+    .map((key) => getString(formData, key))
+    .filter(Boolean);
+  const correctOptionIndex = getInteger(
+    formData,
+    "correctOptionIndex",
+    1,
+  );
+
+  const input: CreateTryoutQuestionInput = {
+    tryoutId,
+    question: getString(formData, "question"),
+    explanation: getString(formData, "explanation"),
+    topic: getString(formData, "topic") || "Umum",
+    difficulty: getString(formData, "difficulty") as TryoutDifficulty,
+    points: getInteger(formData, "points", 1),
+    options,
+    correctOptionIndex,
+  };
+
+  if (!input.question) {
+    throw new Error("Pertanyaan wajib diisi.");
+  }
+  if (options.length < 2) {
+    throw new Error("Minimal dua pilihan jawaban wajib diisi.");
+  }
+  if (correctOptionIndex < 1 || correctOptionIndex > options.length) {
+    throw new Error("Jawaban benar tidak sesuai pilihan yang tersedia.");
+  }
+
+  return input;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -169,38 +215,7 @@ export async function createTryoutQuestionAction(
 ) {
   try {
     await requireAdminProfile();
-
-    const options = ["optionA", "optionB", "optionC", "optionD", "optionE"]
-      .map((key) => getString(formData, key))
-      .filter(Boolean);
-    const correctOptionIndex = getInteger(
-      formData,
-      "correctOptionIndex",
-      1,
-    );
-
-    const input: CreateTryoutQuestionInput = {
-      tryoutId,
-      question: getString(formData, "question"),
-      explanation: getString(formData, "explanation"),
-      topic: getString(formData, "topic") || "Umum",
-      difficulty: getString(formData, "difficulty") as TryoutDifficulty,
-      points: getInteger(formData, "points", 1),
-      options,
-      correctOptionIndex,
-    };
-
-    if (!input.question) {
-      throw new Error("Pertanyaan wajib diisi.");
-    }
-    if (options.length < 2) {
-      throw new Error("Minimal dua pilihan jawaban wajib diisi.");
-    }
-    if (correctOptionIndex < 1 || correctOptionIndex > options.length) {
-      throw new Error("Jawaban benar tidak sesuai pilihan yang tersedia.");
-    }
-
-    await tryoutService.createQuestion(input);
+    await tryoutService.createQuestion(getQuestionInput(tryoutId, formData));
   } catch (error) {
     redirect(
       `/dashboard/admin/tryout/${tryoutId}/questions?error=${encodeURIComponent(
@@ -211,6 +226,31 @@ export async function createTryoutQuestionAction(
 
   revalidatePath(`/dashboard/admin/tryout/${tryoutId}/questions`);
   redirect(`/dashboard/admin/tryout/${tryoutId}/questions?added=true`);
+}
+
+export async function updateTryoutQuestionAction(
+  tryoutId: string,
+  questionId: string,
+  formData: FormData,
+) {
+  try {
+    await requireAdminProfile();
+    const { tryoutId: _ignored, ...input } = getQuestionInput(
+      tryoutId,
+      formData,
+    );
+    void _ignored;
+    await tryoutService.updateQuestion(questionId, input);
+  } catch (error) {
+    redirect(
+      `/dashboard/admin/tryout/${tryoutId}/questions/${questionId}/edit?error=${encodeURIComponent(
+        getErrorMessage(error),
+      )}`,
+    );
+  }
+
+  revalidatePath(`/dashboard/admin/tryout/${tryoutId}/questions`);
+  redirect(`/dashboard/admin/tryout/${tryoutId}/questions?saved=true`);
 }
 
 export async function deleteTryoutQuestionAction(
