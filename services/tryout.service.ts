@@ -1,3 +1,4 @@
+import { tryoutFollowupRepository } from "@/repositories/tryout-followup.repository";
 import { tryoutRepository } from "@/repositories/tryout.repository";
 
 import type {
@@ -118,6 +119,13 @@ export class TryoutService {
     return tryoutRepository.createQuestion(input);
   }
 
+  async updateQuestion(
+    questionId: string,
+    input: Omit<CreateTryoutQuestionInput, "tryoutId">,
+  ) {
+    return tryoutFollowupRepository.updateQuestion(questionId, input);
+  }
+
   async deleteQuestion(questionId: string) {
     return tryoutRepository.deleteQuestion(questionId);
   }
@@ -126,18 +134,14 @@ export class TryoutService {
     profileId: string,
     courseId: string,
   ): Promise<StudentTryoutListItem[]> {
-    const tryouts = await tryoutRepository.getByCourse(courseId);
-    const tryoutIds = tryouts.map((tryout) => tryout.id);
-    const [results, activeAttempts] = await Promise.all([
-      tryoutRepository.getStudentResults(profileId, tryoutIds),
-      tryoutRepository.getActiveAttempts(profileId, tryoutIds),
+    void profileId;
+    const [tryouts, summaries] = await Promise.all([
+      tryoutRepository.getByCourse(courseId),
+      tryoutFollowupRepository.getStudentSummaries(courseId),
     ]);
 
-    const resultsByTryout = new Map(
-      results.map((result) => [result.tryout_id, result]),
-    );
-    const activeByTryout = new Map(
-      activeAttempts.map((attempt) => [attempt.tryout_id, attempt]),
+    const summaryByTryout = new Map(
+      summaries.map((summary) => [summary.tryout_id, summary]),
     );
 
     return tryouts.map((tryout) => {
@@ -146,17 +150,18 @@ export class TryoutService {
         tryout.open_at,
         tryout.close_at,
       );
-      const result = resultsByTryout.get(tryout.id);
-      const activeAttempt = activeByTryout.get(tryout.id);
+      const summary = summaryByTryout.get(tryout.id);
+      const activeAttemptId = summary?.active_attempt_id ?? null;
 
       return {
         ...tryout,
-        attemptsUsed: result?.attempts_used ?? 0,
-        bestScore: result?.best_score ?? null,
-        passed: result?.passed ?? false,
-        activeAttemptId: activeAttempt?.id ?? null,
-        isAvailable: availability.available || Boolean(activeAttempt),
-        availabilityLabel: activeAttempt
+        attemptsUsed: summary?.attempts_used ?? 0,
+        bestScore: summary?.best_score ?? null,
+        passed: summary?.passed ?? false,
+        resultReleased: summary?.result_released ?? false,
+        activeAttemptId,
+        isAvailable: availability.available || Boolean(activeAttemptId),
+        availabilityLabel: activeAttemptId
           ? "Sedang dikerjakan"
           : availability.label,
       };
@@ -205,6 +210,10 @@ export class TryoutService {
 
   async getResult(attemptId: string) {
     return tryoutRepository.getResult(attemptId);
+  }
+
+  async getReview(attemptId: string) {
+    return tryoutFollowupRepository.getReview(attemptId);
   }
 
   async getAdminResults(tryoutId: string) {
