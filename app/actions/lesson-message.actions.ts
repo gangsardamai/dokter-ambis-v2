@@ -35,10 +35,12 @@ export async function sendLessonMessageAction(
     });
 
     revalidatePath(`/dashboard/student/my-course/${courseId}`);
+    revalidatePath("/dashboard/admin/messages");
+    revalidatePath("/dashboard/mentor/messages");
 
     return {
       success: true,
-      message: "Pesan berhasil dikirim ke Admin Dokter Ambis.",
+      message: "Pesan berhasil dikirim ke tim pengajar Dokter Ambis.",
     };
   } catch (error) {
     return {
@@ -69,6 +71,32 @@ export async function replyLessonMessageAction(
 
   revalidatePath("/dashboard/admin/messages");
   revalidatePath(`/dashboard/admin/messages/${threadId}`);
+  revalidatePath("/dashboard/mentor/messages");
+  revalidatePath(`/dashboard/mentor/messages/${threadId}`);
+  revalidatePath(`/dashboard/student/my-course/${courseId}`);
+}
+
+
+export async function replyLessonMessageAsMentorAction(
+  threadId: string,
+  formData: FormData,
+): Promise<void> {
+  const profile = await profileService.getCurrentProfile();
+  if (!profile || profile.role !== "mentor") {
+    throw new Error("Hanya Mentor yang dapat menggunakan aksi ini.");
+  }
+
+  const message = String(formData.get("message") ?? "");
+  const courseId = await lessonMessageService.replyAsMentor({
+    mentorProfileId: profile.id,
+    threadId,
+    message,
+  });
+
+  revalidatePath("/dashboard/mentor/messages");
+  revalidatePath(`/dashboard/mentor/messages/${threadId}`);
+  revalidatePath("/dashboard/admin/messages");
+  revalidatePath(`/dashboard/admin/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
 }
 
@@ -87,6 +115,8 @@ export async function closeLessonMessageThreadAction(
 
   revalidatePath("/dashboard/admin/messages");
   revalidatePath(`/dashboard/admin/messages/${threadId}`);
+  revalidatePath("/dashboard/mentor/messages");
+  revalidatePath(`/dashboard/mentor/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
 }
 
@@ -105,5 +135,7 @@ export async function reopenLessonMessageThreadAction(
 
   revalidatePath("/dashboard/admin/messages");
   revalidatePath(`/dashboard/admin/messages/${threadId}`);
+  revalidatePath("/dashboard/mentor/messages");
+  revalidatePath(`/dashboard/mentor/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -219,6 +221,17 @@ export default function TryoutAttemptClient({
           <p className="mt-6 whitespace-pre-wrap text-base font-bold leading-8 text-slate-950 sm:text-lg">
             {currentQuestion.question}
           </p>
+
+          {currentQuestion.image_path && payload.tryout_id && (
+            <Image
+              src={`/api/tryout-images/${payload.tryout_id}/${currentQuestion.id}?kind=question&attemptId=${attemptId}`}
+              alt={`Gambar soal ${currentIndex + 1}`}
+              width={1000}
+              height={650}
+              unoptimized
+              className="mt-5 max-h-[32rem] w-auto rounded-2xl border border-blue-100 object-contain"
+            />
+          )}
 
           <div className="mt-7 space-y-3">
             {currentQuestion.options.map((option, index) => {

@@ -114,10 +114,14 @@ export default function Sidebar({
                   item.href,
                   homeHref,
                 );
+                const messageHref =
+                  role === "admin"
+                    ? "/dashboard/admin/messages"
+                    : role === "mentor"
+                      ? "/dashboard/mentor/messages"
+                      : null;
                 const showMessageBadge =
-                  role === "admin" &&
-                  item.href === "/dashboard/admin/messages" &&
-                  messageUnreadCount > 0;
+                  item.href === messageHref && messageUnreadCount > 0;
 
                 return (
                   <Link

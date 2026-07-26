@@ -1,5 +1,6 @@
 import { tryoutFollowupRepository } from "@/repositories/tryout-followup.repository";
 import { tryoutRepository } from "@/repositories/tryout.repository";
+import { mentorCourseAccessService } from "./mentor-course-access.service";
 
 import type {
   AdminTryoutListItem,
@@ -71,6 +72,37 @@ export class TryoutService {
       questionCount: questionCounts[tryout.id] ?? 0,
       participantCount: participantCounts[tryout.id] ?? 0,
     }));
+  }
+
+
+  async getMentorTryouts(profileId: string): Promise<AdminTryoutListItem[]> {
+    const items = await this.getAdminTryouts();
+    return items.filter((item) => item.created_by === profileId);
+  }
+
+  async getMentorEditorPayload(
+    profileId: string,
+    tryoutId: string,
+  ): Promise<TryoutEditorPayload | null> {
+    const payload = await this.getEditorPayload(tryoutId);
+    if (!payload || payload.tryout.created_by !== profileId) return null;
+
+    const assigned = await mentorCourseAccessService.isAssigned(
+      profileId,
+      payload.tryout.course_id,
+    );
+    return assigned ? payload : null;
+  }
+
+  async requireMentorTryoutAccess(
+    profileId: string,
+    tryoutId: string,
+  ): Promise<TryoutEditorPayload> {
+    const payload = await this.getMentorEditorPayload(profileId, tryoutId);
+    if (!payload) {
+      throw new Error("Try Out tidak ditemukan atau bukan milik Anda.");
+    }
+    return payload;
   }
 
   async getEditorPayload(

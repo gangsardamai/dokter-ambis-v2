@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin";
+import TryoutQuestionForm from "@/components/tryout/TryoutQuestionForm";
 import { tryoutService } from "@/services";
 
 import {
@@ -23,17 +25,6 @@ interface TryoutQuestionsPageProps {
 function getParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
-
-const inputClass =
-  "min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
-const labelClass = "mb-1.5 block text-sm font-black text-slate-700";
-const optionFields = [
-  ["optionA", "A"],
-  ["optionB", "B"],
-  ["optionC", "C"],
-  ["optionD", "D"],
-  ["optionE", "E"],
-] as const;
 
 export default async function TryoutQuestionsPage({
   params,
@@ -100,81 +91,13 @@ export default async function TryoutQuestionsPage({
 
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-6">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
-            Soal Baru
-          </p>
-          <h2 className="mt-2 text-xl font-black text-slate-950">
-            Tambahkan Pertanyaan
-          </h2>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Soal Baru</p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">Tambahkan Pertanyaan</h2>
           <p className="mt-2 text-sm text-slate-500">
-            Isi pilihan A–E dan tentukan tepat satu jawaban benar. Konten soal terkunci setelah attempt pertama dimulai.
+            Isi pilihan A–D, tentukan satu jawaban benar, dan tambahkan gambar soal atau pembahasan bila diperlukan.
           </p>
         </div>
-
-        <form action={createAction} className="space-y-5">
-          <div>
-            <label htmlFor="question" className={labelClass}>
-              Pertanyaan
-            </label>
-            <textarea
-              id="question"
-              name="question"
-              rows={5}
-              required
-              className={`${inputClass} py-3`}
-              placeholder="Tuliskan vignette dan pertanyaan klinis..."
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label htmlFor="topic" className={labelClass}>Topik</label>
-              <input id="topic" name="topic" required defaultValue="Umum" className={inputClass} />
-            </div>
-            <div>
-              <label htmlFor="difficulty" className={labelClass}>Kesulitan</label>
-              <select id="difficulty" name="difficulty" defaultValue="medium" className={inputClass}>
-                <option value="easy">Mudah</option>
-                <option value="medium">Sedang</option>
-                <option value="hard">Sulit</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="points" className={labelClass}>Bobot</label>
-              <input id="points" name="points" type="number" min={1} defaultValue={1} required className={inputClass} />
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {optionFields.map(([name, label]) => (
-              <div key={name}>
-                <label htmlFor={name} className={labelClass}>Pilihan {label}</label>
-                <input id={name} name={name} required className={inputClass} />
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="correctOptionIndex" className={labelClass}>Jawaban Benar</label>
-              <select id="correctOptionIndex" name="correctOptionIndex" defaultValue="1" className={inputClass}>
-                {[1, 2, 3, 4, 5].map((index) => (
-                  <option key={index} value={index}>{String.fromCharCode(64 + index)}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="explanation" className={labelClass}>Pembahasan</label>
-              <textarea id="explanation" name="explanation" rows={3} className={`${inputClass} py-3`} />
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button type="submit" className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-blue-600 to-[#033b63] px-6 py-2.5 text-sm font-black text-white">
-              Tambahkan Soal
-            </button>
-          </div>
-        </form>
+        <TryoutQuestionForm tryoutId={tryoutId} action={createAction} />
       </section>
 
       <section className="space-y-4">
@@ -201,6 +124,16 @@ export default async function TryoutQuestionsPage({
                       <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">{question.difficulty}</span>
                     </div>
                     <p className="mt-4 whitespace-pre-wrap text-sm font-bold leading-7 text-slate-900">{question.question}</p>
+                    {question.image_path && (
+                      <Image
+                        src={`/api/tryout-images/${tryoutId}/${question.id}?kind=question`}
+                        alt={`Gambar soal ${question.question_order}`}
+                        width={900}
+                        height={520}
+                        unoptimized
+                        className="mt-4 max-h-72 w-auto rounded-2xl border border-blue-100 object-contain"
+                      />
+                    )}
                   </div>
 
                   <div className="flex shrink-0 gap-2">
@@ -235,10 +168,20 @@ export default async function TryoutQuestionsPage({
                   ))}
                 </div>
 
-                {question.explanation && (
+                {(question.explanation || question.explanation_image_path) && (
                   <div className="mt-5 rounded-2xl bg-blue-50/70 p-4">
                     <p className="text-xs font-black uppercase tracking-wide text-blue-700">Pembahasan</p>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{question.explanation}</p>
+                    {question.explanation_image_path && (
+                      <Image
+                        src={`/api/tryout-images/${tryoutId}/${question.id}?kind=explanation`}
+                        alt={`Gambar pembahasan ${question.question_order}`}
+                        width={900}
+                        height={520}
+                        unoptimized
+                        className="mt-4 max-h-72 w-auto rounded-2xl border border-blue-100 object-contain"
+                      />
+                    )}
                   </div>
                 )}
               </article>

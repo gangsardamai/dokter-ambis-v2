@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -91,6 +92,17 @@ export default async function TryoutReviewPage({
               {question.question}
             </p>
 
+            {question.image_path && review.tryout_id && (
+              <Image
+                src={`/api/tryout-images/${review.tryout_id}/${question.id}?kind=question&attemptId=${attemptId}`}
+                alt={`Gambar soal ${question.question_order}`}
+                width={1000}
+                height={650}
+                unoptimized
+                className="mt-5 max-h-[32rem] w-auto rounded-2xl border border-blue-100 object-contain"
+              />
+            )}
+
             <div className="mt-6 space-y-3">
               {question.options.map((option, index) => {
                 const selected = question.selected_option_id === option.id;
@@ -127,6 +139,16 @@ export default async function TryoutReviewPage({
               <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
                 {question.explanation ?? "Pembahasan belum ditambahkan."}
               </p>
+              {question.explanation_image_path && review.tryout_id && (
+                <Image
+                  src={`/api/tryout-images/${review.tryout_id}/${question.id}?kind=explanation&attemptId=${attemptId}`}
+                  alt={`Gambar pembahasan ${question.question_order}`}
+                  width={1000}
+                  height={650}
+                  unoptimized
+                  className="mt-4 max-h-[32rem] w-auto rounded-2xl border border-blue-100 object-contain"
+                />
+              )}
             </div>
           </article>
         ))}

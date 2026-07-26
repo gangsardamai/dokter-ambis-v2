@@ -41,6 +41,8 @@ export class TryoutFollowupRepository extends BaseRepository {
         target_question_id: questionId,
         question_text: input.question,
         explanation_text: input.explanation,
+        question_image_path: input.imagePath,
+        explanation_image_path: input.explanationImagePath,
         topic_text: input.topic,
         difficulty_text: input.difficulty,
         question_points: input.points,

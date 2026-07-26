@@ -15,6 +15,8 @@ export type TryoutFollowupFunctions = {
       target_question_id: string;
       question_text: string;
       explanation_text: string;
+      question_image_path: string;
+      explanation_image_path: string;
       topic_text: string;
       difficulty_text: TryoutDifficulty;
       question_points: number;

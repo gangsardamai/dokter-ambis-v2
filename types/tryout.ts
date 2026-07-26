@@ -63,6 +63,8 @@ export interface CreateTryoutQuestionInput {
   points: number;
   options: string[];
   correctOptionIndex: number;
+  imagePath: string;
+  explanationImagePath: string;
 }
 
 export interface StudentTryoutSummary {

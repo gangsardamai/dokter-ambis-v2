@@ -28,7 +28,7 @@ export interface AdminLessonMessageListItem {
   lessonId: string;
   lessonTitle: string;
   latestMessage: string;
-  latestSenderRole: "student" | "admin";
+  latestSenderRole: "student" | "mentor" | "admin";
 }
 
 export interface AdminLessonMessageThreadDetail

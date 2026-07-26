@@ -1,4 +1,4 @@
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 type CourseInsert =
   Database["public"]["Tables"]["courses"]["Insert"];
@@ -14,6 +14,9 @@ export function mapCourseForm(
 
     program_id:
       formData.get("program_id") as string,
+
+    payment_account_id:
+      formData.get("payment_account_id") as string,
 
     title:
       formData.get("title") as string,

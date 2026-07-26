@@ -1,7 +1,7 @@
 import { courseRepository, programRepository } from "@/repositories";
 
 import type { CourseListFilters } from "@/repositories/course.repository";
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 type CourseInsert = Database["public"]["Tables"]["courses"]["Insert"];
 type CourseUpdate = Database["public"]["Tables"]["courses"]["Update"];

@@ -207,7 +207,11 @@ export default async function AdminMessagesPage({
                 <div className="shrink-0 text-xs font-semibold text-slate-400 lg:text-right">
                   <p>{formatDate(thread.lastMessageAt)}</p>
                   <p className="mt-1">
-                    Pesan terakhir: {thread.latestSenderRole === "admin" ? "Admin" : "Peserta"}
+                    Pesan terakhir: {thread.latestSenderRole === "student"
+                      ? "Peserta"
+                      : thread.latestSenderRole === "mentor"
+                        ? "Mentor"
+                        : "Admin"}
                   </p>
                 </div>
               </div>

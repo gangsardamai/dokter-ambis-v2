@@ -43,6 +43,21 @@ export class LessonMessageRepository extends BaseRepository {
     return data ?? [];
   }
 
+  async getThreadsByCourseIds(courseIds: string[]): Promise<Thread[]> {
+    if (courseIds.length === 0) return [];
+
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("lesson_message_threads")
+      .select("*")
+      .in("course_id", courseIds)
+      .order("last_message_at", { ascending: false })
+      .limit(200);
+
+    if (error) this.handleError(error);
+    return data ?? [];
+  }
+
   async getThreadById(id: string): Promise<Thread | null> {
     const supabase = await this.db();
     const { data, error } = await supabase
@@ -135,14 +150,28 @@ export class LessonMessageRepository extends BaseRepository {
     return count ?? 0;
   }
 
+  async countOpenThreadsByCourseIds(courseIds: string[]): Promise<number> {
+    if (courseIds.length === 0) return 0;
+
+    const supabase = await this.db();
+    const { count, error } = await supabase
+      .from("lesson_message_threads")
+      .select("id", { count: "exact", head: true })
+      .in("course_id", courseIds)
+      .eq("status", "open");
+
+    if (error) this.handleError(error);
+    return count ?? 0;
+  }
+
   async getProfilesByIds(ids: string[]) {
     if (ids.length === 0) return [];
 
     const supabase = await this.db();
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name, university_origin")
-      .in("id", ids);
+    const { data, error } = await supabase.rpc(
+      "get_message_participant_summaries",
+      { target_profile_ids: ids },
+    );
 
     if (error) this.handleError(error);
     return data ?? [];

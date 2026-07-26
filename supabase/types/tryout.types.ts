@@ -272,11 +272,17 @@ export type TryoutFunctions = {
     Args: { target_attempt_id: string };
     Returns: Json;
   };
+  manage_delete_tryout_question: {
+    Args: { target_question_id: string };
+    Returns: string;
+  };
   admin_create_tryout_question: {
     Args: {
       target_tryout_id: string;
       question_text: string;
       explanation_text: string;
+      question_image_path: string;
+      explanation_image_path: string;
       topic_text: string;
       difficulty_text: TryoutDifficulty;
       question_points: number;

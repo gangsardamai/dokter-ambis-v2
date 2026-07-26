@@ -137,19 +137,23 @@ export default async function AdminMessageThreadPage({
 
         <div className="mt-5 max-h-[36rem] space-y-4 overflow-y-auto rounded-2xl bg-slate-50 p-4 sm:p-5">
           {thread.messages.map((entry) => {
-            const fromAdmin = entry.sender_role === "admin";
+            const fromStaff = entry.sender_role !== "student";
 
             return (
               <article
                 key={entry.id}
                 className={`max-w-[92%] rounded-2xl px-4 py-3 shadow-sm sm:max-w-[78%] ${
-                  fromAdmin
+                  fromStaff
                     ? "ml-auto bg-blue-600 text-white"
                     : "mr-auto bg-white text-slate-700 ring-1 ring-blue-100"
                 }`}
               >
                 <p className="text-[11px] font-black uppercase tracking-wide opacity-75">
-                  {fromAdmin ? "Admin Dokter Ambis" : thread.studentName}
+                  {entry.sender_role === "admin"
+                    ? "Admin Dokter Ambis"
+                    : entry.sender_role === "mentor"
+                      ? "Mentor Dokter Ambis"
+                      : thread.studentName}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">
                   {entry.message}

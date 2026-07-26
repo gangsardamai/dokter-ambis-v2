@@ -8,6 +8,7 @@ import {
 import {
   courseService,
   enrollmentService,
+  paymentAccountService,
   profileService,
 } from "@/services";
 
@@ -104,6 +105,13 @@ export default async function StudentPaymentPage({
 
   if (!course) {
     notFound();
+  }
+
+  const paymentAccount =
+    await paymentAccountService.getAccountForCourse(course.id);
+
+  if (!paymentAccount) {
+    throw new Error("Rekening pembayaran course belum tersedia.");
   }
 
   const totalPayment = Math.max(
@@ -261,7 +269,7 @@ export default async function StudentPaymentPage({
               <>
                 <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-5">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
-                    Rekening Pembayaran
+                    Rekening Pembayaran · {paymentAccount.label}
                   </p>
 
                   <div className="mt-4 rounded-xl border border-blue-100 bg-white p-4">
@@ -270,7 +278,7 @@ export default async function StudentPaymentPage({
                         Bank
                       </span>
                       <span className="font-black text-blue-700">
-                        BRI
+                        {paymentAccount.bank_name}
                       </span>
                     </div>
 
@@ -279,7 +287,7 @@ export default async function StudentPaymentPage({
                         Nomor rekening
                       </p>
                       <p className="mt-1 break-all font-mono text-xl font-black tracking-wider text-slate-950 sm:text-2xl">
-                        0021 0114 8799 501
+                        {paymentAccount.account_number.replace(/(.{4})/g, "$1 ").trim()}
                       </p>
                     </div>
 
@@ -288,7 +296,7 @@ export default async function StudentPaymentPage({
                         Atas nama
                       </p>
                       <p className="mt-1 font-black text-slate-950">
-                        Gangsar Lintas Damai
+                        {paymentAccount.account_holder_name}
                       </p>
                     </div>
                   </div>

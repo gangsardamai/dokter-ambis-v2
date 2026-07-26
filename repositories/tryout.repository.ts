@@ -24,21 +24,6 @@ interface TryoutWithCourseRow extends Tryout {
   courses: TryoutCourseRow | null;
 }
 
-interface AttemptWithProfileRow {
-  id: string;
-  attempt_number: number;
-  status: string;
-  score: number | null;
-  total_correct: number;
-  total_wrong: number;
-  total_unanswered: number;
-  duration_seconds: number | null;
-  submitted_at: string | null;
-  profiles: {
-    full_name: string;
-    university_origin: string | null;
-  } | null;
-}
 
 export class TryoutRepository extends BaseRepository {
   async getAllWithCourses(): Promise<TryoutWithCourseRow[]> {
@@ -187,6 +172,8 @@ export class TryoutRepository extends BaseRepository {
         target_tryout_id: input.tryoutId,
         question_text: input.question,
         explanation_text: input.explanation,
+        question_image_path: input.imagePath,
+        explanation_image_path: input.explanationImagePath,
         topic_text: input.topic,
         difficulty_text: input.difficulty,
         question_points: input.points,
@@ -201,10 +188,10 @@ export class TryoutRepository extends BaseRepository {
 
   async deleteQuestion(questionId: string): Promise<void> {
     const supabase = await this.db();
-    const { error } = await supabase
-      .from("tryout_questions")
-      .delete()
-      .eq("id", questionId);
+    const { error } = await supabase.rpc(
+      "manage_delete_tryout_question",
+      { target_question_id: questionId },
+    );
 
     if (error) this.handleError(error);
   }
@@ -325,33 +312,17 @@ export class TryoutRepository extends BaseRepository {
 
   async getAdminResults(tryoutId: string): Promise<AdminTryoutResultItem[]> {
     const supabase = await this.db();
-    const { data, error } = await supabase
-      .from("tryout_attempts")
-      .select(`
-        id,
-        attempt_number,
-        status,
-        score,
-        total_correct,
-        total_wrong,
-        total_unanswered,
-        duration_seconds,
-        submitted_at,
-        profiles!tryout_attempts_profile_id_fkey(
-          full_name,
-          university_origin
-        )
-      `)
-      .eq("tryout_id", tryoutId)
-      .neq("status", "in_progress")
-      .order("score", { ascending: false, nullsFirst: false });
+    const { data, error } = await supabase.rpc(
+      "get_managed_tryout_results",
+      { target_tryout_id: tryoutId },
+    );
 
     if (error) this.handleError(error);
 
-    return ((data ?? []) as unknown as AttemptWithProfileRow[]).map((row) => ({
-      attemptId: row.id,
-      studentName: row.profiles?.full_name ?? "Peserta",
-      universityOrigin: row.profiles?.university_origin ?? null,
+    return (data ?? []).map((row) => ({
+      attemptId: row.attempt_id,
+      studentName: row.student_name,
+      universityOrigin: row.university_origin,
       attemptNumber: row.attempt_number,
       status: row.status,
       score: row.score,
