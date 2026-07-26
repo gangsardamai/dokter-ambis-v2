@@ -1,52 +1,52 @@
-name: Apply Integrated Feature Patch
+name: Feature Check
 
 on:
   pull_request:
     branches:
+      - main
       - feat/student-course-statistics
 
-permissions:
-  contents: write
-
 jobs:
-  apply:
-    if: github.head_ref == 'feat/course-tryout-mvp'
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
     steps:
-      - name: Checkout feature branch
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: feat/course-tryout-mvp
-          fetch-depth: 0
+          node-version: 24
+          cache: npm
 
-      - name: Reconstruct and verify patch
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: TypeScript
+        id: typescript
+        continue-on-error: true
+        run: npx tsc --noEmit > typescript.log 2>&1
+
+      - name: Upload TypeScript report
+        if: steps.typescript.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-report
+          path: typescript.log
+          retention-days: 1
+
+      - name: Fail on TypeScript errors
+        if: steps.typescript.outcome == 'failure'
         run: |
-          cat .github/feature-patch.part.00 \
-              .github/feature-patch.part.01 \
-              .github/feature-patch.part.02 \
-              .github/feature-patch.part.03 \
-            | base64 --decode > /tmp/feature-patch.tar.gz
-          echo "de86f0ca6ac799a638ba5b549bd0cd6b77096017710c9209a15c430b55d47656  /tmp/feature-patch.tar.gz" \
-            | sha256sum --check
+          cat typescript.log
+          exit 1
 
-      - name: Apply source changes
-        run: |
-          tar --extract --gzip --file /tmp/feature-patch.tar.gz --directory .
-          git checkout HEAD -- .github/workflows/feature-check.yml
-          rm -f .github/feature-patch.part.00 \
-                .github/feature-patch.part.01 \
-                .github/feature-patch.part.02 \
-                .github/feature-patch.part.03 \
-                .github/feature-patch.trigger
-
-      - name: Commit source changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --all
-          git diff --cached --check
-          git commit -m "feat: mentor tryout images messages and payment accounts"
-
-      - name: Push feature branch
-        run: git push origin HEAD:feat/course-tryout-mvp
+      - name: Build
+        run: npm run build
