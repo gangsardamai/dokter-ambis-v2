@@ -5,6 +5,7 @@ export * from "./video.service";
 export * from "./file.service";
 export * from "./live-class.service";
 export * from "./quiz.service";
+export * from "./tryout.service";
 export * from "./program.service";
 export * from "./auth.service";
 export * from "./profile.service";
@@ -19,3 +20,6 @@ export * from "./device.service";
 export * from "./course-explorer.service";
 export * from "./student-course-progress.service";
 export * from "./lesson-message.service";
+
+export * from "./payment-account.service";
+export * from "./mentor-course-access.service";

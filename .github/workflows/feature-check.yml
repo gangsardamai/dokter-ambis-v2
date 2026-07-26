@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - feat/student-course-statistics
 
 jobs:
   validate:
@@ -29,7 +30,23 @@ jobs:
         run: npm run lint
 
       - name: TypeScript
-        run: npx tsc --noEmit
+        id: typescript
+        continue-on-error: true
+        run: npx tsc --noEmit > typescript.log 2>&1
+
+      - name: Upload TypeScript report
+        if: steps.typescript.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-report
+          path: typescript.log
+          retention-days: 1
+
+      - name: Fail on TypeScript errors
+        if: steps.typescript.outcome == 'failure'
+        run: |
+          cat typescript.log
+          exit 1
 
       - name: Build
         run: npm run build

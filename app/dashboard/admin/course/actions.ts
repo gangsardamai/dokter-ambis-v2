@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { courseService } from "@/services";
+import { courseService, paymentAccountService } from "@/services";
 
 import { validateCourse } from "@/lib/validators/course.validator";
 
@@ -12,7 +12,7 @@ import {
 } from "@/lib/actions/result";
 
 import type { ActionResult } from "@/types/action-result";
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 type CourseInsert =
   Database["public"]["Tables"]["courses"]["Insert"];
@@ -36,6 +36,9 @@ export async function createCourseAction(
   }
 
   try {
+    await paymentAccountService.requireActiveAccount(
+      data.payment_account_id ?? "",
+    );
     await courseService.createCourse(data);
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Course gagal dibuat.");
@@ -64,6 +67,9 @@ export async function updateCourseAction(
   }
 
   try {
+    await paymentAccountService.requireActiveAccount(
+      data.payment_account_id ?? "",
+    );
     await courseService.updateCourse(
       id,
       data

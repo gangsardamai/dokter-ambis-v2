@@ -12,7 +12,7 @@ import {
   PrimaryButton,
 } from "@/components/admin";
 
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 type CourseInsert = Database["public"]["Tables"]["courses"]["Insert"];
 
@@ -22,6 +22,7 @@ interface CourseFormProps {
   defaultValues?: Partial<CourseInsert>;
   organizationOptions: SelectOption[];
   programOptions: SelectOption[];
+  paymentAccountOptions: SelectOption[];
   submitLabel: string;
   action: (formData: FormData) => Promise<void>;
 }
@@ -30,6 +31,7 @@ export default function CourseForm({
   defaultValues,
   organizationOptions,
   programOptions,
+  paymentAccountOptions,
   submitLabel,
   action,
 }: CourseFormProps) {
@@ -67,6 +69,15 @@ export default function CourseForm({
           placeholder={organizationId ? "Pilih Program" : "Pilih Organization terlebih dahulu"}
           required
           disabled={!organizationId}
+        />
+
+        <SelectInput
+          label="Rekening Pembayaran"
+          name="payment_account_id"
+          defaultValue={defaultValues?.payment_account_id ?? ""}
+          options={paymentAccountOptions}
+          placeholder="Pilih rekening pembayaran"
+          required
         />
 
         <TextInput label="Nama Blok" name="title" required defaultValue={defaultValues?.title ?? ""} />

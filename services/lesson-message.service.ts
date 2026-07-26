@@ -10,6 +10,7 @@ import type {
 } from "@/types/lesson-messages";
 
 import { enrollmentService } from "./enrollment.service";
+import { mentorCourseAccessService } from "./mentor-course-access.service";
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];
@@ -17,17 +18,16 @@ function unique(values: string[]): string[] {
 
 function normalizeMessage(message: string): string {
   const normalized = message.trim();
-
-  if (!normalized) {
-    throw new Error("Pesan tidak boleh kosong.");
-  }
-
+  if (!normalized) throw new Error("Pesan tidak boleh kosong.");
   if (normalized.length > 2000) {
     throw new Error("Pesan maksimal 2.000 karakter.");
   }
-
   return normalized;
 }
+
+type Thread = Awaited<
+  ReturnType<typeof lessonMessageRepository.getAllThreads>
+>[number];
 
 export class LessonMessageService {
   async getStudentCourseThreads(
@@ -76,9 +76,7 @@ export class LessonMessageService {
       input.courseId,
     );
 
-    if (!enrollment) {
-      throw new Error("Akses course tidak aktif.");
-    }
+    if (!enrollment) throw new Error("Akses course tidak aktif.");
 
     const lesson = await lessonRepository.getById(input.lessonId);
     if (
@@ -89,11 +87,10 @@ export class LessonMessageService {
       throw new Error("Lesson tidak tersedia untuk peserta.");
     }
 
-    let thread =
-      await lessonMessageRepository.findStudentLessonThread(
-        input.studentProfileId,
-        input.lessonId,
-      );
+    let thread = await lessonMessageRepository.findStudentLessonThread(
+      input.studentProfileId,
+      input.lessonId,
+    );
 
     if (!thread) {
       thread = await lessonMessageRepository.createThread({
@@ -111,8 +108,9 @@ export class LessonMessageService {
     });
   }
 
-  async getAdminInbox(): Promise<AdminLessonMessageListItem[]> {
-    const threads = await lessonMessageRepository.getAllThreads();
+  private async buildInbox(
+    threads: Thread[],
+  ): Promise<AdminLessonMessageListItem[]> {
     if (threads.length === 0) return [];
 
     const entries = await lessonMessageRepository.getEntriesByThreadIds(
@@ -129,7 +127,6 @@ export class LessonMessageService {
         unique(threads.map((thread) => thread.lesson_id)),
       ),
     ]);
-
     const [organizations, programs] = await Promise.all([
       lessonMessageRepository.getOrganizationsByIds(
         unique(courses.map((course) => course.organization_id)),
@@ -160,8 +157,7 @@ export class LessonMessageService {
       const profile = profileMap.get(thread.student_profile_id);
       const course = courseMap.get(thread.course_id);
       const lesson = lessonMap.get(thread.lesson_id);
-      const threadEntries = entriesByThread.get(thread.id) ?? [];
-      const latestEntry = threadEntries.at(-1);
+      const latestEntry = (entriesByThread.get(thread.id) ?? []).at(-1);
 
       return {
         id: thread.id,
@@ -182,29 +178,57 @@ export class LessonMessageService {
         lessonId: thread.lesson_id,
         lessonTitle: lesson?.title ?? "Lesson tidak ditemukan",
         latestMessage: latestEntry?.message ?? "Belum ada isi pesan.",
-        latestSenderRole:
-          latestEntry?.sender_role === "admin" ? "admin" : "student",
+        latestSenderRole: latestEntry?.sender_role ?? "student",
       };
     });
+  }
+
+  async getAdminInbox(): Promise<AdminLessonMessageListItem[]> {
+    return this.buildInbox(await lessonMessageRepository.getAllThreads());
+  }
+
+  async getMentorInbox(
+    mentorProfileId: string,
+  ): Promise<AdminLessonMessageListItem[]> {
+    const courseIds =
+      await mentorCourseAccessService.getAssignedCourseIds(mentorProfileId);
+    return this.buildInbox(
+      await lessonMessageRepository.getThreadsByCourseIds(courseIds),
+    );
+  }
+
+  private async getThreadDetailFromInbox(
+    threadId: string,
+    inbox: AdminLessonMessageListItem[],
+  ): Promise<AdminLessonMessageThreadDetail | null> {
+    const item = inbox.find((thread) => thread.id === threadId);
+    if (!item) return null;
+
+    return {
+      ...item,
+      messages: await lessonMessageRepository.getEntriesByThreadIds([
+        threadId,
+      ]),
+    };
   }
 
   async getAdminThreadDetail(
     threadId: string,
   ): Promise<AdminLessonMessageThreadDetail | null> {
-    const item = (await this.getAdminInbox()).find(
-      (thread) => thread.id === threadId,
-    );
-
-    if (!item) return null;
-
-    const messages = await lessonMessageRepository.getEntriesByThreadIds([
+    return this.getThreadDetailFromInbox(
       threadId,
-    ]);
+      await this.getAdminInbox(),
+    );
+  }
 
-    return {
-      ...item,
-      messages,
-    };
+  async getMentorThreadDetail(
+    mentorProfileId: string,
+    threadId: string,
+  ): Promise<AdminLessonMessageThreadDetail | null> {
+    return this.getThreadDetailFromInbox(
+      threadId,
+      await this.getMentorInbox(mentorProfileId),
+    );
   }
 
   async replyAsAdmin(input: {
@@ -213,13 +237,8 @@ export class LessonMessageService {
     message: string;
   }): Promise<string> {
     const message = normalizeMessage(input.message);
-    const thread = await lessonMessageRepository.getThreadById(
-      input.threadId,
-    );
-
-    if (!thread) {
-      throw new Error("Percakapan tidak ditemukan.");
-    }
+    const thread = await lessonMessageRepository.getThreadById(input.threadId);
+    if (!thread) throw new Error("Percakapan tidak ditemukan.");
 
     await lessonMessageRepository.createEntry({
       thread_id: thread.id,
@@ -227,7 +246,31 @@ export class LessonMessageService {
       sender_role: "admin",
       message,
     });
+    return thread.course_id;
+  }
 
+  async replyAsMentor(input: {
+    mentorProfileId: string;
+    threadId: string;
+    message: string;
+  }): Promise<string> {
+    const message = normalizeMessage(input.message);
+    const thread = await lessonMessageRepository.getThreadById(input.threadId);
+    if (!thread) throw new Error("Percakapan tidak ditemukan.");
+    if (thread.status === "closed") {
+      throw new Error("Thread sudah ditutup Admin.");
+    }
+
+    await mentorCourseAccessService.requireAssigned(
+      input.mentorProfileId,
+      thread.course_id,
+    );
+    await lessonMessageRepository.createEntry({
+      thread_id: thread.id,
+      sender_profile_id: input.mentorProfileId,
+      sender_role: "mentor",
+      message,
+    });
     return thread.course_id;
   }
 
@@ -244,6 +287,12 @@ export class LessonMessageService {
 
   async countOpenThreads(): Promise<number> {
     return lessonMessageRepository.countOpenThreads();
+  }
+
+  async countOpenThreadsForMentor(profileId: string): Promise<number> {
+    const courseIds =
+      await mentorCourseAccessService.getAssignedCourseIds(profileId);
+    return lessonMessageRepository.countOpenThreadsByCourseIds(courseIds);
   }
 }
 

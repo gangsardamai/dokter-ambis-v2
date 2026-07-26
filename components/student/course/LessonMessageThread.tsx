@@ -64,7 +64,7 @@ export default function LessonMessageThread({
             Pesan atau Pertanyaan
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            Kirim saran atau pertanyaan yang berkaitan dengan lesson ini kepada Admin Dokter Ambis.
+            Kirim saran atau pertanyaan yang berkaitan dengan lesson ini kepada tim pengajar Dokter Ambis.
           </p>
         </div>
 
@@ -90,19 +90,23 @@ export default function LessonMessageThread({
       {thread && thread.messages.length > 0 && (
         <div className="mt-4 max-h-80 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3 sm:p-4">
           {thread.messages.map((entry) => {
-            const fromAdmin = entry.sender_role === "admin";
+            const fromStaff = entry.sender_role !== "student";
 
             return (
               <article
                 key={entry.id}
                 className={`max-w-[92%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
-                  fromAdmin
+                  fromStaff
                     ? "mr-auto bg-white text-slate-700 ring-1 ring-blue-100"
                     : "ml-auto bg-blue-600 text-white"
                 }`}
               >
                 <p className="text-[11px] font-black uppercase tracking-wide opacity-75">
-                  {fromAdmin ? "Admin Dokter Ambis" : "Anda"}
+                  {entry.sender_role === "admin"
+                    ? "Admin Dokter Ambis"
+                    : entry.sender_role === "mentor"
+                      ? "Mentor Dokter Ambis"
+                      : "Anda"}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap break-words leading-6">
                   {entry.message}
