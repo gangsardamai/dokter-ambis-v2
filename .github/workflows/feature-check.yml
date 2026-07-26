@@ -17,6 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Export branch source
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-source
+          path: |
+            .
+            !node_modules
+            !.next
+            !.git
+          include-hidden-files: true
+          retention-days: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
