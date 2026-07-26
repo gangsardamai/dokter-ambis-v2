@@ -23,6 +23,16 @@ function validKind(value: string | null): value is ImageKind {
   return value === "question" || value === "explanation";
 }
 
+function isScopedObjectPath(
+  objectPath: string,
+  expectedPrefix: string,
+): boolean {
+  if (!objectPath.startsWith(expectedPrefix)) return false;
+
+  const fileName = objectPath.slice(expectedPrefix.length);
+  return fileName.length > 0 && !fileName.includes("/");
+}
+
 export async function GET(request: Request, context: Context) {
   const { tryoutId, questionId } = await context.params;
   const url = new URL(request.url);
@@ -102,12 +112,38 @@ export async function GET(request: Request, context: Context) {
     );
   }
 
+  const { data: tryout } = await supabase
+    .from("tryouts")
+    .select("course_id")
+    .eq("id", tryoutId)
+    .maybeSingle();
+
+  if (!tryout) {
+    return NextResponse.json(
+      { message: "Course Try Out tidak dapat diverifikasi." },
+      { status: 403 },
+    );
+  }
+
   const r2 = parseR2FilePath(filePath);
   if (r2) {
-    if (!isR2Configured() || r2.bucket !== getR2BucketName()) {
+    const expectedPrefix = [
+      "courses",
+      tryout.course_id,
+      "tryout-images",
+      tryoutId,
+      kind,
+      "",
+    ].join("/");
+
+    if (
+      !isR2Configured() ||
+      r2.bucket !== getR2BucketName() ||
+      !isScopedObjectPath(r2.key, expectedPrefix)
+    ) {
       return NextResponse.json(
-        { message: "Bucket gambar tidak tersedia." },
-        { status: 503 },
+        { message: "Path gambar tidak valid." },
+        { status: 403 },
       );
     }
     return NextResponse.redirect(
@@ -122,6 +158,21 @@ export async function GET(request: Request, context: Context) {
   const objectPath = filePath.startsWith(`${MATERIAL_BUCKET}/`)
     ? filePath.slice(`${MATERIAL_BUCKET}/`.length)
     : filePath;
+  const expectedPrefix = [
+    tryout.course_id,
+    "tryout-images",
+    tryoutId,
+    kind,
+    "",
+  ].join("/");
+
+  if (!isScopedObjectPath(objectPath, expectedPrefix)) {
+    return NextResponse.json(
+      { message: "Path gambar tidak valid." },
+      { status: 403 },
+    );
+  }
+
   const { data, error } = await supabase.storage
     .from(MATERIAL_BUCKET)
     .createSignedUrl(objectPath, 60);
