@@ -172,23 +172,45 @@ export class StudentCourseProgressRepository extends BaseRepository {
     const supabase = await this.db();
     const now = new Date().toISOString();
 
+    const { data: existing, error: existingError } = await supabase
+      .from("lesson_progress")
+      .select("id")
+      .eq("profile_id", profileId)
+      .eq("lesson_id", lessonId)
+      .maybeSingle();
+
+    if (existingError) this.handleError(existingError);
+
+    const progressData = {
+      is_completed: completed,
+      progress_percent: completed ? 100 : 0,
+      last_position_seconds: 0,
+      last_accessed_at: now,
+      completed_at: completed ? now : null,
+      updated_at: now,
+    };
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .update(progressData)
+        .eq("id", existing.id)
+        .select("is_completed")
+        .single();
+
+      if (error) this.handleError(error);
+
+      return data.is_completed;
+    }
+
     const { data, error } = await supabase
       .from("lesson_progress")
-      .upsert(
-        {
-          profile_id: profileId,
-          lesson_id: lessonId,
-          is_completed: completed,
-          progress_percent: completed ? 100 : 0,
-          last_position_seconds: 0,
-          last_accessed_at: now,
-          completed_at: completed ? now : null,
-          updated_at: now,
-        },
-        {
-          onConflict: "profile_id,lesson_id",
-        },
-      )
+      .insert({
+        profile_id: profileId,
+        lesson_id: lessonId,
+        created_at: now,
+        ...progressData,
+      })
       .select("is_completed")
       .single();
 
