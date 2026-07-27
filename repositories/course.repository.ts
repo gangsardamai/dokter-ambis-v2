@@ -1,4 +1,4 @@
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 import { BaseRepository } from "./base.repository";
 

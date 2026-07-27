@@ -3,6 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import LessonCompletionButton from "@/components/student/course/LessonCompletionButton";
+import LessonMessageThread from "@/components/student/course/LessonMessageThread";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import { isGoogleDriveFilePath } from "@/lib/file/file-source";
 
@@ -13,6 +15,7 @@ import type {
   ExplorerQuiz,
   ExplorerVideo,
 } from "@/types/course-explorer";
+import type { StudentLessonMessageThread } from "@/types/lesson-messages";
 
 type ExplorerMode = "manager" | "student";
 
@@ -20,12 +23,17 @@ interface CourseContentAccordionProps {
   courseId: string;
   content: CourseExplorerContent;
   mode: ExplorerMode;
+  completedLessonIds?: string[];
+  lessonMessages?: Record<string, StudentLessonMessageThread>;
 }
 
 interface ActionMenuProps {
   children: ReactNode;
   label: string;
 }
+
+const menuLinkClass =
+  "flex min-h-10 w-full items-center rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200";
 
 function ChevronIcon() {
   return (
@@ -46,10 +54,7 @@ function ChevronIcon() {
   );
 }
 
-function ActionMenu({
-  children,
-  label,
-}: ActionMenuProps) {
+function ActionMenu({ children, label }: ActionMenuProps) {
   return (
     <details className="relative">
       <summary
@@ -58,7 +63,6 @@ function ActionMenu({
       >
         •••
       </summary>
-
       <div className="absolute right-0 z-30 mt-2 min-w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10">
         {children}
       </div>
@@ -66,14 +70,7 @@ function ActionMenu({
   );
 }
 
-const menuLinkClass =
-  "flex min-h-10 w-full items-center rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200";
-
-function StatusBadge({
-  status,
-}: {
-  status: string;
-}) {
+function StatusBadge({ status }: { status: string }) {
   const published = status === "published";
 
   return (
@@ -85,6 +82,14 @@ function StatusBadge({
       }`}
     >
       {published ? "Published" : "Draft"}
+    </span>
+  );
+}
+
+function CompletionBadge() {
+  return (
+    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-emerald-700">
+      Selesai
     </span>
   );
 }
@@ -149,16 +154,10 @@ function ManagerItemMenu({
 
   return (
     <ActionMenu label={`Aksi ${type}`}>
-      <Link
-        href={`${basePath}/${id}/edit`}
-        className={menuLinkClass}
-      >
+      <Link href={`${basePath}/${id}/edit`} className={menuLinkClass}>
         Edit
       </Link>
-      <Link
-        href={`${basePath}/${id}`}
-        className={menuLinkClass}
-      >
+      <Link href={`${basePath}/${id}`} className={menuLinkClass}>
         Lihat Detail
       </Link>
     </ActionMenu>
@@ -172,8 +171,7 @@ function FileItem({
   file: ExplorerFile;
   mode: ExplorerMode;
 }) {
-  const isGoogleDrive =
-    isGoogleDriveFilePath(file.file_path);
+  const isGoogleDrive = isGoogleDriveFilePath(file.file_path);
 
   return (
     <article className="flex min-w-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -196,7 +194,8 @@ function FileItem({
           </div>
           {mode === "student" && isGoogleDrive && (
             <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
-              Jika unduhan tidak dimulai atau Google Drive menampilkan error, silakan hubungi Admin Dokter Ambis.
+              Jika unduhan tidak dimulai atau Google Drive menampilkan error,
+              silakan hubungi Admin Dokter Ambis.
             </p>
           )}
         </div>
@@ -206,11 +205,7 @@ function FileItem({
         <a
           href={`/api/materials/${file.id}`}
           target={isGoogleDrive ? "_blank" : undefined}
-          rel={
-            isGoogleDrive
-              ? "noopener noreferrer"
-              : undefined
-          }
+          rel={isGoogleDrive ? "noopener noreferrer" : undefined}
           className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 sm:flex-none"
         >
           Download
@@ -247,12 +242,10 @@ function VideoItem({
             </div>
           </div>
         </div>
-
         {mode === "manager" && (
           <ManagerItemMenu type="video" id={video.id} />
         )}
       </div>
-
       <div className="border-t border-slate-100 bg-slate-950 p-2 sm:p-3">
         <VideoPlayer
           provider={video.provider}
@@ -312,16 +305,23 @@ function LessonPanel({
   courseId,
   content,
   mode,
+  completed,
+  messageThread,
 }: {
   courseId: string;
   content: ExplorerLessonContent;
   mode: ExplorerMode;
+  completed: boolean;
+  messageThread?: StudentLessonMessageThread;
 }) {
   const { lesson, files, videos, quizzes } = content;
   const itemCount = files.length + videos.length + quizzes.length;
 
   return (
-    <details className="group min-w-0 overflow-visible rounded-2xl border border-blue-100 bg-slate-50/80">
+    <details
+      id={`lesson-${lesson.id}`}
+      className="group min-w-0 scroll-mt-24 overflow-visible rounded-2xl border border-blue-100 bg-slate-50/80"
+    >
       <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -331,12 +331,17 @@ function LessonPanel({
             {mode === "manager" && (
               <StatusBadge status={lesson.publication_status} />
             )}
+            {mode === "student" && completed && <CompletionBadge />}
+            {mode === "student" && messageThread?.status === "open" && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-amber-700">
+                Pesan Menunggu
+              </span>
+            )}
           </div>
           <p className="mt-1 text-xs font-semibold text-slate-500">
             {itemCount} konten · {lesson.duration ?? 0} menit
           </p>
         </div>
-
         <span className="shrink-0 rounded-xl bg-white p-2 text-blue-700 shadow-sm ring-1 ring-blue-100">
           <ChevronIcon />
         </span>
@@ -399,6 +404,34 @@ function LessonPanel({
             ))}
           </div>
         )}
+
+        {mode === "student" && (
+          <>
+            <div className="mt-4 border-t border-blue-100 pt-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-800">
+                    Sudah memahami lesson ini?
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Status progres hanya berubah setelah peserta menekan tombol.
+                  </p>
+                </div>
+                <LessonCompletionButton
+                  courseId={courseId}
+                  lessonId={lesson.id}
+                  initialCompleted={completed}
+                />
+              </div>
+            </div>
+
+            <LessonMessageThread
+              courseId={courseId}
+              lessonId={lesson.id}
+              thread={messageThread}
+            />
+          </>
+        )}
       </div>
     </details>
   );
@@ -408,17 +441,18 @@ export default function CourseContentAccordion({
   courseId,
   content,
   mode,
+  completedLessonIds = [],
+  lessonMessages = {},
 }: CourseContentAccordionProps) {
   const isEmpty =
     content.folders.length === 0 &&
     content.ungroupedLessons.length === 0;
+  const completedLessonSet = new Set(completedLessonIds);
 
   if (isEmpty) {
     return (
       <div className="rounded-3xl border border-dashed border-blue-200 bg-white p-8 text-center shadow-sm">
-        <p className="font-black text-slate-900">
-          Materi belum tersedia
-        </p>
+        <p className="font-black text-slate-900">Materi belum tersedia</p>
         <p className="mt-2 text-sm text-slate-500">
           Folder dan lesson akan muncul di sini setelah ditambahkan.
         </p>
@@ -451,7 +485,6 @@ export default function CourseContentAccordion({
                   />
                 </svg>
               </span>
-
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="break-words text-base font-black text-slate-950 sm:text-lg">
@@ -466,7 +499,6 @@ export default function CourseContentAccordion({
                 </p>
               </div>
             </div>
-
             <span className="shrink-0 rounded-xl bg-blue-50 p-2 text-blue-700">
               <ChevronIcon />
             </span>
@@ -510,6 +542,12 @@ export default function CourseContentAccordion({
                     courseId={courseId}
                     content={lessonContent}
                     mode={mode}
+                    completed={completedLessonSet.has(
+                      lessonContent.lesson.id,
+                    )}
+                    messageThread={
+                      lessonMessages[lessonContent.lesson.id]
+                    }
                   />
                 ))}
               </div>
@@ -530,6 +568,12 @@ export default function CourseContentAccordion({
                 courseId={courseId}
                 content={lessonContent}
                 mode={mode}
+                completed={completedLessonSet.has(
+                  lessonContent.lesson.id,
+                )}
+                messageThread={
+                  lessonMessages[lessonContent.lesson.id]
+                }
               />
             ))}
           </div>

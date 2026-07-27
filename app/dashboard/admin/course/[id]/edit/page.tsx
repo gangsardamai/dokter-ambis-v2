@@ -10,6 +10,7 @@ from "@/components/admin/course/CourseForm";
 import {
   courseService,
   organizationService,
+  paymentAccountService,
   programService,
 } from "@/services";
 
@@ -53,6 +54,9 @@ export default async function EditCoursePage({
 
   const programs =
     await programService.getPrograms();
+
+  const paymentAccounts =
+    await paymentAccountService.getActiveAccounts();
 
   async function updateAction(
     formData: FormData
@@ -110,6 +114,12 @@ export default async function EditCoursePage({
               organizationId: item.organization_id,
             })
           )
+        }
+        paymentAccountOptions={
+          paymentAccounts.map((item) => ({
+            label: `${item.label} — ${item.bank_name}`,
+            value: item.id,
+          }))
         }
       />
 

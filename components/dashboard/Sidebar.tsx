@@ -11,6 +11,7 @@ import {
 
 interface SidebarProps {
   role: ProfileRole;
+  messageUnreadCount?: number;
   onNavigate?: () => void;
 }
 
@@ -56,6 +57,7 @@ function isActivePath(
 
 export default function Sidebar({
   role,
+  messageUnreadCount = 0,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
@@ -112,6 +114,14 @@ export default function Sidebar({
                   item.href,
                   homeHref,
                 );
+                const messageHref =
+                  role === "admin"
+                    ? "/dashboard/admin/messages"
+                    : role === "mentor"
+                      ? "/dashboard/mentor/messages"
+                      : null;
+                const showMessageBadge =
+                  item.href === messageHref && messageUnreadCount > 0;
 
                 return (
                   <Link
@@ -126,9 +136,19 @@ export default function Sidebar({
                     }`}
                   >
                     <span>{item.title}</span>
-                    {active && (
+                    {showMessageBadge ? (
+                      <span
+                        className={`inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-black ${
+                          active
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-amber-400 text-amber-950"
+                        }`}
+                      >
+                        {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+                      </span>
+                    ) : active ? (
                       <span className="h-2 w-2 rounded-full bg-[#1769cf]" />
-                    )}
+                    ) : null}
                   </Link>
                 );
               })}

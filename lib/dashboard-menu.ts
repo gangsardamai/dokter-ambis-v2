@@ -59,11 +59,23 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
           title: "Live Class",
           href: "/dashboard/admin/live-class",
         },
+        {
+          title: "Try Out",
+          href: "/dashboard/admin/tryout",
+        },
       ],
     },
     {
       title: "Operasional",
       items: [
+        {
+          title: "Rekening Pembayaran",
+          href: "/dashboard/admin/payment-account",
+        },
+        {
+          title: "Kotak Pesan",
+          href: "/dashboard/admin/messages",
+        },
         {
           title: "Promotion",
           href: "/dashboard/admin/promotion",
@@ -83,6 +95,14 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
         {
           title: "Course Ditugaskan",
           href: "/dashboard/mentor",
+        },
+        {
+          title: "Try Out",
+          href: "/dashboard/mentor/tryout",
+        },
+        {
+          title: "Kotak Pesan",
+          href: "/dashboard/mentor/messages",
         },
         {
           title: "Profil",

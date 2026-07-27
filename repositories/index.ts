@@ -8,6 +8,7 @@ export * from "./video.repository";
 export * from "./file.repository";
 export * from "./live-class.repository";
 export * from "./quiz.repository";
+export * from "./tryout.repository";
 
 export * from "./program.repository";
 export { courseRepository } from "./course.repository";
@@ -20,3 +21,8 @@ export * from "./enrollment.repository";
 export * from "./payment.repository";
 export * from "./payment-proof.repository";
 export * from "./device.repository";
+export * from "./student-course-progress.repository";
+export * from "./lesson-message.repository";
+
+export * from "./payment-account.repository";
+export * from "./mentor-course-access.repository";

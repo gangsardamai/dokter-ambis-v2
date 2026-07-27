@@ -2,11 +2,18 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
+import StudentCourseInsights, {
+  CourseProgressSummaryCards,
+} from "@/components/student/course/StudentCourseStatistics";
+import StudentTryoutList from "@/components/tryout/StudentTryoutList";
 
 import {
   courseExplorerService,
   enrollmentService,
+  lessonMessageService,
   profileService,
+  studentCourseProgressService,
+  tryoutService,
 } from "@/services";
 
 interface StudentMyCoursePageProps {
@@ -20,18 +27,16 @@ export default async function StudentMyCoursePage({
 }: StudentMyCoursePageProps) {
   const { courseId } = await params;
 
-  const profile =
-    await profileService.getCurrentProfile();
+  const profile = await profileService.getCurrentProfile();
 
   if (!profile) {
     redirect("/login");
   }
 
-  const enrollment =
-    await enrollmentService.getActiveCourseEnrollment(
-      profile.id,
-      courseId,
-    );
+  const enrollment = await enrollmentService.getActiveCourseEnrollment(
+    profile.id,
+    courseId,
+  );
 
   if (!enrollment || !enrollment.courses) {
     redirect(
@@ -41,8 +46,12 @@ export default async function StudentMyCoursePage({
     );
   }
 
-  const content =
-    await courseExplorerService.getCourseContent(courseId);
+  const [content, progressSummary, lessonMessages, tryouts] = await Promise.all([
+    courseExplorerService.getCourseContent(courseId),
+    studentCourseProgressService.getCourseProgress(profile.id, courseId),
+    lessonMessageService.getStudentCourseThreads(profile.id, courseId),
+    tryoutService.getStudentTryouts(profile.id, courseId),
+  ]);
 
   const course = enrollment.courses;
 
@@ -56,25 +65,62 @@ export default async function StudentMyCoursePage({
       </Link>
 
       <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
-        <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
-          Blok Aktif
-        </span>
+        <div className="grid min-w-0 gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="min-w-0">
+            <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
+              Blok Aktif
+            </span>
 
-        <h1 className="mt-5 break-words text-3xl font-black tracking-tight sm:text-4xl">
-          {course.title}
-        </h1>
+            <h1 className="mt-5 break-words text-3xl font-black tracking-tight sm:text-4xl">
+              {course.title}
+            </h1>
 
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
-          <span>
-            {course.organizations?.title ??
-              "Universitas belum tersedia"}
-          </span>
-          <span>
-            {course.programs?.title ??
-              "Program belum tersedia"}
-          </span>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
+              <span>
+                {course.organizations?.title ??
+                  "Universitas belum tersedia"}
+              </span>
+              <span>
+                {course.programs?.title ?? "Program belum tersedia"}
+              </span>
+            </div>
+          </div>
+
+          <CourseProgressSummaryCards summary={progressSummary} />
         </div>
       </section>
+
+      <details className="group rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5">
+        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-6">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+              Statistik Belajar
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              Buka grafik nilai dan rekomendasi materi yang perlu dipelajari ulang.
+            </p>
+          </div>
+          <span className="rounded-xl bg-blue-50 p-2 text-blue-700 transition-transform group-open:rotate-180">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </summary>
+        <div className="border-t border-blue-100 p-4 sm:p-5 [&>section>section:first-child]:hidden [&>section>div:nth-child(2)]:!mt-0">
+          <StudentCourseInsights summary={progressSummary} />
+        </div>
+      </details>
 
       <section>
         <div className="mb-5">
@@ -85,7 +131,7 @@ export default async function StudentMyCoursePage({
             Materi Pembelajaran
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Buka folder, pilih lesson, lalu akses file, video, atau quiz sesuai urutan pembelajaran.
+            Buka folder, pilih lesson, lalu akses file, video, quiz, atau kirim pertanyaan sesuai urutan pembelajaran.
           </p>
         </div>
 
@@ -93,7 +139,25 @@ export default async function StudentMyCoursePage({
           courseId={courseId}
           content={content}
           mode="student"
+          completedLessonIds={progressSummary.completedLessonIds}
+          lessonMessages={lessonMessages}
         />
+      </section>
+
+      <section>
+        <div className="mb-5">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+            Simulasi Ujian
+          </p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
+            Try Out Course
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Kerjakan simulasi ujian dengan timer server, autosave jawaban, dan hasil sesuai kebijakan publikasi Admin.
+          </p>
+        </div>
+
+        <StudentTryoutList tryouts={tryouts} />
       </section>
     </main>
   );

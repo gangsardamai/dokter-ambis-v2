@@ -7,6 +7,7 @@ from "@/components/admin/course/CourseForm";
 
 import {
   organizationService,
+  paymentAccountService,
   programService,
 } from "@/services";
 
@@ -25,6 +26,9 @@ export default async function CreateCoursePage() {
 
   const programs =
     await programService.getPrograms();
+
+  const paymentAccounts =
+    await paymentAccountService.getActiveAccounts();
 
   async function createAction(
     formData: FormData
@@ -62,6 +66,13 @@ export default async function CreateCoursePage() {
 
       <CourseForm
 
+        defaultValues={{
+          payment_account_id:
+            paymentAccounts.find((item) => item.is_default)?.id ??
+            paymentAccounts[0]?.id ??
+            "",
+        }}
+
         submitLabel="Simpan Course"
 
         action={createAction}
@@ -83,6 +94,12 @@ export default async function CreateCoursePage() {
               organizationId: item.organization_id,
             })
           )
+        }
+        paymentAccountOptions={
+          paymentAccounts.map((item) => ({
+            label: `${item.label} — ${item.bank_name}`,
+            value: item.id,
+          }))
         }
 
       />
