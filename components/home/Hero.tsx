@@ -50,12 +50,12 @@ export default function Hero() {
               Mulai Belajar
             </Link>
 
-            <a
-              href="#program"
+            <Link
+              href="/kelas"
               className="rounded-xl border border-blue-200 bg-white px-7 py-3.5 text-center text-sm font-bold text-[#1769cf] transition hover:border-blue-400 hover:bg-blue-50"
             >
               Lihat Program
-            </a>
+            </Link>
           </div>
         </div>
       </div>
