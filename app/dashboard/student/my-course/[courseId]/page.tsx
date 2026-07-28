@@ -8,6 +8,7 @@ import StudentCourseInsights, {
 import StudentTryoutList from "@/components/tryout/StudentTryoutList";
 
 import {
+  courseCommunityLinkService,
   courseExplorerService,
   enrollmentService,
   lessonMessageService,
@@ -46,11 +47,18 @@ export default async function StudentMyCoursePage({
     );
   }
 
-  const [content, progressSummary, lessonMessages, tryouts] = await Promise.all([
+  const [
+    content,
+    progressSummary,
+    lessonMessages,
+    tryouts,
+    whatsappGroupUrl,
+  ] = await Promise.all([
     courseExplorerService.getCourseContent(courseId),
     studentCourseProgressService.getCourseProgress(profile.id, courseId),
     lessonMessageService.getStudentCourseThreads(profile.id, courseId),
     tryoutService.getStudentTryouts(profile.id, courseId),
+    courseCommunityLinkService.getWhatsAppGroupUrl(courseId),
   ]);
 
   const course = enrollment.courses;
@@ -84,6 +92,37 @@ export default async function StudentMyCoursePage({
                 {course.programs?.title ?? "Program belum tersedia"}
               </span>
             </div>
+
+            {whatsappGroupUrl && (
+              <a
+                href={whatsappGroupUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl bg-[#25D366] px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#20bd5a] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white/70 sm:w-auto"
+                aria-label={`Gabung Grup WhatsApp ${course.title}`}
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-6 w-6 shrink-0"
+                  fill="none"
+                >
+                  <path
+                    d="M20 11.6a8 8 0 0 1-11.9 7l-4.1 1.1 1.1-4A8 8 0 1 1 20 11.6Z"
+                    fill="currentColor"
+                    fillOpacity="0.18"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8.7 7.7c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.5.9 1.2 1.6 2.1 2.1.2.1.4.2.6 0l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .3-.1 1.3-.7 1.8-.5.5-1.2.8-2 .8-.6 0-1.4-.2-2.4-.6-1.4-.6-2.5-1.5-3.4-2.5-.8-.9-1.5-1.9-1.9-2.9-.4-.9-.5-1.6-.5-2.2 0-.8.3-1.4.6-1.8Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                Gabung Grup WhatsApp
+              </a>
+            )}
           </div>
 
           <CourseProgressSummaryCards summary={progressSummary} />

@@ -2,6 +2,7 @@ export * from "./base.repository";
 
 export * from "./organization.repository";
 export * from "./course.repository";
+export * from "./course-community-link.repository";
 export * from "./lesson.repository";
 
 export * from "./video.repository";
