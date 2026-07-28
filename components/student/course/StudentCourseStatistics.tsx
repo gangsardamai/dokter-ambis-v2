@@ -95,7 +95,7 @@ function FolderProgress({
   summary,
 }: StudentCourseInsightsProps) {
   return (
-    <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
+    <section className="min-w-0 rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
       <div>
         <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
           Progress per Folder
@@ -175,11 +175,11 @@ function ScoreChart({ scores }: { scores: QuizScorePoint[] }) {
   const polyline = points.map((point) => `${point.x},${point.y}`).join(" ");
 
   return (
-    <div className="mt-5">
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
+    <div className="mt-5 min-w-0">
+      <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          className="min-w-[36rem]"
+          className="block h-auto w-full max-w-full"
           role="img"
           aria-label="Grafik nilai terbaik quiz dan try out"
         >
@@ -249,11 +249,11 @@ function ScoreChart({ scores }: { scores: QuizScorePoint[] }) {
         </svg>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className="mt-4 grid min-w-0 gap-2 sm:grid-cols-2">
         {visibleScores.map((item, index) => (
           <div
             key={item.quizId}
-            className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs"
+            className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs"
           >
             <div className="min-w-0">
               <p className="truncate font-black text-slate-700">
@@ -277,7 +277,7 @@ function AssessmentPerformance({
   summary,
 }: StudentCourseInsightsProps) {
   return (
-    <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
         Perkembangan Nilai
       </p>
@@ -295,7 +295,7 @@ function AssessmentPerformance({
 
 function WeakTopics({ summary }: StudentCourseInsightsProps) {
   return (
-    <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
+    <section className="min-w-0 rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
         Rekomendasi Belajar
       </p>
@@ -351,9 +351,9 @@ export default function StudentCourseInsights({
   summary,
 }: StudentCourseInsightsProps) {
   return (
-    <section aria-label="Statistik belajar" className="space-y-5">
+    <section aria-label="Statistik belajar" className="min-w-0 space-y-5">
       <FolderProgress summary={summary} />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
         <AssessmentPerformance summary={summary} />
         <WeakTopics summary={summary} />
       </div>
