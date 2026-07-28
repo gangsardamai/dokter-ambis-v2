@@ -1,5 +1,6 @@
 export * from "./organization.service";
 export * from "./course.service";
+export * from "./course-community-link.service";
 export * from "./lesson.service";
 export * from "./video.service";
 export * from "./file.service";
