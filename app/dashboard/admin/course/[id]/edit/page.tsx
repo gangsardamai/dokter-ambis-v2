@@ -54,6 +54,10 @@ export default async function EditCoursePage({
   const registrationPath = courseOrganization
     ? `/daftar/${courseOrganization.slug}/${course.slug}`
     : `/kelas/${course.id}`;
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://dokterambis.com"
+  ).replace(/\/+$/, "");
+  const registrationUrl = `${siteUrl}${registrationPath}`;
 
   async function updateAction(formData: FormData) {
     "use server";
@@ -109,7 +113,7 @@ export default async function EditCoursePage({
 
       <FormCard>
         <CourseRegistrationLinkCard
-          registrationPath={registrationPath}
+          registrationUrl={registrationUrl}
         />
       </FormCard>
 
