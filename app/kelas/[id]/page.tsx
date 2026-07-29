@@ -42,9 +42,9 @@ export default async function PublicCourseDetailPage({
   const profile = authenticated
     ? await profileService.getCurrentProfile()
     : null;
-  const ownedEnrollment =
+  const existingEnrollment =
     profile?.role === "student"
-      ? await enrollmentService.getActiveCourseEnrollment(
+      ? await enrollmentService.getExistingEnrollment(
           profile.id,
           course.id,
         )
@@ -57,9 +57,17 @@ export default async function PublicCourseDetailPage({
   let studentActionHref = enrollmentTarget;
   let studentActionLabel = "Daftar Blok";
 
-  if (profile?.role === "student" && ownedEnrollment) {
-    studentActionHref = `/dashboard/student/my-course/${course.id}`;
-    studentActionLabel = "Buka Course";
+  if (profile?.role === "student" && existingEnrollment) {
+    if (existingEnrollment.status === "active") {
+      studentActionHref = `/dashboard/student/my-course/${course.id}`;
+      studentActionLabel = "Buka Course";
+    } else if (
+      existingEnrollment.status !== "cancelled" &&
+      existingEnrollment.status !== "expired"
+    ) {
+      studentActionHref = `/dashboard/student/payment/${existingEnrollment.id}`;
+      studentActionLabel = "Lanjutkan Pendaftaran";
+    }
   }
 
   return (
