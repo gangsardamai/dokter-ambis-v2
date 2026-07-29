@@ -50,16 +50,16 @@ export default async function PublicCourseDetailPage({
         )
       : null;
 
-  let actionHref = `/login?next=${encodeURIComponent(
-    `/dashboard/student/course/${course.id}`,
-  )}`;
-  let actionLabel = "Daftar";
+  const enrollmentTarget = `/dashboard/student/course/${course.id}`;
+  const loginHref = `/login?next=${encodeURIComponent(enrollmentTarget)}`;
+  const registerHref = `/register?next=${encodeURIComponent(enrollmentTarget)}`;
 
-  if (profile?.role === "student") {
-    actionHref = ownedEnrollment
-      ? `/dashboard/student/my-course/${course.id}`
-      : `/dashboard/student/course/${course.id}`;
-    actionLabel = ownedEnrollment ? "Buka Course" : "Daftar";
+  let studentActionHref = enrollmentTarget;
+  let studentActionLabel = "Daftar Blok";
+
+  if (profile?.role === "student" && ownedEnrollment) {
+    studentActionHref = `/dashboard/student/my-course/${course.id}`;
+    studentActionLabel = "Buka Course";
   }
 
   return (
@@ -138,13 +138,28 @@ export default async function PublicCourseDetailPage({
                   <span className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-blue-200 bg-white px-6 py-3 text-sm font-black text-blue-700">
                     Mode Lihat Detail
                   </span>
-                ) : (
+                ) : profile?.role === "student" ? (
                   <Link
-                    href={actionHref}
+                    href={studentActionHref}
                     className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-7 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10 transition hover:from-blue-700 hover:to-[#032f50]"
                   >
-                    {actionLabel}
+                    {studentActionLabel}
                   </Link>
+                ) : (
+                  <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                    <Link
+                      href={registerHref}
+                      className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-7 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10 transition hover:from-blue-700 hover:to-[#032f50]"
+                    >
+                      Daftar Akun
+                    </Link>
+                    <Link
+                      href={loginHref}
+                      className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-blue-200 bg-white px-7 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-50"
+                    >
+                      Sudah Punya Akun? Masuk
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
