@@ -8,6 +8,7 @@ import {
   TextInput,
 } from "@/components/admin";
 import CourseForm from "@/components/admin/course/CourseForm";
+import CourseRegistrationLinkCard from "@/components/admin/course/CourseRegistrationLinkCard";
 import { mapCourseForm } from "@/lib/forms/course";
 import {
   courseCommunityLinkService,
@@ -46,6 +47,13 @@ export default async function EditCoursePage({
     paymentAccountService.getActiveAccounts(),
     courseCommunityLinkService.getCourseLink(id),
   ]);
+
+  const courseOrganization = organizations.find(
+    (organization) => organization.id === course.organization_id,
+  );
+  const registrationPath = courseOrganization
+    ? `/daftar/${courseOrganization.slug}/${course.slug}`
+    : `/kelas/${course.id}`;
 
   async function updateAction(formData: FormData) {
     "use server";
@@ -98,6 +106,12 @@ export default async function EditCoursePage({
           value: item.id,
         }))}
       />
+
+      <FormCard>
+        <CourseRegistrationLinkCard
+          registrationPath={registrationPath}
+        />
+      </FormCard>
 
       <FormCard>
         <form action={saveWhatsAppGroupAction} className="space-y-5">
