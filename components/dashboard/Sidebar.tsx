@@ -72,25 +72,25 @@ export default function Sidebar({
         <Link
           href={homeHref}
           onClick={onNavigate}
-          className="relative flex items-center gap-3"
+          className="relative flex min-w-0 items-center gap-3"
           aria-label={`DokterAmbis — ${consoleLabelByRole[role]}`}
         >
-          <span className="relative block h-12 w-13 overflow-hidden rounded-2xl bg-white/95 shadow-lg shadow-blue-950/20 ring-1 ring-white/40">
+          <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/95 shadow-lg shadow-blue-950/20 ring-1 ring-white/40">
             <Image
               src="/brand/dokterambis-logo.png"
               alt=""
               width={500}
               height={500}
               priority
-              className="absolute -left-[19px] -top-[12px] h-[86px] w-[86px] max-w-none"
+              className="h-[52px] w-[52px] object-contain"
             />
           </span>
 
-          <span>
-            <span className="block text-xl font-extrabold tracking-[-0.04em]">
+          <span className="min-w-0">
+            <span className="block whitespace-nowrap text-xl font-extrabold leading-none tracking-[-0.04em]">
               Dokter<span className="text-cyan-200">Ambis</span>
             </span>
-            <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.18em] text-blue-100/80">
+            <span className="mt-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-blue-100/80">
               {consoleLabelByRole[role]}
             </span>
           </span>
