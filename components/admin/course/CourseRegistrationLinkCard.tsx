@@ -1,20 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface CourseRegistrationLinkCardProps {
-  registrationPath: string;
+  registrationUrl: string;
 }
 
 export default function CourseRegistrationLinkCard({
-  registrationPath,
+  registrationUrl,
 }: CourseRegistrationLinkCardProps) {
-  const [registrationUrl, setRegistrationUrl] = useState(registrationPath);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setRegistrationUrl(`${window.location.origin}${registrationPath}`);
-  }, [registrationPath]);
 
   async function copyRegistrationUrl() {
     try {
@@ -73,7 +68,7 @@ export default function CourseRegistrationLinkCard({
         </button>
 
         <a
-          href={registrationPath}
+          href={registrationUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-white px-5 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
