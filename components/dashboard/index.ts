@@ -11,7 +11,7 @@ export { default as Sidebar }
 from "./Sidebar";
 
 export { default as CourseDirectory }
-from "./CourseDirectory";
+from "./FormattedCourseDirectory";
 
 export type { DashboardCourseItem }
 from "./CourseDirectory";

@@ -1,8 +1,9 @@
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
-import PublicCourseCatalog, {
-  type PublicCourseCatalogItem,
-  type PublicOrganizationOption,
+import PublicCourseCatalog from "@/components/public/FormattedPublicCourseCatalog";
+import type {
+  PublicCourseCatalogItem,
+  PublicOrganizationOption,
 } from "@/components/public/PublicCourseCatalog";
 import {
   authService,

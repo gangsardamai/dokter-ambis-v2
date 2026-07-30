@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import CourseDescription from "@/components/course/CourseDescription";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import {
@@ -123,10 +124,7 @@ export default async function PublicCourseDetailPage({
                 <h2 className="text-lg font-black text-slate-950">
                   Tentang Kelas
                 </h2>
-                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600">
-                  {course.description ??
-                    "Deskripsi kelas akan segera diperbarui oleh tim DokterAmbis."}
-                </p>
+                <CourseDescription description={course.description} />
               </div>
 
               <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
