@@ -15,7 +15,8 @@ export interface AdminStudentDirectoryFilters {
 }
 
 export interface AdminStudentDirectoryItem extends AdminStudentProfileRow {
-  courses: AdminStudentCourseRef[];
+  email: string;
+  enrollments: AdminStudentEnrollmentRow[];
 }
 
 export interface AdminStudentDirectoryResult {
@@ -29,7 +30,9 @@ export interface AdminStudentDirectoryResult {
 }
 
 export interface AdminStudentDetailResult {
-  student: AdminStudentProfileRow;
+  student: AdminStudentProfileRow & {
+    email: string;
+  };
   enrollments: AdminStudentEnrollmentRow[];
 }
 
@@ -42,30 +45,6 @@ function normalizePositiveInteger(
   }
 
   return Math.max(1, Math.floor(value));
-}
-
-function uniqueCourses(
-  enrollments: AdminStudentEnrollmentRow[],
-): AdminStudentCourseRef[] {
-  const courses = new Map<string, AdminStudentCourseRef>();
-
-  enrollments.forEach((enrollment) => {
-    if (enrollment.courses) {
-      courses.set(enrollment.courses.id, enrollment.courses);
-    }
-  });
-
-  return Array.from(courses.values()).sort((left, right) => {
-    const organizationComparison = (
-      left.organizations?.title ?? ""
-    ).localeCompare(right.organizations?.title ?? "", "id-ID");
-
-    if (organizationComparison !== 0) {
-      return organizationComparison;
-    }
-
-    return left.title.localeCompare(right.title, "id-ID");
-  });
 }
 
 function getOrganizationOptions(
@@ -82,6 +61,10 @@ function getOrganizationOptions(
   return Array.from(organizations.values()).sort((left, right) =>
     left.title.localeCompare(right.title, "id-ID"),
   );
+}
+
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 export class AdminStudentService {
@@ -106,10 +89,15 @@ export class AdminStudentService {
     ]);
 
     const profileIds = profilePage.profiles.map((profile) => profile.id);
-    const enrollments = await adminStudentRepository.getEnrollmentsByProfileIds(
-      profileIds,
-    );
+    const [enrollments, emailRows] = await Promise.all([
+      adminStudentRepository.getEnrollmentsByProfileIds(profileIds),
+      adminStudentRepository.getStudentEmails(profileIds),
+    ]);
+
     const enrollmentsByProfile = new Map<string, AdminStudentEnrollmentRow[]>();
+    const emailsByProfile = new Map(
+      emailRows.map((row) => [row.profile_id, row.email]),
+    );
 
     enrollments.forEach((enrollment) => {
       const existing = enrollmentsByProfile.get(enrollment.profile_id) ?? [];
@@ -119,7 +107,8 @@ export class AdminStudentService {
 
     const students = profilePage.profiles.map((profile) => ({
       ...profile,
-      courses: uniqueCourses(enrollmentsByProfile.get(profile.id) ?? []),
+      email: emailsByProfile.get(profile.id) ?? "",
+      enrollments: enrollmentsByProfile.get(profile.id) ?? [],
     }));
 
     return {
@@ -156,14 +145,59 @@ export class AdminStudentService {
       return null;
     }
 
-    const enrollments = await adminStudentRepository.getEnrollmentsByProfileIds([
-      profileId,
+    const [enrollments, emailRows] = await Promise.all([
+      adminStudentRepository.getEnrollmentsByProfileIds([profileId]),
+      adminStudentRepository.getStudentEmails([profileId]),
     ]);
 
     return {
-      student,
+      student: {
+        ...student,
+        email: emailRows[0]?.email ?? "",
+      },
       enrollments,
     };
+  }
+
+  async deleteStudentAccount(
+    profileId: string,
+    confirmationEmail: string,
+  ): Promise<void> {
+    if (!profileId) {
+      throw new Error("Akun mahasiswa tidak ditemukan.");
+    }
+
+    const normalizedConfirmation = normalizeEmail(confirmationEmail);
+
+    if (!normalizedConfirmation) {
+      throw new Error("Email konfirmasi wajib diisi.");
+    }
+
+    const student = await adminStudentRepository.getStudentById(profileId);
+
+    if (!student) {
+      throw new Error("Akun mahasiswa tidak ditemukan.");
+    }
+
+    const [emailRows, enrollments] = await Promise.all([
+      adminStudentRepository.getStudentEmails([profileId]),
+      adminStudentRepository.getEnrollmentsByProfileIds([profileId]),
+    ]);
+    const actualEmail = emailRows[0]?.email ?? "";
+
+    if (!actualEmail || normalizeEmail(actualEmail) !== normalizedConfirmation) {
+      throw new Error("Email konfirmasi tidak sesuai.");
+    }
+
+    const paymentProofPaths = enrollments
+      .map((enrollment) => enrollment.payments?.payment_proof_path ?? null)
+      .filter((path): path is string => Boolean(path));
+
+    await adminStudentRepository.removePaymentProofs(paymentProofPaths);
+    await adminStudentRepository.deleteStudentAccount(
+      profileId,
+      confirmationEmail,
+    );
   }
 }
 
