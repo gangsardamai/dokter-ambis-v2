@@ -1,4 +1,5 @@
 import type { Database as ApplicationDatabase } from "./database.app.types";
+import type { AdminStudentManagementFunctions } from "./admin-student-management.types";
 import type { CourseCommunityLinkTables } from "./course-community-link.types";
 import type { MentorFeatureFunctions } from "./mentor-feature.types";
 import type { TryoutFollowupFunctions } from "./tryout.followup.types";
@@ -15,6 +16,7 @@ export type Database = Omit<ApplicationDatabase, "public"> & {
       TryoutFunctions &
       TryoutFollowupFunctions &
       PaymentAccountFunctions &
-      MentorFeatureFunctions;
+      MentorFeatureFunctions &
+      AdminStudentManagementFunctions;
   };
 };

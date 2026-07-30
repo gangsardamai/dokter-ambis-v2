@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/admin";
+import { DeleteStudentButton } from "@/components/admin/student/DeleteStudentButton";
 import { adminStudentService } from "@/services";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -55,7 +56,7 @@ function getWhatsappHref(phone: string): string | null {
   return `https://wa.me/${digits}`;
 }
 
-function getStatusLabel(status: string): string {
+function getProfileStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     active: "Aktif",
     inactive: "Tidak Aktif",
@@ -65,7 +66,7 @@ function getStatusLabel(status: string): string {
   return labels[status] ?? status;
 }
 
-function getStatusClassName(status: string): string {
+function getProfileStatusClassName(status: string): string {
   if (status === "active") {
     return "bg-emerald-100 text-emerald-700";
   }
@@ -75,6 +76,30 @@ function getStatusClassName(status: string): string {
   }
 
   return "bg-slate-100 text-slate-600";
+}
+
+function getEnrollmentStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending_payment: "Menunggu Pembayaran",
+    pending_approval: "Menunggu Verifikasi",
+    active: "Aktif",
+    expired: "Kedaluwarsa",
+    cancelled: "Dibatalkan",
+  };
+
+  return labels[status] ?? status;
+}
+
+function getEnrollmentStatusClassName(status: string): string {
+  const classes: Record<string, string> = {
+    pending_payment: "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100",
+    pending_approval: "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100",
+    active: "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+    expired: "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200",
+    cancelled: "border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
+  };
+
+  return classes[status] ?? classes.expired;
 }
 
 function buildPageHref({
@@ -183,7 +208,7 @@ export default async function AdminStudentPage({
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
       <PageHeader
         title="Mahasiswa"
-        description="Lihat data mahasiswa, nomor WhatsApp, asal universitas, dan course yang pernah didaftarkan."
+        description="Lihat data mahasiswa, status enrollment setiap course, dan kelola akun secara aman."
       />
 
       <section className="grid gap-4 sm:grid-cols-2">
@@ -339,10 +364,13 @@ export default async function AdminStudentPage({
         <section className="space-y-4">
           {directory.students.map((student) => {
             const whatsappHref = getWhatsappHref(student.phone);
-            const visibleCourses = student.courses.slice(0, 3);
-            const remainingCourses = Math.max(
+            const enrollmentWithCourses = student.enrollments.filter(
+              (enrollment) => Boolean(enrollment.courses),
+            );
+            const visibleEnrollments = enrollmentWithCourses.slice(0, 3);
+            const remainingEnrollments = Math.max(
               0,
-              student.courses.length - visibleCourses.length,
+              enrollmentWithCourses.length - visibleEnrollments.length,
             );
 
             return (
@@ -351,7 +379,7 @@ export default async function AdminStudentPage({
                 className="rounded-3xl border border-blue-100/80 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:p-5"
               >
                 <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-center">
-                  <div className="flex min-w-0 items-start gap-4 xl:w-[30%]">
+                  <div className="flex min-w-0 items-start gap-4 xl:w-[29%]">
                     <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#1769cf] to-[#033b63] text-sm font-black text-white shadow-sm">
                       {getInitials(student.full_name)}
                     </div>
@@ -361,18 +389,21 @@ export default async function AdminStudentPage({
                           {student.full_name}
                         </h2>
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-black ${getStatusClassName(student.status)}`}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-black ${getProfileStatusClassName(student.status)}`}
                         >
-                          {getStatusLabel(student.status)}
+                          {getProfileStatusLabel(student.status)}
                         </span>
                       </div>
                       <p className="mt-1 break-words text-sm font-semibold text-slate-500">
                         {student.university_origin || "Asal universitas belum diisi"}
                       </p>
+                      <p className="mt-1 break-all text-xs font-semibold text-slate-400">
+                        {student.email || "Email tidak tersedia"}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="min-w-0 xl:w-[24%]">
+                  <div className="min-w-0 xl:w-[21%]">
                     <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
                       WhatsApp
                     </p>
@@ -397,45 +428,69 @@ export default async function AdminStudentPage({
 
                   <div className="min-w-0 flex-1">
                     <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
-                      Course yang pernah didaftarkan
+                      Course dan status enrollment
                     </p>
-                    {visibleCourses.length === 0 ? (
+                    {visibleEnrollments.length === 0 ? (
                       <p className="mt-2 text-sm font-semibold text-slate-400">
                         Belum memiliki course.
                       </p>
                     ) : (
                       <div className="mt-2 flex min-w-0 flex-wrap gap-2">
-                        {visibleCourses.map((course) => (
-                          <span
-                            key={course.id}
-                            className="inline-flex max-w-full flex-col rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs"
-                          >
-                            <span className="break-words font-black text-blue-900">
-                              {course.title}
-                            </span>
-                            <span className="mt-0.5 break-words font-semibold text-blue-600">
-                              {course.organizations?.title ?? "Universitas tidak tersedia"}
-                              {course.organizations?.short_name
-                                ? ` · ${course.organizations.short_name}`
-                                : ""}
-                            </span>
-                          </span>
-                        ))}
-                        {remainingCourses > 0 && (
+                        {visibleEnrollments.map((enrollment) => {
+                          const course = enrollment.courses;
+
+                          if (!course) {
+                            return null;
+                          }
+
+                          return (
+                            <div
+                              key={enrollment.id}
+                              className="inline-flex max-w-full flex-wrap items-stretch gap-1"
+                            >
+                              <span className="inline-flex max-w-full flex-col rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs">
+                                <span className="break-words font-black text-blue-900">
+                                  {course.title}
+                                </span>
+                                <span className="mt-0.5 break-words font-semibold text-blue-600">
+                                  {course.organizations?.title ?? "Universitas tidak tersedia"}
+                                  {course.organizations?.short_name
+                                    ? ` · ${course.organizations.short_name}`
+                                    : ""}
+                                </span>
+                              </span>
+                              <Link
+                                href={`/dashboard/admin/enrollment/${enrollment.id}`}
+                                title="Buka detail enrollment"
+                                className={`inline-flex items-center rounded-xl border px-3 py-2 text-[11px] font-black transition ${getEnrollmentStatusClassName(enrollment.status)}`}
+                              >
+                                {getEnrollmentStatusLabel(enrollment.status)}
+                              </Link>
+                            </div>
+                          );
+                        })}
+                        {remainingEnrollments > 0 && (
                           <span className="inline-flex items-center rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600">
-                            +{remainingCourses} lainnya
+                            +{remainingEnrollments} lainnya
                           </span>
                         )}
                       </div>
                     )}
                   </div>
 
-                  <Link
-                    href={`/dashboard/admin/student/${student.id}`}
-                    className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-black text-[#1769cf] transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 xl:w-auto"
-                  >
-                    Lihat Detail
-                  </Link>
+                  <div className="flex w-full shrink-0 flex-col gap-2 xl:w-auto">
+                    <Link
+                      href={`/dashboard/admin/student/${student.id}`}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-black text-[#1769cf] transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 xl:w-auto"
+                    >
+                      Lihat Detail
+                    </Link>
+                    <DeleteStudentButton
+                      studentId={student.id}
+                      fullName={student.full_name}
+                      email={student.email}
+                    />
+                  </div>
                 </div>
               </article>
             );

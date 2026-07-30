@@ -17,6 +17,11 @@ export interface AdminStudentProfileRow {
   created_at: string;
 }
 
+export interface AdminStudentEmailRow {
+  profile_id: string;
+  email: string;
+}
+
 export interface AdminStudentOrganizationRef {
   id: string;
   title: string;
@@ -47,6 +52,7 @@ export interface AdminStudentEnrollmentRow {
   payments: {
     id: string;
     status: PaymentStatus;
+    payment_proof_path: string | null;
   } | null;
 }
 
@@ -167,6 +173,28 @@ export class AdminStudentRepository extends BaseRepository {
     };
   }
 
+  async getStudentEmails(
+    profileIds: string[],
+  ): Promise<AdminStudentEmailRow[]> {
+    if (profileIds.length === 0) {
+      return [];
+    }
+
+    const supabase = await this.db();
+    const { data, error } = await supabase.rpc(
+      "admin_get_student_emails",
+      {
+        target_profile_ids: profileIds,
+      },
+    );
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return (data as AdminStudentEmailRow[] | null) ?? [];
+  }
+
   async getEnrollmentsByProfileIds(
     profileIds: string[],
   ): Promise<AdminStudentEnrollmentRow[]> {
@@ -202,7 +230,8 @@ export class AdminStudentRepository extends BaseRepository {
         ),
         payments (
           id,
-          status
+          status,
+          payment_proof_path
         )
       `)
       .in("profile_id", profileIds)
@@ -259,6 +288,47 @@ export class AdminStudentRepository extends BaseRepository {
     }
 
     return (data as AdminStudentCourseRef[] | null) ?? [];
+  }
+
+  async removePaymentProofs(paths: string[]): Promise<void> {
+    const uniquePaths = Array.from(
+      new Set(paths.map((path) => path.trim()).filter(Boolean)),
+    );
+
+    if (uniquePaths.length === 0) {
+      return;
+    }
+
+    const supabase = await this.db();
+    const { error } = await supabase.storage
+      .from("payment-proofs")
+      .remove(uniquePaths);
+
+    if (error) {
+      this.handleError(error);
+    }
+  }
+
+  async deleteStudentAccount(
+    profileId: string,
+    confirmationEmail: string,
+  ): Promise<void> {
+    const supabase = await this.db();
+    const { data, error } = await supabase.rpc(
+      "admin_delete_student_account",
+      {
+        target_profile_id: profileId,
+        confirmation_email: confirmationEmail,
+      },
+    );
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    if (!data) {
+      throw new Error("Akun mahasiswa gagal dihapus.");
+    }
   }
 }
 
