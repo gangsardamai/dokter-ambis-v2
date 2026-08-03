@@ -37,6 +37,14 @@ jobs:
       - name: Initialize isolated local Supabase configuration
         run: supabase init --force
 
+      - name: Neutralize duplicated legacy migration in isolated workspace
+        run: |
+          cat > supabase/migrations/0047_update_lessons_add_folder.sql <<'SQL'
+          -- CI-only compatibility no-op.
+          -- Migration 0040 already creates folder_id, its FK, and its indexes.
+          select 1;
+          SQL
+
       - name: Start isolated local database and apply all migrations
         run: supabase db start
 
