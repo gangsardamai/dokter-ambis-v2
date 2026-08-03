@@ -438,6 +438,10 @@ begin
 end
 $wrong_amount$;
 
-raise notice 'Payment timing behavioral verification passed.';
+do $payment_behavior_complete$
+begin
+  raise notice 'Payment timing behavioral verification passed.';
+end
+$payment_behavior_complete$;
 
 rollback;
