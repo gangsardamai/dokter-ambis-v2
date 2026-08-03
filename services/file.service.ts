@@ -1,4 +1,8 @@
-import { lessonFileRepository } from "@/repositories";
+import { deleteStoredCourseFile } from "@/lib/file/delete-stored-course-file";
+import {
+  lessonFileRepository,
+  lessonRepository,
+} from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -9,80 +13,73 @@ type LessonFileUpdate =
   Database["public"]["Tables"]["lesson_files"]["Update"];
 
 export class LessonFileService {
-
-  /* ========================================
-     READ
-  ======================================== */
-
   async getFiles() {
     return await lessonFileRepository.getAll();
   }
 
-  async getFileById(
-    id: string
-  ) {
+  async getFileById(id: string) {
     return await lessonFileRepository.getById(id);
   }
 
-  async getFilesByLesson(
-    lessonId: string
-  ) {
-    return await lessonFileRepository.getByLesson(
-      lessonId
-    );
+  async getFilesByLesson(lessonId: string) {
+    return await lessonFileRepository.getByLesson(lessonId);
   }
 
-  async getFilesByCourse(
-    courseId: string
-  ) {
-    return await lessonFileRepository.getByCourse(
-      courseId
-    );
+  async getFilesByCourse(courseId: string) {
+    return await lessonFileRepository.getByCourse(courseId);
   }
 
   async countFiles() {
     return await lessonFileRepository.count();
   }
 
-  /* ========================================
-     CREATE
-  ======================================== */
-
-  async createFile(
-    data: LessonFileInsert
-  ) {
-    return await lessonFileRepository.create(
-      data
-    );
+  async createFile(data: LessonFileInsert) {
+    return await lessonFileRepository.create(data);
   }
-
-  /* ========================================
-     UPDATE
-  ======================================== */
 
   async updateFile(
     id: string,
-    data: LessonFileUpdate
+    data: LessonFileUpdate,
   ) {
-    return await lessonFileRepository.update(
-      id,
-      data
-    );
+    return await lessonFileRepository.update(id, data);
   }
-
-  /* ========================================
-     DELETE
-  ======================================== */
 
   async deleteFile(
-    id: string
+    id: string,
+    expectedCourseId?: string,
   ) {
-    return await lessonFileRepository.delete(
-      id
-    );
-  }
+    const file = await lessonFileRepository.getById(id);
 
+    if (!file) {
+      throw new Error(
+        "File tidak ditemukan atau Anda tidak memiliki akses.",
+      );
+    }
+
+    const lesson = await lessonRepository.getById(
+      file.lesson_id,
+    );
+
+    if (!lesson) {
+      throw new Error(
+        "Lesson pemilik file tidak ditemukan atau tidak dapat diakses.",
+      );
+    }
+
+    if (
+      expectedCourseId &&
+      lesson.course_id !== expectedCourseId
+    ) {
+      throw new Error(
+        "File tidak termasuk dalam course yang dipilih.",
+      );
+    }
+
+    await deleteStoredCourseFile(file.file_path, lesson);
+    await lessonFileRepository.delete(id);
+
+    return { courseId: lesson.course_id };
+  }
 }
 
-export const lessonFileService =
-  new LessonFileService();
+export const lessonFileService = new LessonFileService();
