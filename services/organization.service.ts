@@ -1,3 +1,4 @@
+import { createUniqueSlug } from "@/lib/slug";
 import { organizationRepository } from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -9,10 +10,6 @@ type OrganizationUpdate =
   Database["public"]["Tables"]["organizations"]["Update"];
 
 export class OrganizationService {
-  /* ========================================
-     READ
-  ======================================== */
-
   async getOrganizations() {
     return await organizationRepository.getAll();
   }
@@ -25,15 +22,11 @@ export class OrganizationService {
     return await organizationRepository.getActiveUniversities();
   }
 
-  async getOrganizationById(
-    id: string
-  ) {
+  async getOrganizationById(id: string) {
     return await organizationRepository.getById(id);
   }
 
-  async getOrganizationBySlug(
-    slug: string
-  ) {
+  async getOrganizationBySlug(slug: string) {
     return await organizationRepository.getBySlug(slug);
   }
 
@@ -45,72 +38,49 @@ export class OrganizationService {
     return await organizationRepository.countUniversities();
   }
 
-
-  /* ========================================
-     CREATE
-  ======================================== */
-
-  async createOrganization(
-    data: OrganizationInsert
-  ) {
-    return await organizationRepository.create(
-      data
+  async createOrganization(data: OrganizationInsert) {
+    const slug = await createUniqueSlug(
+      data.title,
+      async (candidate) =>
+        (await organizationRepository.getBySlug(candidate)) === null,
     );
-  }
 
-  /* ========================================
-     UPDATE
-  ======================================== */
+    return await organizationRepository.create({
+      ...data,
+      slug,
+    });
+  }
 
   async updateOrganization(
     id: string,
-    data: OrganizationUpdate
+    data: OrganizationUpdate,
   ) {
-    return await organizationRepository.update(
-      id,
-      data
-    );
+    const existing = await organizationRepository.getById(id);
+
+    if (!existing) {
+      throw new Error("Organization tidak ditemukan.");
+    }
+
+    return await organizationRepository.update(id, {
+      ...data,
+      slug: existing.slug,
+    });
   }
 
-  /* ========================================
-     ACTIVATE
-  ======================================== */
-
-  async activateOrganization(
-    id: string
-  ) {
-    return await organizationRepository.update(
-      id,
-      {
-        status: "active",
-      }
-    );
+  async activateOrganization(id: string) {
+    return await organizationRepository.update(id, {
+      status: "active",
+    });
   }
 
-  /* ========================================
-     DEACTIVATE
-  ======================================== */
-
-  async deactivateOrganization(
-    id: string
-  ) {
-    return await organizationRepository.update(
-      id,
-      {
-        status: "inactive",
-      }
-    );
+  async deactivateOrganization(id: string) {
+    return await organizationRepository.update(id, {
+      status: "inactive",
+    });
   }
 
-  /* ========================================
-     DELETE
-  ======================================== */
-
-  async deleteOrganization(
-    id: string
-  ) {
-    const organization =
-      await organizationRepository.getById(id);
+  async deleteOrganization(id: string) {
+    const organization = await organizationRepository.getById(id);
 
     if (!organization) {
       throw new Error("Organization tidak ditemukan.");
@@ -118,16 +88,12 @@ export class OrganizationService {
 
     if (organization.is_general) {
       throw new Error(
-        "Organization Umum / Nasional tidak dapat dihapus."
+        "Organization Umum / Nasional tidak dapat dihapus.",
       );
     }
 
-    return await organizationRepository.delete(
-      id
-    );
+    return await organizationRepository.delete(id);
   }
-
 }
 
-export const organizationService =
-  new OrganizationService();
+export const organizationService = new OrganizationService();
