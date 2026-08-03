@@ -1,5 +1,8 @@
 import { createUniqueSlug } from "@/lib/slug";
-import { folderRepository } from "@/repositories";
+import {
+  folderRepository,
+  lessonRepository,
+} from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -68,7 +71,44 @@ export class FolderService {
     });
   }
 
-  async deleteFolder(id: string) {
+  async deleteFolder(
+    id: string,
+    expectedCourseId?: string,
+  ) {
+    const folder = await folderRepository.getById(id);
+
+    if (!folder) {
+      throw new Error(
+        "Folder tidak ditemukan atau Anda tidak memiliki akses.",
+      );
+    }
+
+    if (
+      expectedCourseId &&
+      folder.course_id !== expectedCourseId
+    ) {
+      throw new Error(
+        "Folder tidak termasuk dalam course yang dipilih.",
+      );
+    }
+
+    const [children, lessons] = await Promise.all([
+      folderRepository.getChildren(id),
+      lessonRepository.getByFolder(id),
+    ]);
+
+    if (children.length > 0) {
+      throw new Error(
+        "Folder masih memiliki subfolder. Hapus atau pindahkan subfolder terlebih dahulu.",
+      );
+    }
+
+    if (lessons.length > 0) {
+      throw new Error(
+        "Folder masih berisi lesson. Hapus atau pindahkan lesson terlebih dahulu.",
+      );
+    }
+
     return await folderRepository.delete(id);
   }
 }
