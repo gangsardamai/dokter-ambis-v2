@@ -14,9 +14,7 @@ type LessonFormProps = {
     publication_status?: string;
   };
   submitLabel: string;
-  action: (
-    formData: FormData,
-  ) => Promise<void>;
+  action: (formData: FormData) => Promise<void>;
   showOrder?: boolean;
 };
 
@@ -60,19 +58,6 @@ export function LessonForm({
 
       <label className="block">
         <span className="mb-2 block text-sm font-bold text-slate-700">
-          Slug
-        </span>
-        <input
-          type="text"
-          name="slug"
-          required
-          defaultValue={defaultValues.slug}
-          className={inputClass}
-        />
-      </label>
-
-      <label className="block">
-        <span className="mb-2 block text-sm font-bold text-slate-700">
           Deskripsi
         </span>
         <textarea
@@ -85,9 +70,7 @@ export function LessonForm({
 
       <div
         className={`grid gap-4 ${
-          showOrder
-            ? "sm:grid-cols-3"
-            : "sm:grid-cols-2"
+          showOrder ? "sm:grid-cols-2" : "sm:grid-cols-1"
         }`}
       >
         {showOrder ? (
@@ -100,29 +83,11 @@ export function LessonForm({
               name="lesson_order"
               min={1}
               required
-              defaultValue={
-                defaultValues.lesson_order ?? 1
-              }
+              defaultValue={defaultValues.lesson_order ?? 1}
               className={inputClass}
             />
           </label>
         ) : null}
-
-        <label className="block">
-          <span className="mb-2 block text-sm font-bold text-slate-700">
-            Durasi (menit)
-          </span>
-          <input
-            type="number"
-            name="duration"
-            min={1}
-            required
-            defaultValue={
-              defaultValues.duration ?? 10
-            }
-            className={inputClass}
-          />
-        </label>
 
         <label className="block">
           <span className="mb-2 block text-sm font-bold text-slate-700">
@@ -146,9 +111,7 @@ export function LessonForm({
           <input
             type="checkbox"
             name="is_free"
-            defaultChecked={
-              defaultValues.is_free ?? false
-            }
+            defaultChecked={defaultValues.is_free ?? false}
             className="h-4 w-4 accent-blue-600"
           />
           Lesson Gratis
@@ -158,9 +121,7 @@ export function LessonForm({
           <input
             type="checkbox"
             name="is_required"
-            defaultChecked={
-              defaultValues.is_required ?? true
-            }
+            defaultChecked={defaultValues.is_required ?? true}
             className="h-4 w-4 accent-blue-600"
           />
           Lesson Wajib
