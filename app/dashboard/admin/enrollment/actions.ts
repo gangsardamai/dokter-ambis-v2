@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import type { Database } from "@/supabase/types/database.types";
-
+import type { Database } from "@/supabase/types/database.extended.types";
 import {
   enrollmentService,
   paymentService,
@@ -12,61 +11,46 @@ import {
 
 type EnrollmentCategory =
   Database["public"]["Enums"]["enrollment_category"];
+type PaymentTiming = Database["public"]["Enums"]["payment_timing"];
 
 async function getAdminProfileId(): Promise<string> {
-  const profile =
-    await profileService
-      .getCurrentProfile();
+  const profile = await profileService.getCurrentProfile();
 
-  if (!profile) {
-    throw new Error(
-      "Profile admin tidak ditemukan.",
-    );
-  }
-
-  if (
-    profile.role !== "admin" ||
-    profile.status !== "active"
-  ) {
-    throw new Error(
-      "Anda tidak memiliki izin sebagai admin.",
-    );
+  if (!profile) throw new Error("Profile admin tidak ditemukan.");
+  if (profile.role !== "admin" || profile.status !== "active") {
+    throw new Error("Anda tidak memiliki izin sebagai admin.");
   }
 
   return profile.id;
 }
-function revalidateEnrollment(
-  enrollmentId?: string,
-) {
-  revalidatePath(
-    "/dashboard/admin/enrollment",
-  );
+
+function revalidateEnrollment(enrollmentId?: string, courseId?: string) {
+  revalidatePath("/dashboard/admin/enrollment");
 
   if (enrollmentId) {
-    revalidatePath(
-      `/dashboard/admin/enrollment/${enrollmentId}`,
-    );
+    revalidatePath(`/dashboard/admin/enrollment/${enrollmentId}`);
+    revalidatePath(`/dashboard/student/payment/${enrollmentId}`);
   }
-}
 
-/* ========================================
-   BULK ACTIONS
-======================================== */
+  if (courseId) {
+    revalidatePath(`/dashboard/student/my-course/${courseId}`);
+  }
+
+  revalidatePath("/dashboard/student");
+}
 
 export async function approveAllEnrollmentsAction() {
   try {
-    const enrollments =
-      await enrollmentService
-        .approveAllPendingEnrollments();
-
+    await getAdminProfileId();
+    const enrollments = await enrollmentService.approveAllPendingEnrollments();
     revalidateEnrollment();
 
     return {
       success: true,
       message:
         enrollments.length > 0
-          ? `${enrollments.length} enrollment berhasil disetujui.`
-          : "Tidak ada enrollment yang menunggu persetujuan.",
+          ? `${enrollments.length} enrollment Bayar di Akhir berhasil disetujui.`
+          : "Tidak ada enrollment Bayar di Akhir yang menunggu persetujuan.",
     };
   } catch (error) {
     return {
@@ -81,15 +65,10 @@ export async function approveAllEnrollmentsAction() {
 
 export async function approveAllPaymentsAction() {
   try {
-    const adminProfileId =
-  await getAdminProfileId();
-
-    const payments =
-      await paymentService
-        .approveAllPendingPayments(
-          adminProfileId,
-        );
-
+    const adminProfileId = await getAdminProfileId();
+    const payments = await paymentService.approveAllPendingPayments(
+      adminProfileId,
+    );
     revalidateEnrollment();
 
     return {
@@ -110,29 +89,22 @@ export async function approveAllPaymentsAction() {
   }
 }
 
-/* ========================================
-   INDIVIDUAL PAYMENT ACTIONS
-======================================== */
-
 export async function approvePaymentAction(
   paymentId: string,
   enrollmentId: string,
 ) {
   try {
-  const adminProfileId =
-  await getAdminProfileId();
-
-    await paymentService.approvePayment(
-      paymentId,
-      adminProfileId,
-    );
-
-    revalidateEnrollment(enrollmentId);
+    const adminProfileId = await getAdminProfileId();
+    await paymentService.approvePayment(paymentId, adminProfileId);
+    const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
+    revalidateEnrollment(enrollmentId, enrollment?.course_id);
 
     return {
       success: true,
       message:
-        "Payment berhasil disetujui dan enrollment telah diaktifkan.",
+        enrollment?.payment_timing === "deferred"
+          ? "Payment berhasil disetujui. Akses enrollment tetap aktif."
+          : "Payment berhasil disetujui dan enrollment telah diaktifkan.",
     };
   } catch (error) {
     return {
@@ -151,21 +123,17 @@ export async function rejectPaymentAction(
   notes?: string,
 ) {
   try {
-    const adminProfileId =
-  await getAdminProfileId();
-
-    await paymentService.rejectPayment(
-      paymentId,
-      adminProfileId,
-      notes,
-    );
-
-    revalidateEnrollment(enrollmentId);
+    const adminProfileId = await getAdminProfileId();
+    await paymentService.rejectPayment(paymentId, adminProfileId, notes);
+    const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
+    revalidateEnrollment(enrollmentId, enrollment?.course_id);
 
     return {
       success: true,
       message:
-        "Payment berhasil ditolak.",
+        enrollment?.payment_timing === "deferred"
+          ? "Payment berhasil ditolak. Akses course peserta tetap aktif."
+          : "Payment berhasil ditolak.",
     };
   } catch (error) {
     return {
@@ -178,23 +146,15 @@ export async function rejectPaymentAction(
   }
 }
 
-/* ========================================
-   INDIVIDUAL ENROLLMENT ACTIONS
-======================================== */
-
-export async function activateEnrollmentAction(
-  enrollmentId: string,
-) {
+export async function activateEnrollmentAction(enrollmentId: string) {
   try {
-    await enrollmentService
-      .activateEnrollment(enrollmentId);
-
-    revalidateEnrollment(enrollmentId);
+    await getAdminProfileId();
+    const enrollment = await enrollmentService.activateEnrollment(enrollmentId);
+    revalidateEnrollment(enrollmentId, enrollment.course_id);
 
     return {
       success: true,
-      message:
-        "Enrollment berhasil diaktifkan.",
+      message: "Enrollment berhasil diaktifkan.",
     };
   } catch (error) {
     return {
@@ -207,19 +167,15 @@ export async function activateEnrollmentAction(
   }
 }
 
-export async function cancelEnrollmentAction(
-  enrollmentId: string,
-) {
+export async function cancelEnrollmentAction(enrollmentId: string) {
   try {
-    await enrollmentService
-      .cancelEnrollment(enrollmentId);
-
-    revalidateEnrollment(enrollmentId);
+    await getAdminProfileId();
+    const enrollment = await enrollmentService.cancelEnrollment(enrollmentId);
+    revalidateEnrollment(enrollmentId, enrollment.course_id);
 
     return {
       success: true,
-      message:
-        "Enrollment berhasil dibatalkan.",
+      message: "Enrollment berhasil dibatalkan.",
     };
   } catch (error) {
     return {
@@ -237,17 +193,16 @@ export async function updateEnrollmentCategoryAction(
   category: EnrollmentCategory,
 ) {
   try {
-    await enrollmentService.updateCategory(
+    await getAdminProfileId();
+    const enrollment = await enrollmentService.updateCategory(
       enrollmentId,
       category,
     );
-
-    revalidateEnrollment(enrollmentId);
+    revalidateEnrollment(enrollmentId, enrollment.course_id);
 
     return {
       success: true,
-      message:
-        "Kategori enrollment berhasil diperbarui.",
+      message: "Kategori enrollment berhasil diperbarui.",
     };
   } catch (error) {
     return {
@@ -255,7 +210,34 @@ export async function updateEnrollmentCategoryAction(
       message:
         error instanceof Error
           ? error.message
-          : "Gagal memperbarui kategori.",
+          : "Gagal memperbarui kategori enrollment.",
+    };
+  }
+}
+
+export async function updateEnrollmentPaymentTimingAction(
+  enrollmentId: string,
+  paymentTiming: PaymentTiming,
+) {
+  try {
+    await getAdminProfileId();
+    const enrollment = await enrollmentService.updatePaymentTiming(
+      enrollmentId,
+      paymentTiming,
+    );
+    revalidateEnrollment(enrollmentId, enrollment.course_id);
+
+    return {
+      success: true,
+      message: "Kategori pembayaran berhasil diperbarui dan dicatat.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui kategori pembayaran.",
     };
   }
 }
