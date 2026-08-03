@@ -17,9 +17,14 @@ type LessonFileInsert =
 type LessonFileUpdate =
   Database["public"]["Tables"]["lesson_files"]["Update"];
 
+type NormalizedFileData = Omit<
+  LessonFileInsert,
+  "file_order"
+>;
+
 function normalizeFilePayload(
   data: FileFormPayload,
-): LessonFileInsert {
+): NormalizedFileData {
   const lessonId = data.lesson_id.trim();
   const title = data.title.trim();
 
@@ -31,15 +36,6 @@ function normalizeFilePayload(
 
   if (!isSupportedCourseFileType(data.file_type)) {
     throw new Error("Tipe file tidak diizinkan.");
-  }
-
-  if (
-    !Number.isInteger(data.file_order) ||
-    data.file_order < 1
-  ) {
-    throw new Error(
-      "Urutan file harus berupa bilangan bulat minimal 1.",
-    );
   }
 
   if (
@@ -85,7 +81,6 @@ function normalizeFilePayload(
     title,
     file_type: data.file_type,
     file_path: normalizedFilePath,
-    file_order: data.file_order,
     publication_status: data.publication_status,
     is_required: data.is_required,
   };
@@ -111,7 +106,6 @@ export async function updateFileAction(
     title: normalized.title,
     file_type: normalized.file_type,
     file_path: normalized.file_path,
-    file_order: normalized.file_order,
     publication_status:
       normalized.publication_status,
     is_required: normalized.is_required,
