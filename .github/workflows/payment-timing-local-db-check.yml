@@ -59,6 +59,14 @@ jobs:
             --set=ON_ERROR_STOP=1 \
             --file=supabase/tests/payment_timing_schema.sql
 
+      - name: Verify payment timing behavior
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            --set=ON_ERROR_STOP=1 \
+            --file=supabase/tests/payment_timing_behavior.sql
+
       - name: Stop isolated local database
         if: always()
         run: supabase stop --no-backup
