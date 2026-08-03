@@ -70,30 +70,32 @@ export default async function StudentDashboardPage({
       enrollment.status === "pending_approval",
   );
   const pendingCourses = await Promise.all(
-    pendingDeferredEnrollments.map(async (enrollment) => {
-      const course = await courseService.getAvailableCourseDetailById(
-        enrollment.course_id,
-      );
-      if (!course) return null;
+    pendingDeferredEnrollments.map(
+      async (enrollment): Promise<DashboardCourseItem | null> => {
+        const course = await courseService.getAvailableCourseDetailById(
+          enrollment.course_id,
+        );
+        if (!course) return null;
 
-      return {
-        id: enrollment.id,
-        title: course.title,
-        description: null,
-        organizationTitle:
-          course.organization?.title ?? "Universitas belum tersedia",
-        organizationShortName: course.organization?.short_name ?? null,
-        programTitle: course.program?.title ?? "Program belum tersedia",
-        statusLabel: "Menunggu Persetujuan",
-        metaLabel: "Diajukan",
-        priceLabel: `${formatDate(enrollment.enrolled_at)} WIB`,
-        href: `/dashboard/student/enrollment/${enrollment.id}/submitted`,
-        actionLabel: "Lihat Status",
-      } satisfies DashboardCourseItem;
-    }),
+        return {
+          id: enrollment.id,
+          title: course.title,
+          description: null,
+          organizationTitle:
+            course.organization?.title ?? "Universitas belum tersedia",
+          organizationShortName: course.organization?.short_name ?? null,
+          programTitle: course.program?.title ?? "Program belum tersedia",
+          statusLabel: "Menunggu Persetujuan",
+          metaLabel: "Diajukan",
+          priceLabel: `${formatDate(enrollment.enrolled_at)} WIB`,
+          href: `/dashboard/student/enrollment/${enrollment.id}/submitted`,
+          actionLabel: "Lihat Status",
+        };
+      },
+    ),
   );
 
-  const courses = [
+  const courses: DashboardCourseItem[] = [
     ...pendingCourses.filter(
       (course): course is DashboardCourseItem => course !== null,
     ),
