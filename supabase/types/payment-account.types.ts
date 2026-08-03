@@ -4,6 +4,7 @@ type GeneratedPublic = GeneratedDatabase["public"];
 type GeneratedCourses = GeneratedPublic["Tables"]["courses"];
 type GeneratedEnrollments = GeneratedPublic["Tables"]["enrollments"];
 type GeneratedPayments = GeneratedPublic["Tables"]["payments"];
+type PaymentStatus = GeneratedPublic["Enums"]["payment_status"];
 
 export type PaymentPolicy = "upfront_only" | "upfront_or_deferred";
 export type PaymentTiming = "upfront" | "deferred";
@@ -18,6 +19,14 @@ export type PaymentAccountRow = {
   is_default: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type PaymentRow = GeneratedPayments["Row"] & {
+  payment_account_id: string;
+  bank_name_snapshot: string;
+  account_number_snapshot: string;
+  account_holder_name_snapshot: string;
+  payment_account_label_snapshot: string;
 };
 
 export type PaymentAccountTables = {
@@ -65,13 +74,7 @@ export type PaymentAccountTables = {
     Relationships: GeneratedEnrollments["Relationships"];
   };
   payments: {
-    Row: GeneratedPayments["Row"] & {
-      payment_account_id: string;
-      bank_name_snapshot: string;
-      account_number_snapshot: string;
-      account_holder_name_snapshot: string;
-      payment_account_label_snapshot: string;
-    };
+    Row: PaymentRow;
     Insert: GeneratedPayments["Insert"] & {
       payment_account_id?: string | null;
       bank_name_snapshot?: string | null;
@@ -101,5 +104,25 @@ export type PaymentAccountFunctions = {
       target_payment_timing: PaymentTiming;
     };
     Returns: undefined;
+  };
+  student_submit_payment: {
+    Args: {
+      target_enrollment_id: string;
+      target_amount: number;
+      target_payment_proof_path: string;
+    };
+    Returns: PaymentRow;
+  };
+  admin_review_payment: {
+    Args: {
+      target_payment_id: string;
+      target_status: PaymentStatus;
+      rejection_notes?: string | null;
+    };
+    Returns: PaymentRow;
+  };
+  admin_approve_all_pending_payments: {
+    Args: Record<PropertyKey, never>;
+    Returns: PaymentRow[];
   };
 };
