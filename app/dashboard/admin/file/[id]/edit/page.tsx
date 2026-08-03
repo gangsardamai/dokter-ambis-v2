@@ -28,7 +28,6 @@ interface Props {
 export default async function EditFilePage({
   params,
 }: Props) {
-
   const { id } = await params;
 
   const file =
@@ -45,44 +44,25 @@ export default async function EditFilePage({
     updateFileAction.bind(null, file.id);
 
   return (
-
     <Container>
-
       <PageHeader
         title="Edit File"
         description="Perbarui informasi file materi."
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-
         <div className="space-y-6 lg:col-span-2">
-
           <Card>
-
             <div className="p-6">
-
               <FileForm
                 initialData={{
-                  lesson_id:
-                    file.lesson_id,
-
-                  title:
-                    file.title,
-
-                  file_type:
-                    file.file_type,
-
-                  file_path:
-                    file.file_path,
-
-                  file_order:
-                    file.file_order,
-
+                  lesson_id: file.lesson_id,
+                  title: file.title,
+                  file_type: file.file_type,
+                  file_path: file.file_path,
                   publication_status:
                     file.publication_status,
-
-                  is_required:
-                    file.is_required,
+                  is_required: file.is_required,
                 }}
                 lessonCourseIds={Object.fromEntries(
                   lessons.map((lesson) => [
@@ -99,22 +79,16 @@ export default async function EditFilePage({
                 submitLabel="Simpan Perubahan"
                 onSubmit={updateCurrentFileAction}
               />
-
             </div>
-
           </Card>
 
           <FileRelationCard
             lessonId={file.lesson_id}
           />
-
         </div>
 
         <div />
-
       </div>
-
     </Container>
-
   );
 }
