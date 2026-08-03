@@ -1,0 +1,56 @@
+name: Payment Timing Local Database Check
+
+on:
+  push:
+    branches:
+      - feature/payment-timing-v1
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/payment-timing-local-db-check.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/payment-timing-local-db-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Initialize isolated local Supabase configuration
+        run: supabase init --force
+
+      - name: Start isolated local database and apply all migrations
+        run: supabase db start
+
+      - name: Lint database schema
+        run: supabase db lint --local --level error
+
+      - name: Verify payment timing schema
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            --set=ON_ERROR_STOP=1 \
+            --file=supabase/tests/payment_timing_schema.sql
+
+      - name: Stop isolated local database
+        if: always()
+        run: supabase stop --no-backup
