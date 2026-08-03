@@ -68,6 +68,15 @@ jobs:
             --set=ON_ERROR_STOP=1 \
             --file=supabase/tests/payment_timing_behavior.sql
 
+      - name: Verify re-enrollment after a closed enrollment
+        env:
+          PGPASSWORD: postgres
+          PGOPTIONS: "-c request.jwt.claim.role=service_role"
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            --set=ON_ERROR_STOP=1 \
+            --file=supabase/tests/reenrollment_after_closed.sql
+
       - name: Stop isolated local database
         if: always()
         run: supabase stop --no-backup
