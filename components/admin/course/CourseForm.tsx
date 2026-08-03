@@ -3,19 +3,17 @@
 import { useState } from "react";
 
 import {
-  FormCard,
-  TextInput,
-  TextAreaInput,
-  SelectInput,
-  NumberInput,
   CheckboxInput,
+  FormCard,
+  NumberInput,
   PrimaryButton,
+  SelectInput,
+  TextAreaInput,
+  TextInput,
 } from "@/components/admin";
-
 import type { Database } from "@/supabase/types/database.extended.types";
 
-type CourseInsert =
-  Database["public"]["Tables"]["courses"]["Insert"];
+type CourseInsert = Database["public"]["Tables"]["courses"]["Insert"];
 
 interface SelectOption {
   label: string;
@@ -68,9 +66,7 @@ export default function CourseForm({
               (program) => program.value === programId,
             );
 
-            if (
-              selectedProgram?.organizationId !== nextOrganizationId
-            ) {
+            if (selectedProgram?.organizationId !== nextOrganizationId) {
               setProgramId("");
             }
           }}
@@ -100,6 +96,20 @@ export default function CourseForm({
           defaultValue={defaultValues?.payment_account_id ?? ""}
           options={paymentAccountOptions}
           placeholder="Pilih rekening pembayaran"
+          required
+        />
+
+        <SelectInput
+          label="Kategori Pembayaran"
+          name="payment_policy"
+          defaultValue={defaultValues?.payment_policy ?? "upfront_only"}
+          options={[
+            { label: "Pembayaran di awal", value: "upfront_only" },
+            {
+              label: "Pembayaran di awal dan di akhir",
+              value: "upfront_or_deferred",
+            },
+          ]}
           required
         />
 
@@ -146,9 +156,7 @@ export default function CourseForm({
           ]}
         />
 
-        <PrimaryButton type="submit">
-          {submitLabel}
-        </PrimaryButton>
+        <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
       </form>
     </FormCard>
   );
