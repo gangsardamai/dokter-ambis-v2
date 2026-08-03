@@ -62,6 +62,7 @@ jobs:
       - name: Verify payment timing behavior
         env:
           PGPASSWORD: postgres
+          PGOPTIONS: "-c request.jwt.claim.role=service_role"
         run: |
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
             --set=ON_ERROR_STOP=1 \
