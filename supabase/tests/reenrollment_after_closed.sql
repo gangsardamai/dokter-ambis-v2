@@ -4,9 +4,9 @@ set local statement_timeout = '30s';
 
 do $$
 declare
-  test_profile_id uuid;
-  test_course_id constant uuid := 'f0000000-0000-0000-0000-000000000001';
-  test_price numeric := 100000;
+  test_profile_id constant uuid := 'f1000000-0000-0000-0000-000000000001';
+  test_course_id uuid;
+  test_price numeric;
   duplicate_blocked boolean := false;
   index_definition text;
 begin
@@ -20,50 +20,51 @@ begin
     raise exception 'uq_student_course harus berupa partial unique index untuk enrollment yang belum berakhir: %', index_definition;
   end if;
 
-  select p.id
-  into test_profile_id
-  from public.profiles p
-  where p.role = 'student'::public.profile_role
-    and p.status = 'active'::public.profile_status
-  order by p.created_at
-  limit 1;
+  insert into auth.users (
+    id,
+    instance_id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at
+  ) values (
+    test_profile_id,
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'authenticated',
+    'authenticated',
+    'reenrollment-ci@example.invalid',
+    extensions.crypt('temporary-ci-password', extensions.gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"full_name":"Re-enrollment CI Student","phone":"TEMP-CI"}'::jsonb,
+    now(),
+    now()
+  );
 
-  if test_profile_id is null then
-    raise exception 'Tidak ada peserta aktif untuk pengujian re-enrollment.';
+  if not exists (
+    select 1
+    from public.profiles p
+    where p.id = test_profile_id
+      and p.role = 'student'::public.profile_role
+      and p.status = 'active'::public.profile_status
+  ) then
+    raise exception 'Profile peserta pengujian tidak terbentuk.';
   end if;
 
-  insert into public.courses (
-    id,
-    organization_id,
-    program_id,
-    slug,
-    title,
-    description,
-    status,
-    price,
-    is_free,
-    payment_account_id,
-    payment_policy
-  )
-  select
-    test_course_id,
-    c.organization_id,
-    c.program_id,
-    'reenrollment-ci-test',
-    'Re-enrollment CI Test',
-    'Course sementara untuk pengujian; seluruh transaksi akan di-rollback.',
-    'active'::public.course_status,
-    test_price,
-    false,
-    c.payment_account_id,
-    'upfront_only'::public.payment_policy
+  select c.id, case when c.is_free then 0::numeric else c.price end
+  into test_course_id, test_price
   from public.courses c
   where c.status = 'active'::public.course_status
   order by c.created_at
   limit 1;
 
-  if not found then
-    raise exception 'Tidak ada course aktif yang dapat menjadi template pengujian.';
+  if test_course_id is null then
+    raise exception 'Tidak ada course aktif untuk pengujian re-enrollment.';
   end if;
 
   insert into public.enrollments (
