@@ -5,8 +5,11 @@ set local statement_timeout = '30s';
 do $$
 declare
   test_profile_id constant uuid := 'f1000000-0000-0000-0000-000000000001';
-  test_course_id uuid;
-  test_price numeric;
+  test_organization_id constant uuid := 'f2000000-0000-0000-0000-000000000001';
+  test_program_id constant uuid := 'f3000000-0000-0000-0000-000000000001';
+  test_payment_account_id constant uuid := 'f4000000-0000-0000-0000-000000000001';
+  test_course_id constant uuid := 'f5000000-0000-0000-0000-000000000001';
+  test_price constant numeric := 100000;
   duplicate_blocked boolean := false;
   index_definition text;
 begin
@@ -56,16 +59,81 @@ begin
     raise exception 'Profile peserta pengujian tidak terbentuk.';
   end if;
 
-  select c.id, case when c.is_free then 0::numeric else c.price end
-  into test_course_id, test_price
-  from public.courses c
-  where c.status = 'active'::public.course_status
-  order by c.created_at
-  limit 1;
+  insert into public.organizations (
+    id,
+    slug,
+    title,
+    short_name,
+    status,
+    is_general
+  ) values (
+    test_organization_id,
+    'reenrollment-ci-org',
+    'Re-enrollment CI Organization',
+    'RCI',
+    'active'::public.organization_status,
+    false
+  );
 
-  if test_course_id is null then
-    raise exception 'Tidak ada course aktif untuk pengujian re-enrollment.';
-  end if;
+  insert into public.programs (
+    id,
+    organization_id,
+    slug,
+    title,
+    description,
+    status
+  ) values (
+    test_program_id,
+    test_organization_id,
+    'reenrollment-ci-program',
+    'Re-enrollment CI Program',
+    'Program sementara untuk pengujian; transaksi akan di-rollback.',
+    'active'::public.program_status
+  );
+
+  insert into public.payment_accounts (
+    id,
+    label,
+    bank_name,
+    account_number,
+    account_holder_name,
+    is_active,
+    is_default
+  ) values (
+    test_payment_account_id,
+    'Re-enrollment CI Account',
+    'Bank CI',
+    '1234567890',
+    'Dokter Ambis CI',
+    true,
+    false
+  );
+
+  insert into public.courses (
+    id,
+    organization_id,
+    program_id,
+    slug,
+    title,
+    description,
+    status,
+    price,
+    is_free,
+    payment_account_id,
+    payment_policy
+  ) values (
+    test_course_id,
+    test_organization_id,
+    test_program_id,
+    'reenrollment-ci-course',
+    'Re-enrollment CI Course',
+    'Course sementara untuk pengujian; transaksi akan di-rollback.',
+    'active'::public.course_status,
+    test_price,
+    false,
+    test_payment_account_id,
+    'upfront_only'::public.payment_policy
+  );
 
   insert into public.enrollments (
     profile_id,
