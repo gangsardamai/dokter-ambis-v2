@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { PaymentTiming } from "@/supabase/types/payment-account.types";
 
 interface RpcError {
   message: string;
@@ -26,7 +27,7 @@ export interface PromotionApplicationResult {
 
 export interface ZeroPaymentSubmissionResult {
   enrollment_id: string;
-  status: "pending_approval";
+  status: "pending_approval" | "active";
   amount: number;
 }
 
@@ -39,49 +40,44 @@ export class StudentCheckoutRepository {
   async applyPromotionCode(
     enrollmentId: string,
     code: string,
+    paymentTiming: PaymentTiming,
   ): Promise<PromotionApplicationResult> {
     const client = await this.rpcClient();
+    const functionName =
+      paymentTiming === "deferred"
+        ? "apply_deferred_promotion_code"
+        : "apply_promotion_code";
     const { data, error } = await client.rpc<PromotionApplicationResult>(
-      "apply_promotion_code",
+      functionName,
       {
         target_enrollment_id: enrollmentId,
         submitted_code: code,
       },
     );
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data) {
-      throw new Error("Hasil penerapan promosi tidak tersedia.");
-    }
-
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Hasil penerapan promosi tidak tersedia.");
     return data;
   }
 
   async submitZeroPayment(
     enrollmentId: string,
+    paymentTiming: PaymentTiming,
   ): Promise<ZeroPaymentSubmissionResult> {
     const client = await this.rpcClient();
+    const functionName =
+      paymentTiming === "deferred"
+        ? "submit_deferred_zero_payment"
+        : "submit_zero_payment_enrollment";
     const { data, error } = await client.rpc<ZeroPaymentSubmissionResult>(
-      "submit_zero_payment_enrollment",
-      {
-        target_enrollment_id: enrollmentId,
-      },
+      functionName,
+      { target_enrollment_id: enrollmentId },
     );
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data) {
-      throw new Error("Hasil pengiriman pendaftaran tidak tersedia.");
-    }
-
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Hasil pengiriman pendaftaran tidak tersedia.");
     return data;
   }
 }
 
-export const studentCheckoutRepository =
-  new StudentCheckoutRepository();
+export const studentCheckoutRepository = new StudentCheckoutRepository();

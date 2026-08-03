@@ -5,6 +5,7 @@ import {
   type DashboardCourseItem,
 } from "@/components/dashboard";
 import {
+  courseService,
   enrollmentService,
   profileService,
 } from "@/services";
@@ -12,6 +13,7 @@ import {
 interface StudentDashboardPageProps {
   searchParams: Promise<{
     error?: string | string[];
+    success?: string | string[];
   }>;
 }
 
@@ -20,27 +22,27 @@ function formatDate(value: string | null): string {
 
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
+    timeZone: "Asia/Jakarta",
   }).format(new Date(value));
 }
 
 function getMessage(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) return value[0] ?? "";
-  return value ?? "";
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }
 
 export default async function StudentDashboardPage({
   searchParams,
 }: StudentDashboardPageProps) {
   const profile = await profileService.getCurrentProfile();
-
   if (!profile) redirect("/login");
 
   const query = await searchParams;
-  const errorMessage = getMessage(query.error);
-  const activeEnrollments =
-    await enrollmentService.getActiveCourseEnrollments(profile.id);
+  const [activeEnrollments, profileEnrollments] = await Promise.all([
+    enrollmentService.getActiveCourseEnrollments(profile.id),
+    enrollmentService.getEnrollmentsByProfile(profile.id),
+  ]);
 
-  const courses: DashboardCourseItem[] = activeEnrollments.flatMap(
+  const activeCourses: DashboardCourseItem[] = activeEnrollments.flatMap(
     (enrollment) => {
       const course = enrollment.courses;
       if (!course) return [];
@@ -52,8 +54,7 @@ export default async function StudentDashboardPage({
         organizationTitle:
           course.organizations?.title ?? "Universitas belum tersedia",
         organizationShortName: null,
-        programTitle:
-          course.programs?.title ?? "Program belum tersedia",
+        programTitle: course.programs?.title ?? "Program belum tersedia",
         statusLabel: "Dimiliki",
         metaLabel: "Aktif sejak",
         priceLabel: formatDate(enrollment.activated_at),
@@ -62,6 +63,44 @@ export default async function StudentDashboardPage({
       }];
     },
   );
+
+  const pendingDeferredEnrollments = profileEnrollments.filter(
+    (enrollment) =>
+      enrollment.payment_timing === "deferred" &&
+      enrollment.status === "pending_approval",
+  );
+  const pendingCourses = await Promise.all(
+    pendingDeferredEnrollments.map(
+      async (enrollment): Promise<DashboardCourseItem | null> => {
+        const course = await courseService.getAvailableCourseDetailById(
+          enrollment.course_id,
+        );
+        if (!course) return null;
+
+        return {
+          id: enrollment.id,
+          title: course.title,
+          description: null,
+          organizationTitle:
+            course.organization?.title ?? "Universitas belum tersedia",
+          organizationShortName: course.organization?.short_name ?? null,
+          programTitle: course.program?.title ?? "Program belum tersedia",
+          statusLabel: "Menunggu Persetujuan",
+          metaLabel: "Diajukan",
+          priceLabel: `${formatDate(enrollment.enrolled_at)} WIB`,
+          href: `/dashboard/student/enrollment/${enrollment.id}/submitted`,
+          actionLabel: "Lihat Status",
+        };
+      },
+    ),
+  );
+
+  const courses: DashboardCourseItem[] = [
+    ...pendingCourses.filter(
+      (course): course is DashboardCourseItem => course !== null,
+    ),
+    ...activeCourses,
+  ];
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
@@ -77,19 +116,24 @@ export default async function StudentDashboardPage({
             Halo, {profile.full_name}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100 sm:text-base">
-            Akses seluruh course yang sudah aktif dan lanjutkan proses belajar Anda.
+            Akses course aktif dan pantau pendaftaran Bayar di Akhir yang masih menunggu persetujuan Admin.
           </p>
 
           <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-            <span className="text-2xl font-black">{courses.length}</span>
+            <span className="text-2xl font-black">{activeCourses.length}</span>
             <span className="text-sm font-bold text-blue-100">course aktif</span>
           </div>
         </div>
       </section>
 
-      {errorMessage && (
+      {getMessage(query.error) && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-          {errorMessage}
+          {getMessage(query.error)}
+        </div>
+      )}
+      {getMessage(query.success) && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700">
+          {getMessage(query.success)}
         </div>
       )}
 
@@ -107,7 +151,7 @@ export default async function StudentDashboardPage({
           courses={courses}
           searchPlaceholder="Cari judul course, universitas, atau program..."
           emptyTitle="Course tidak ditemukan"
-          emptyDescription="Belum ada course aktif atau kata kunci pencarian tidak sesuai."
+          emptyDescription="Belum ada course aktif atau pendaftaran yang sedang diproses."
         />
       </section>
     </main>

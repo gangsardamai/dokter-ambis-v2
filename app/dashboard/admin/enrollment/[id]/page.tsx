@@ -10,9 +10,7 @@ import {
 } from "@/services";
 
 interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
 
 function formatCurrency(value: number): string {
@@ -24,46 +22,17 @@ function formatCurrency(value: number): string {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) {
-    return "-";
-  }
+  if (!value) return "-";
 
-  return new Intl.DateTimeFormat("id-ID", {
+  return `${new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+    timeZone: "Asia/Jakarta",
+  }).format(new Date(value))} WIB`;
 }
 
-function CardIcon({
-  type,
-}: {
-  type: "student" | "course";
-}) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-6 w-6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {type === "student" ? (
-        <>
-          <path d="M20 21a8 8 0 0 0-16 0" />
-          <circle cx="12" cy="7" r="4" />
-        </>
-      ) : (
-        <>
-          <path d="M12 3 4 7l8 4 8-4-8-4Z" />
-          <path d="m4 11 8 4 8-4" />
-          <path d="m4 15 8 4 8-4" />
-        </>
-      )}
-    </svg>
-  );
+function getPaymentTimingLabel(value: "upfront" | "deferred"): string {
+  return value === "deferred" ? "Bayar di Akhir" : "Bayar di Awal";
 }
 
 function StatusBadge({
@@ -90,25 +59,16 @@ function StatusBadge({
 
 function DetailCard({
   title,
-  icon,
   children,
 }: {
   title: string;
-  icon?: React.ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="min-w-0 rounded-3xl border border-blue-100/80 bg-white p-5 shadow-sm sm:p-6">
-      <div className="mb-5 flex items-center gap-3">
-        {icon && (
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#1769cf] to-[#033b63] text-white shadow-sm">
-            {icon}
-          </div>
-        )}
-        <h2 className="break-words text-xl font-extrabold tracking-[-0.04em] text-[#061827]">
-          {title}
-        </h2>
-      </div>
+      <h2 className="mb-5 break-words text-xl font-extrabold tracking-[-0.04em] text-[#061827]">
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -134,31 +94,26 @@ function Field({
 }
 
 function getEnrollmentTone(status: string) {
-  if (status === "active") return "green";
-  if (status === "cancelled") return "red";
-  if (status === "pending_approval") return "blue";
-  if (status === "pending_payment") return "yellow";
-  return "gray";
+  if (status === "active") return "green" as const;
+  if (status === "cancelled") return "red" as const;
+  if (status === "pending_approval") return "blue" as const;
+  if (status === "pending_payment") return "yellow" as const;
+  return "gray" as const;
 }
 
 function getPaymentTone(status: string) {
-  if (status === "approved") return "green";
-  if (status === "rejected") return "red";
-  return "yellow";
+  if (status === "approved") return "green" as const;
+  if (status === "rejected") return "red" as const;
+  return "yellow" as const;
 }
 
-export default async function EnrollmentDetailPage({
-  params,
-}: PageProps) {
+export default async function EnrollmentDetailPage({ params }: PageProps) {
   const { id } = await params;
   const enrollment = await enrollmentService.getEnrollmentDetail(id);
 
-  if (!enrollment) {
-    notFound();
-  }
+  if (!enrollment) notFound();
 
   const payment = enrollment.payments ?? null;
-
   let paymentProofUrl: string | null = null;
   let paymentProofError: string | null = null;
 
@@ -177,48 +132,31 @@ export default async function EnrollmentDetailPage({
 
   const paymentProofIsPdf =
     payment?.payment_proof_path?.toLowerCase().endsWith(".pdf") ?? false;
-
-  const finalPrice = enrollment.price_snapshot - enrollment.discount_amount;
+  const finalPrice = Math.max(
+    enrollment.price_snapshot - enrollment.discount_amount,
+    0,
+  );
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
       <PageHeader
         title="Detail Enrollment"
-        description="Informasi mahasiswa, course, dan pembayaran."
-        actions={(
+        description="Informasi mahasiswa, course, kategori pembayaran, dan bukti pembayaran."
+        actions={
           <Link
             href="/dashboard/admin/enrollment"
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-5 py-2.5 text-sm font-bold text-[#1769cf] shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 sm:w-auto"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-blue-100 bg-white px-5 py-2.5 text-sm font-bold text-[#1769cf] shadow-sm transition hover:bg-blue-50 sm:w-auto"
           >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-            Kembali
+            ← Kembali
           </Link>
-        )}
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <DetailCard
-          title="Mahasiswa"
-          icon={<CardIcon type="student" />}
-        >
+        <DetailCard title="Mahasiswa">
           <dl className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nama">
-              {enrollment.profiles?.full_name ?? "-"}
-            </Field>
-            <Field label="Nomor telepon">
-              {enrollment.profiles?.phone ?? "-"}
-            </Field>
+            <Field label="Nama">{enrollment.profiles?.full_name ?? "-"}</Field>
+            <Field label="Nomor telepon">{enrollment.profiles?.phone ?? "-"}</Field>
             <Field label="Role">
               <span className="capitalize">{enrollment.profiles?.role ?? "-"}</span>
             </Field>
@@ -228,25 +166,20 @@ export default async function EnrollmentDetailPage({
           </dl>
         </DetailCard>
 
-        <DetailCard
-          title="Course"
-          icon={<CardIcon type="course" />}
-        >
+        <DetailCard title="Course">
           <dl className="grid gap-4 sm:grid-cols-2">
-            <Field label="Program">
-              {enrollment.courses?.programs?.title ?? "-"}
-            </Field>
+            <Field label="Program">{enrollment.courses?.programs?.title ?? "-"}</Field>
             <Field label="Universitas">
               {enrollment.courses?.organizations?.title ?? "-"}
             </Field>
-            <Field label="Course">
-              {enrollment.courses?.title ?? "-"}
-            </Field>
-            <Field label="Slug">
-              <span className="break-all">{enrollment.courses?.slug ?? "-"}</span>
-            </Field>
+            <Field label="Course">{enrollment.courses?.title ?? "-"}</Field>
             <Field label="Harga course saat ini">
               {formatCurrency(enrollment.courses?.price ?? 0)}
+            </Field>
+            <Field label="Kebijakan course">
+              {enrollment.courses?.payment_policy === "upfront_or_deferred"
+                ? "Bayar di Awal atau di Akhir"
+                : "Bayar di Awal"}
             </Field>
           </dl>
         </DetailCard>
@@ -255,10 +188,19 @@ export default async function EnrollmentDetailPage({
       <div className="grid gap-6 lg:grid-cols-2">
         <DetailCard title="Enrollment">
           <dl className="grid gap-4 sm:grid-cols-2">
-            <Field label="Harga snapshot">{formatCurrency(enrollment.price_snapshot)}</Field>
+            <Field label="Harga snapshot">
+              {formatCurrency(enrollment.price_snapshot)}
+            </Field>
             <Field label="Diskon">{formatCurrency(enrollment.discount_amount)}</Field>
             <Field label="Total pembayaran">{formatCurrency(finalPrice)}</Field>
-            <Field label="Kategori"><span className="capitalize">{enrollment.category}</span></Field>
+            <Field label="Kategori Enrollment">
+              {enrollment.category === "separated" ? "Terpisah" : "Reguler"}
+            </Field>
+            <Field label="Kategori Pembayaran">
+              <strong className="text-violet-700">
+                {getPaymentTimingLabel(enrollment.payment_timing)}
+              </strong>
+            </Field>
             <Field label="Status">
               <StatusBadge tone={getEnrollmentTone(enrollment.status)}>
                 {enrollment.status}
@@ -273,13 +215,20 @@ export default async function EnrollmentDetailPage({
 
         <DetailCard title="Pembayaran">
           {!payment ? (
-            <p className="break-words text-sm font-semibold text-slate-500">
-              Belum ada pembayaran untuk enrollment ini.
-            </p>
+            <div className="space-y-3">
+              <StatusBadge tone="gray">Belum Ada Pembayaran</StatusBadge>
+              <p className="text-sm font-semibold text-slate-500">
+                {enrollment.payment_timing === "deferred"
+                  ? "Peserta dapat membayar dari halaman course setelah enrollment aktif."
+                  : "Peserta belum mengirim pembayaran."}
+              </p>
+            </div>
           ) : (
             <dl className="grid gap-4 sm:grid-cols-2">
               <Field label="Nominal">{formatCurrency(payment.amount)}</Field>
-              <Field label="Metode"><span className="break-words">{payment.payment_method}</span></Field>
+              <Field label="Metode">
+                <span className="break-words">{payment.payment_method}</span>
+              </Field>
               <Field label="Status">
                 <StatusBadge tone={getPaymentTone(payment.status)}>
                   {payment.status}
@@ -311,7 +260,6 @@ export default async function EnrollmentDetailPage({
                 />
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-                  {/* Bukti pembayaran berasal dari URL dinamis Supabase. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={paymentProofUrl}
@@ -325,21 +273,12 @@ export default async function EnrollmentDetailPage({
                 href={paymentProofUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 sm:w-auto"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm sm:w-auto"
               >
                 Buka Bukti di Tab Baru
               </a>
             </div>
           )}
-
-          <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-semibold text-slate-500">
-              Lihat path file
-            </summary>
-            <p className="mt-2 break-all rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-              {payment.payment_proof_path}
-            </p>
-          </details>
         </DetailCard>
       )}
 
@@ -347,6 +286,7 @@ export default async function EnrollmentDetailPage({
         enrollmentId={enrollment.id}
         enrollmentStatus={enrollment.status}
         enrollmentCategory={enrollment.category}
+        paymentTiming={enrollment.payment_timing}
         paymentId={payment?.id ?? null}
         paymentStatus={payment?.status ?? null}
       />

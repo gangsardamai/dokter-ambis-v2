@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  useState,
-  useTransition,
-} from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 import {
   activateEnrollmentAction,
@@ -13,21 +10,19 @@ import {
   cancelEnrollmentAction,
   rejectPaymentAction,
   updateEnrollmentCategoryAction,
+  updateEnrollmentPaymentTimingAction,
 } from "@/app/dashboard/admin/enrollment/actions";
 
-type EnrollmentStatus =
-  Database["public"]["Enums"]["enrollment_status"];
-
-type EnrollmentCategory =
-  Database["public"]["Enums"]["enrollment_category"];
-
-type PaymentStatus =
-  Database["public"]["Enums"]["payment_status"];
+type EnrollmentStatus = Database["public"]["Enums"]["enrollment_status"];
+type EnrollmentCategory = Database["public"]["Enums"]["enrollment_category"];
+type PaymentTiming = Database["public"]["Enums"]["payment_timing"];
+type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 
 interface EnrollmentActionButtonsProps {
   enrollmentId: string;
   enrollmentStatus: EnrollmentStatus;
   enrollmentCategory: EnrollmentCategory;
+  paymentTiming: PaymentTiming;
   paymentId: string | null;
   paymentStatus: PaymentStatus | null;
 }
@@ -39,6 +34,7 @@ export function EnrollmentActionButtons({
   enrollmentId,
   enrollmentStatus,
   enrollmentCategory,
+  paymentTiming,
   paymentId,
   paymentStatus,
 }: EnrollmentActionButtonsProps) {
@@ -48,108 +44,59 @@ export function EnrollmentActionButtons({
   const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
 
   function runAction(
-    action: () => Promise<{
-      success: boolean;
-      message: string;
-    }>,
+    action: () => Promise<{ success: boolean; message: string }>,
   ) {
     startTransition(async () => {
       const result = await action();
-
       setMessage(result.message);
       setIsSuccess(result.success);
-
-      if (result.success) {
-        router.refresh();
-      }
+      if (result.success) router.refresh();
     });
   }
 
   function approvePayment() {
-    if (!paymentId) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Setujui payment ini dan aktifkan enrollment?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    runAction(() =>
-      approvePaymentAction(
-        paymentId,
-        enrollmentId,
-      ),
-    );
+    if (!paymentId) return;
+    if (!window.confirm("Setujui payment ini?")) return;
+    runAction(() => approvePaymentAction(paymentId, enrollmentId));
   }
 
   function rejectPayment() {
-    if (!paymentId) {
-      return;
-    }
-
-    const notes = window.prompt(
-      "Masukkan alasan penolakan payment:",
-    );
-
-    if (notes === null) {
-      return;
-    }
-
-    runAction(() =>
-      rejectPaymentAction(
-        paymentId,
-        enrollmentId,
-        notes,
-      ),
-    );
+    if (!paymentId) return;
+    const notes = window.prompt("Masukkan alasan penolakan payment:");
+    if (notes === null) return;
+    runAction(() => rejectPaymentAction(paymentId, enrollmentId, notes));
   }
 
   function activateEnrollment() {
-    const confirmed = window.confirm(
-      "Aktifkan enrollment ini secara manual?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    runAction(() =>
-      activateEnrollmentAction(
-        enrollmentId,
-      ),
-    );
+    const text =
+      paymentTiming === "deferred"
+        ? "Setujui pendaftaran Bayar di Akhir dan aktifkan course?"
+        : "Aktifkan enrollment ini secara manual?";
+    if (!window.confirm(text)) return;
+    runAction(() => activateEnrollmentAction(enrollmentId));
   }
 
   function cancelEnrollment() {
-    const confirmed = window.confirm(
-      "Batalkan enrollment ini?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    runAction(() =>
-      cancelEnrollmentAction(
-        enrollmentId,
-      ),
-    );
+    if (!window.confirm("Batalkan enrollment ini?")) return;
+    runAction(() => cancelEnrollmentAction(enrollmentId));
   }
 
   function updateCategory(category: EnrollmentCategory) {
-    if (category === enrollmentCategory) {
+    if (category === enrollmentCategory) return;
+    runAction(() => updateEnrollmentCategoryAction(enrollmentId, category));
+  }
+
+  function updatePaymentTiming(timing: PaymentTiming) {
+    if (timing === paymentTiming) return;
+    if (
+      !window.confirm(
+        "Ubah kategori pembayaran enrollment? Perubahan ini akan dicatat pada audit log.",
+      )
+    ) {
       return;
     }
-
     runAction(() =>
-      updateEnrollmentCategoryAction(
-        enrollmentId,
-        category,
-      ),
+      updateEnrollmentPaymentTimingAction(enrollmentId, timing),
     );
   }
 
@@ -160,7 +107,7 @@ export function EnrollmentActionButtons({
           Tindakan Admin
         </p>
         <h2 className="mt-2 text-xl font-extrabold tracking-[-0.04em] text-[#061827]">
-          Kelola status enrollment
+          Kelola enrollment dan pembayaran
         </h2>
       </div>
 
@@ -175,7 +122,6 @@ export function EnrollmentActionButtons({
             >
               Setujui Payment
             </button>
-
             <button
               type="button"
               disabled={isPending}
@@ -194,7 +140,9 @@ export function EnrollmentActionButtons({
             onClick={activateEnrollment}
             className={`${actionClass} bg-gradient-to-r from-[#1769cf] to-[#033b63] text-white hover:-translate-y-0.5 hover:shadow-md focus:ring-blue-300`}
           >
-            Aktifkan Enrollment
+            {paymentTiming === "deferred"
+              ? "Setujui Enrollment Bayar di Akhir"
+              : "Aktifkan Enrollment"}
           </button>
         )}
 
@@ -210,29 +158,53 @@ export function EnrollmentActionButtons({
         )}
       </div>
 
-      <div className="mt-6">
-        <p className="mb-3 text-sm font-bold text-slate-700">
-          Kategori Enrollment
-        </p>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div>
+          <p className="mb-3 text-sm font-bold text-slate-700">
+            Kategori Enrollment
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              disabled={isPending || enrollmentCategory === "regular"}
+              onClick={() => updateCategory("regular")}
+              className={`${actionClass} border border-blue-100 bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200 disabled:bg-slate-100 disabled:text-slate-400`}
+            >
+              Reguler
+            </button>
+            <button
+              type="button"
+              disabled={isPending || enrollmentCategory === "separated"}
+              onClick={() => updateCategory("separated")}
+              className={`${actionClass} border border-blue-100 bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200 disabled:bg-slate-100 disabled:text-slate-400`}
+            >
+              Terpisah
+            </button>
+          </div>
+        </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <button
-            type="button"
-            disabled={isPending || enrollmentCategory === "regular"}
-            onClick={() => updateCategory("regular")}
-            className={`${actionClass} border border-blue-100 bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200 disabled:bg-slate-100 disabled:text-slate-400`}
-          >
-            Reguler
-          </button>
-
-          <button
-            type="button"
-            disabled={isPending || enrollmentCategory === "separated"}
-            onClick={() => updateCategory("separated")}
-            className={`${actionClass} border border-blue-100 bg-blue-50 text-[#1769cf] hover:bg-blue-100 focus:ring-blue-200 disabled:bg-slate-100 disabled:text-slate-400`}
-          >
-            Terpisah
-          </button>
+        <div>
+          <p className="mb-3 text-sm font-bold text-slate-700">
+            Kategori Pembayaran
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              disabled={isPending || paymentTiming === "upfront"}
+              onClick={() => updatePaymentTiming("upfront")}
+              className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
+            >
+              Bayar di Awal
+            </button>
+            <button
+              type="button"
+              disabled={isPending || paymentTiming === "deferred"}
+              onClick={() => updatePaymentTiming("deferred")}
+              className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
+            >
+              Bayar di Akhir
+            </button>
+          </div>
         </div>
       </div>
 
@@ -243,11 +215,12 @@ export function EnrollmentActionButtons({
       )}
 
       {message && !isPending && (
-        <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${
-          isSuccess
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : "border-red-200 bg-red-50 text-red-700"
-        }`}
+        <div
+          className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+            isSuccess
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
         >
           {message}
         </div>

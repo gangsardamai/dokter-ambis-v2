@@ -6,9 +6,7 @@ import { courseService } from "@/services";
 import { enrollCourseAction } from "./actions";
 
 interface StudentCourseDetailPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
 
 function formatRupiah(value: number): string {
@@ -25,9 +23,9 @@ export default async function StudentCourseDetailPage({
   const { id } = await params;
   const course = await courseService.getAvailableCourseDetailById(id);
 
-  if (!course) {
-    notFound();
-  }
+  if (!course) notFound();
+
+  const allowsDeferred = course.payment_policy === "upfront_or_deferred";
 
   return (
     <main className="mx-auto w-full max-w-5xl p-4 sm:p-6 lg:p-8">
@@ -78,34 +76,77 @@ export default async function StudentCourseDetailPage({
           </div>
 
           <section className="mt-6 rounded-2xl border border-slate-200 p-5 sm:p-6">
-            <h2 className="text-lg font-black text-slate-950">
-              Tentang Kelas
-            </h2>
+            <h2 className="text-lg font-black text-slate-950">Tentang Kelas</h2>
             <CourseDescription description={course.description} />
           </section>
 
-          <div className="mt-6 flex flex-col gap-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div>
-              <p className="text-sm font-bold text-slate-500">
-                Harga blok
-              </p>
-              <p className="mt-1 text-2xl font-black text-blue-700">
-                {course.is_free ? "Gratis" : formatRupiah(course.price)}
-              </p>
+          <form
+            action={enrollCourseAction.bind(null, course.id)}
+            className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-5 sm:p-6"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-500">Harga blok</p>
+                <p className="mt-1 text-2xl font-black text-blue-700">
+                  {course.is_free ? "Gratis" : formatRupiah(course.price)}
+                </p>
+              </div>
+              <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700 ring-1 ring-blue-100">
+                {allowsDeferred
+                  ? "Tersedia bayar di awal atau di akhir"
+                  : "Pembayaran di awal"}
+              </span>
             </div>
 
-            <form
-              action={enrollCourseAction.bind(null, course.id)}
-              className="w-full sm:w-auto"
+            {allowsDeferred ? (
+              <fieldset className="mt-6">
+                <legend className="text-sm font-black text-slate-950">
+                  Pilih kategori pembayaran
+                </legend>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="cursor-pointer rounded-2xl border border-blue-200 bg-white p-4 transition hover:border-blue-400 has-[:checked]:border-blue-600 has-[:checked]:ring-2 has-[:checked]:ring-blue-100">
+                    <input
+                      type="radio"
+                      name="paymentTiming"
+                      value="upfront"
+                      defaultChecked
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    <span className="ml-3 font-black text-slate-950">
+                      Bayar di Awal Course
+                    </span>
+                    <span className="mt-2 block text-sm leading-6 text-slate-500">
+                      Lanjutkan ke halaman pembayaran dan tunggu verifikasi Admin.
+                    </span>
+                  </label>
+
+                  <label className="cursor-pointer rounded-2xl border border-blue-200 bg-white p-4 transition hover:border-blue-400 has-[:checked]:border-blue-600 has-[:checked]:ring-2 has-[:checked]:ring-blue-100">
+                    <input
+                      type="radio"
+                      name="paymentTiming"
+                      value="deferred"
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    <span className="ml-3 font-black text-slate-950">
+                      Bayar di Akhir Course
+                    </span>
+                    <span className="mt-2 block text-sm leading-6 text-slate-500">
+                      Admin perlu menyetujui pendaftaran sebelum course dapat diakses. Pembayaran dapat dilakukan kemudian.
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+            ) : (
+              <input type="hidden" name="paymentTiming" value="upfront" />
+            )}
+
+            <button
+              type="submit"
+              className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-7 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10 transition hover:from-blue-700 hover:to-[#032f50] sm:w-auto"
             >
-              <button
-                type="submit"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-7 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10 transition hover:from-blue-700 hover:to-[#032f50] sm:w-auto"
-              >
-                Daftar Blok
-              </button>
-            </form>
-          </div>
+              Lanjutkan Pendaftaran
+            </button>
+          </form>
         </div>
       </article>
     </main>

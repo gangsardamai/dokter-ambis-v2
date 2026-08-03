@@ -1,44 +1,26 @@
-import type { Database } from "@/supabase/types/database.types";
+import type { Database } from "@/supabase/types/database.extended.types";
 
 import { BaseRepository } from "./base.repository";
 
-/* ========================================
-   DATABASE TYPES
-======================================== */
-
 export type Enrollment =
   Database["public"]["Tables"]["enrollments"]["Row"];
-
 export type EnrollmentInsert =
   Database["public"]["Tables"]["enrollments"]["Insert"];
-
 export type EnrollmentUpdate =
   Database["public"]["Tables"]["enrollments"]["Update"];
-
 export type EnrollmentStatus =
   Database["public"]["Enums"]["enrollment_status"];
-
 export type EnrollmentCategory =
   Database["public"]["Enums"]["enrollment_category"];
+export type PaymentTiming =
+  Database["public"]["Enums"]["payment_timing"];
 
-type ProfileRole =
-  Database["public"]["Enums"]["profile_role"];
-
-type ProfileStatus =
-  Database["public"]["Enums"]["profile_status"];
-
-type CourseStatus =
-  Database["public"]["Enums"]["course_status"];
-
-export type PaymentStatus =
-  Database["public"]["Enums"]["payment_status"];
-
-type PaymentMethod =
-  Database["public"]["Enums"]["payment_method"];
-
-/* ========================================
-   RELATION TYPES
-======================================== */
+type ProfileRole = Database["public"]["Enums"]["profile_role"];
+type ProfileStatus = Database["public"]["Enums"]["profile_status"];
+type CourseStatus = Database["public"]["Enums"]["course_status"];
+type PaymentPolicy = Database["public"]["Enums"]["payment_policy"];
+export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
+type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 
 export type EnrollmentProfile = {
   id: string;
@@ -64,6 +46,7 @@ export type EnrollmentCourse = {
   slug: string;
   price: number;
   status: CourseStatus;
+  payment_policy: PaymentPolicy;
   organizations: EnrollmentOrganization | null;
   programs: EnrollmentProgram | null;
 };
@@ -89,17 +72,40 @@ export type EnrollmentDetail = Enrollment & {
 
 export type StudentActiveEnrollment = Enrollment & {
   courses: EnrollmentCourse | null;
+  payments: EnrollmentPayment | null;
 };
 
-/* ========================================
-   REPOSITORY
-======================================== */
+const COURSE_RELATION_SELECT = `
+  id,
+  title,
+  slug,
+  price,
+  status,
+  payment_policy,
+  organizations (
+    id,
+    title
+  ),
+  programs!fk_courses_program (
+    id,
+    title
+  )
+`;
+
+const PAYMENT_RELATION_SELECT = `
+  id,
+  amount,
+  status,
+  payment_method,
+  payment_proof_path,
+  notes,
+  paid_at,
+  verified_at,
+  verified_by,
+  created_at
+`;
 
 export class EnrollmentRepository extends BaseRepository {
-  /* ========================================
-     BULK UPDATE
-  ======================================== */
-
   async activateAllPendingApproval(): Promise<Enrollment[]> {
     const supabase = await this.db();
     const now = new Date().toISOString();
@@ -112,22 +118,15 @@ export class EnrollmentRepository extends BaseRepository {
         updated_at: now,
       })
       .eq("status", "pending_approval")
+      .eq("payment_timing", "deferred")
       .select();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data ?? [];
   }
-
-  /* ========================================
-     READ WITH RELATIONS
-  ======================================== */
 
   async getAllDetails(): Promise<EnrollmentDetail[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select(`
@@ -139,50 +138,17 @@ export class EnrollmentRepository extends BaseRepository {
           role,
           status
         ),
-        courses (
-          id,
-          title,
-          slug,
-          price,
-          status,
-          organizations (
-            id,
-            title
-          ),
-          programs!fk_courses_program (
-            id,
-            title
-          )
-        ),
-        payments (
-          id,
-          amount,
-          status,
-          payment_method,
-          payment_proof_path,
-          notes,
-          paid_at,
-          verified_at,
-          verified_by,
-          created_at
-        )
+        courses (${COURSE_RELATION_SELECT}),
+        payments (${PAYMENT_RELATION_SELECT})
       `)
-      .order("created_at", {
-        ascending: false,
-      });
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return (data as EnrollmentDetail[] | null) ?? [];
   }
 
-  async getDetail(
-    id: string,
-  ): Promise<EnrollmentDetail | null> {
+  async getDetail(id: string): Promise<EnrollmentDetail | null> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select(`
@@ -194,100 +160,48 @@ export class EnrollmentRepository extends BaseRepository {
           role,
           status
         ),
-        courses (
-          id,
-          title,
-          slug,
-          price,
-          status,
-          organizations (
-            id,
-            title
-          ),
-          programs!fk_courses_program (
-            id,
-            title
-          )
-        ),
-        payments (
-          id,
-          amount,
-          status,
-          payment_method,
-          payment_proof_path,
-          notes,
-          paid_at,
-          verified_at,
-          verified_by,
-          created_at
-        )
+        courses (${COURSE_RELATION_SELECT}),
+        payments (${PAYMENT_RELATION_SELECT})
       `)
       .eq("id", id)
       .maybeSingle();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data as EnrollmentDetail | null;
   }
 
-  /* ========================================
-     BASIC READ
-  ======================================== */
-
   async getAll(): Promise<Enrollment[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data ?? [];
   }
 
-  async getById(
-    id: string,
-  ): Promise<Enrollment | null> {
+  async getById(id: string): Promise<Enrollment | null> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
       .eq("id", id)
       .maybeSingle();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data;
   }
 
-  async getByProfile(
-    profileId: string,
-  ): Promise<Enrollment[]> {
+  async getByProfile(profileId: string): Promise<Enrollment[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
       .eq("profile_id", profileId)
-      .order("created_at", {
-        ascending: false,
-      });
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data ?? [];
   }
 
@@ -295,37 +209,18 @@ export class EnrollmentRepository extends BaseRepository {
     profileId: string,
   ): Promise<StudentActiveEnrollment[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select(`
         *,
-        courses (
-          id,
-          title,
-          slug,
-          price,
-          status,
-          organizations (
-            id,
-            title
-          ),
-          programs!fk_courses_program (
-            id,
-            title
-          )
-        )
+        courses (${COURSE_RELATION_SELECT}),
+        payments (${PAYMENT_RELATION_SELECT})
       `)
       .eq("profile_id", profileId)
       .eq("status", "active")
-      .order("activated_at", {
-        ascending: false,
-      });
+      .order("activated_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return (data ?? []) as StudentActiveEnrollment[];
   }
 
@@ -334,100 +229,57 @@ export class EnrollmentRepository extends BaseRepository {
     courseId: string,
   ): Promise<StudentActiveEnrollment | null> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select(`
         *,
-        courses (
-          id,
-          title,
-          slug,
-          price,
-          status,
-          organizations (
-            id,
-            title
-          ),
-          programs!fk_courses_program (
-            id,
-            title
-          )
-        )
+        courses (${COURSE_RELATION_SELECT}),
+        payments (${PAYMENT_RELATION_SELECT})
       `)
       .eq("profile_id", profileId)
       .eq("course_id", courseId)
       .eq("status", "active")
-      .order("activated_at", {
-        ascending: false,
-      })
+      .order("activated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data as StudentActiveEnrollment | null;
   }
 
-  async getByCourse(
-    courseId: string,
-  ): Promise<Enrollment[]> {
+  async getByCourse(courseId: string): Promise<Enrollment[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
       .eq("course_id", courseId)
-      .order("created_at", {
-        ascending: false,
-      });
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data ?? [];
   }
 
-  async getByStatus(
-    status: EnrollmentStatus,
-  ): Promise<Enrollment[]> {
+  async getByStatus(status: EnrollmentStatus): Promise<Enrollment[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
       .eq("status", status)
-      .order("created_at", {
-        ascending: false,
-      });
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data ?? [];
   }
 
-  async getByCategory(
-    category: EnrollmentCategory,
-  ): Promise<Enrollment[]> {
+  async getByCategory(category: EnrollmentCategory): Promise<Enrollment[]> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
       .eq("category", category)
-      .order("created_at", {
-        ascending: false,
-      });
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data ?? [];
   }
 
@@ -436,94 +288,54 @@ export class EnrollmentRepository extends BaseRepository {
     courseId: string,
   ): Promise<Enrollment | null> {
     const supabase = await this.db();
-
     const { data, error } = await supabase
       .from("enrollments")
       .select("*")
       .eq("profile_id", profileId)
       .eq("course_id", courseId)
-      .order("created_at", {
-        ascending: false,
-      })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return data;
   }
 
   async count(): Promise<number> {
     const supabase = await this.db();
-
     const { count, error } = await supabase
       .from("enrollments")
-      .select("*", {
-        count: "exact",
-        head: true,
-      });
+      .select("*", { count: "exact", head: true });
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return count ?? 0;
   }
 
-  async countByStatus(
-    status: EnrollmentStatus,
-  ): Promise<number> {
+  async countByStatus(status: EnrollmentStatus): Promise<number> {
     const supabase = await this.db();
-
     const { count, error } = await supabase
       .from("enrollments")
-      .select("*", {
-        count: "exact",
-        head: true,
-      })
+      .select("*", { count: "exact", head: true })
       .eq("status", status);
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return count ?? 0;
   }
 
-  /* ========================================
-     CREATE
-  ======================================== */
-
-  async create(
-    data: EnrollmentInsert,
-  ): Promise<Enrollment> {
+  async create(data: EnrollmentInsert): Promise<Enrollment> {
     const supabase = await this.db();
-
     const { data: created, error } = await supabase
       .from("enrollments")
       .insert(data)
       .select()
       .single();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return created;
   }
 
-  /* ========================================
-     UPDATE
-  ======================================== */
-
-  async update(
-    id: string,
-    data: EnrollmentUpdate,
-  ): Promise<Enrollment> {
+  async update(id: string, data: EnrollmentUpdate): Promise<Enrollment> {
     const supabase = await this.db();
-
     const { data: updated, error } = await supabase
       .from("enrollments")
       .update(data)
@@ -531,32 +343,35 @@ export class EnrollmentRepository extends BaseRepository {
       .select()
       .single();
 
-    if (error) {
-      this.handleError(error);
-    }
-
+    if (error) this.handleError(error);
     return updated;
   }
 
-  /* ========================================
-     DELETE
-  ======================================== */
-
-  async delete(
+  async updatePaymentTimingAsAdmin(
     id: string,
+    paymentTiming: PaymentTiming,
   ): Promise<void> {
     const supabase = await this.db();
+    const { error } = await supabase.rpc(
+      "admin_update_enrollment_payment_timing",
+      {
+        target_enrollment_id: id,
+        target_payment_timing: paymentTiming,
+      },
+    );
 
+    if (error) this.handleError(error);
+  }
+
+  async delete(id: string): Promise<void> {
+    const supabase = await this.db();
     const { error } = await supabase
       .from("enrollments")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      this.handleError(error);
-    }
+    if (error) this.handleError(error);
   }
 }
 
-export const enrollmentRepository =
-  new EnrollmentRepository();
+export const enrollmentRepository = new EnrollmentRepository();
