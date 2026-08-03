@@ -1,4 +1,9 @@
-import { lessonRepository } from "@/repositories";
+import { deleteStoredCourseFile } from "@/lib/file/delete-stored-course-file";
+import { createUniqueSlug } from "@/lib/slug";
+import {
+  lessonFileRepository,
+  lessonRepository,
+} from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -13,105 +18,116 @@ type AutomaticLessonInsert = Omit<
   "lesson_order"
 >;
 
+function getInternalDuration(value: number | null | undefined): number {
+  return Number.isInteger(value) && Number(value) > 0
+    ? Number(value)
+    : 1;
+}
+
 export class LessonService {
-
-  /* ========================================
-     READ
-  ======================================== */
-
   async getLessons() {
     return await lessonRepository.getAll();
   }
 
-  async getLessonById(
-    id: string
-  ) {
+  async getLessonById(id: string) {
     return await lessonRepository.getById(id);
   }
 
-  async getLessonDetail(
-    slug: string
-  ) {
-    return await lessonRepository.getBySlug(
-      slug
-    );
+  async getLessonDetail(slug: string) {
+    return await lessonRepository.getBySlug(slug);
   }
 
-  async getLessonsByCourse(
-    courseId: string
-  ) {
-    return await lessonRepository.getByCourse(
-      courseId
-    );
+  async getLessonsByCourse(courseId: string) {
+    return await lessonRepository.getByCourse(courseId);
   }
 
-  async getLessonsByFolder(
-    folderId: string
-  ) {
-    return await lessonRepository.getByFolder(
-      folderId
-    );
+  async getLessonsByFolder(folderId: string) {
+    return await lessonRepository.getByFolder(folderId);
   }
 
-  async getLessonSummaries(
-    folderId: string
-  ) {
-    return await lessonRepository.getSimpleByFolder(
-      folderId
-    );
+  async getLessonSummaries(folderId: string) {
+    return await lessonRepository.getSimpleByFolder(folderId);
   }
 
   async countLessons() {
     return await lessonRepository.count();
   }
 
-  /* ========================================
-     CREATE
-  ======================================== */
+  async createLesson(data: LessonInsert) {
+    const slug = await this.generateUniqueSlug(data.title);
 
-  async createLesson(
-    data: LessonInsert
-  ) {
-    return await lessonRepository.create(
-      data
-    );
+    return await lessonRepository.create({
+      ...data,
+      slug,
+      duration: getInternalDuration(data.duration),
+    });
   }
 
   async createLessonWithNextOrder(
     data: AutomaticLessonInsert,
   ) {
-    return await lessonRepository.createWithNextOrder(
-      data,
-    );
+    const slug = await this.generateUniqueSlug(data.title);
+
+    return await lessonRepository.createWithNextOrder({
+      ...data,
+      slug,
+      duration: getInternalDuration(data.duration),
+    });
   }
 
-  /* ========================================
-     UPDATE
-  ======================================== */
+  async updateLesson(id: string, data: LessonUpdate) {
+    const existing = await lessonRepository.getById(id);
 
-  async updateLesson(
-    id: string,
-    data: LessonUpdate
-  ) {
-    return await lessonRepository.update(
-      id,
-      data
-    );
+    if (!existing) {
+      throw new Error("Lesson tidak ditemukan.");
+    }
+
+    return await lessonRepository.update(id, {
+      ...data,
+      slug: existing.slug,
+      duration: data.duration ?? existing.duration,
+    });
   }
-
-  /* ========================================
-     DELETE
-  ======================================== */
 
   async deleteLesson(
-    id: string
+    id: string,
+    expectedCourseId?: string,
   ) {
-    return await lessonRepository.delete(
-      id
+    const lesson = await lessonRepository.getById(id);
+
+    if (!lesson) {
+      throw new Error(
+        "Lesson tidak ditemukan atau Anda tidak memiliki akses.",
+      );
+    }
+
+    if (
+      expectedCourseId &&
+      lesson.course_id !== expectedCourseId
+    ) {
+      throw new Error(
+        "Lesson tidak termasuk dalam course yang dipilih.",
+      );
+    }
+
+    const files = await lessonFileRepository.getByLesson(id);
+
+    await Promise.all(
+      files.map((file) =>
+        deleteStoredCourseFile(file.file_path, lesson),
+      ),
     );
+
+    return await lessonRepository.delete(id);
   }
 
+  private async generateUniqueSlug(title: string): Promise<string> {
+    return await createUniqueSlug(
+      title,
+      async (candidate) =>
+        (await lessonRepository.getBySlug(candidate)) === null,
+    );
+  }
 }
 
-export const lessonService =
-  new LessonService();
+export const lessonService = new LessonService();

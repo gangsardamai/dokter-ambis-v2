@@ -4,29 +4,18 @@ type ProgramInsert =
   Database["public"]["Tables"]["programs"]["Insert"];
 
 export function mapProgramForm(
-  formData: FormData
+  formData: FormData,
 ): ProgramInsert {
-
   return {
-
-    organization_id:
-      formData.get("organization_id") as string,
-
-    title:
-      formData.get("title") as string,
-
-    slug:
-      formData.get("slug") as string,
-
+    organization_id: String(
+      formData.get("organization_id") ?? "",
+    ),
+    title: String(formData.get("title") ?? "").trim(),
+    slug: "",
     description:
-      (formData.get("description") as string) || null,
-
+      String(formData.get("description") ?? "").trim() || null,
     thumbnail_path:
-      (formData.get("thumbnail_path") as string) || null,
-
-    status:
-      formData.get("status") as ProgramInsert["status"],
-
+      String(formData.get("thumbnail_path") ?? "").trim() || null,
+    status: formData.get("status") as ProgramInsert["status"],
   };
-
 }

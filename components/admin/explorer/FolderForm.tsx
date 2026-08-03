@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import {
   FormCard,
@@ -15,12 +15,8 @@ type FolderInsert =
 
 interface FolderFormProps {
   defaultValues?: Partial<FolderInsert>;
-
   submitLabel: string;
-
-  action: (
-    formData: FormData
-  ) => Promise<void>;
+  action: (formData: FormData) => Promise<void>;
 }
 
 export function FolderForm({
@@ -30,57 +26,39 @@ export function FolderForm({
 }: FolderFormProps) {
   return (
     <FormCard>
+      <form action={action} className="space-y-6">
+        <input
+          type="hidden"
+          name="id"
+          value={defaultValues?.id ?? ""}
+        />
+        <input
+          type="hidden"
+          name="course_id"
+          value={defaultValues?.course_id ?? ""}
+        />
 
-      <form
-        action={action}
-        className="space-y-6"
-      >
-<input
-  type="hidden"
-  name="id"
-  value={defaultValues?.id ?? ""}
-/>
-
-<input
-  type="hidden"
-  name="course_id"
-  value={defaultValues?.course_id ?? ""}
-/>
         <TextInput
           label="Nama Folder"
           name="title"
           required
-          defaultValue={
-            defaultValues?.title ?? ""
-          }
-        />
-
-        <TextInput
-          label="Slug"
-          name="slug"
-          required
-          defaultValue={
-            defaultValues?.slug ?? ""
-          }
+          defaultValue={defaultValues?.title ?? ""}
         />
 
         <TextAreaInput
           label="Deskripsi"
           name="description"
-          defaultValue={
-            defaultValues?.description ?? ""
-          }
+          defaultValue={defaultValues?.description ?? ""}
         />
-<NumberInput
-  label="Urutan"
-  name="folder_order"
-  required
-  defaultValue={
-    Number(
-      defaultValues?.folder_order ?? 1
-    )
-  }
-/>
+
+        <NumberInput
+          label="Urutan"
+          name="folder_order"
+          required
+          defaultValue={Number(
+            defaultValues?.folder_order ?? 1,
+          )}
+        />
 
         <label className="block">
           <span className="mb-2 block text-sm font-bold text-slate-700">
@@ -98,14 +76,10 @@ export function FolderForm({
           </select>
         </label>
 
-        <PrimaryButton
-          type="submit"
-        >
+        <PrimaryButton type="submit">
           {submitLabel}
         </PrimaryButton>
-
       </form>
-
     </FormCard>
   );
 }

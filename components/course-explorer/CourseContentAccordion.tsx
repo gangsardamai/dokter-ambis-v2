@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import DeleteExplorerItemButton from "@/components/course-explorer/DeleteExplorerItemButton";
 import LessonCompletionButton from "@/components/student/course/LessonCompletionButton";
 import LessonMessageThread from "@/components/student/course/LessonMessageThread";
 import VideoPlayer from "@/components/video/VideoPlayer";
@@ -34,6 +35,8 @@ interface ActionMenuProps {
 
 const menuLinkClass =
   "flex min-h-10 w-full items-center rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200";
+const deleteMenuClass =
+  `${menuLinkClass} text-red-600 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60`;
 
 function ChevronIcon() {
   return (
@@ -141,9 +144,13 @@ function ContentIcon({
 function ManagerItemMenu({
   type,
   id,
+  courseId,
+  itemTitle,
 }: {
   type: "file" | "video" | "quiz";
   id: string;
+  courseId?: string;
+  itemTitle?: string;
 }) {
   const basePath =
     type === "file"
@@ -160,14 +167,27 @@ function ManagerItemMenu({
       <Link href={`${basePath}/${id}`} className={menuLinkClass}>
         Lihat Detail
       </Link>
+      {type === "file" && courseId && itemTitle && (
+        <DeleteExplorerItemButton
+          managerRole="admin"
+          resourceType="file"
+          courseId={courseId}
+          itemId={id}
+          itemTitle={itemTitle}
+          label="Hapus File"
+          className={deleteMenuClass}
+        />
+      )}
     </ActionMenu>
   );
 }
 
 function FileItem({
+  courseId,
   file,
   mode,
 }: {
+  courseId: string;
   file: ExplorerFile;
   mode: ExplorerMode;
 }) {
@@ -211,7 +231,12 @@ function FileItem({
           Download
         </a>
         {mode === "manager" && (
-          <ManagerItemMenu type="file" id={file.id} />
+          <ManagerItemMenu
+            type="file"
+            id={file.id}
+            courseId={courseId}
+            itemTitle={file.title}
+          />
         )}
       </div>
     </article>
@@ -375,12 +400,15 @@ function LessonPanel({
               >
                 Edit Lesson
               </Link>
-              <Link
-                href={`/dashboard/admin/course/${courseId}/explorer/lesson/${lesson.id}/delete`}
-                className={`${menuLinkClass} text-red-600 hover:bg-red-50 hover:text-red-700`}
-              >
-                Hapus Lesson
-              </Link>
+              <DeleteExplorerItemButton
+                managerRole="admin"
+                resourceType="lesson"
+                courseId={courseId}
+                itemId={lesson.id}
+                itemTitle={lesson.title}
+                label="Hapus Lesson"
+                className={deleteMenuClass}
+              />
             </ActionMenu>
           </div>
         )}
@@ -394,7 +422,12 @@ function LessonPanel({
         ) : (
           <div className="space-y-3">
             {files.map((file) => (
-              <FileItem key={file.id} file={file} mode={mode} />
+              <FileItem
+                key={file.id}
+                courseId={courseId}
+                file={file}
+                mode={mode}
+              />
             ))}
             {videos.map((video) => (
               <VideoItem key={video.id} video={video} mode={mode} />
@@ -520,12 +553,15 @@ export default function CourseContentAccordion({
                   >
                     Edit Folder
                   </Link>
-                  <Link
-                    href={`/dashboard/admin/course/${courseId}/explorer/folder/${folder.id}/delete`}
-                    className={`${menuLinkClass} text-red-600 hover:bg-red-50 hover:text-red-700`}
-                  >
-                    Hapus Folder
-                  </Link>
+                  <DeleteExplorerItemButton
+                    managerRole="admin"
+                    resourceType="folder"
+                    courseId={courseId}
+                    itemId={folder.id}
+                    itemTitle={folder.title}
+                    label="Hapus Folder"
+                    className={deleteMenuClass}
+                  />
                 </ActionMenu>
               </div>
             )}

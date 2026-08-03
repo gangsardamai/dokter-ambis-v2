@@ -6,11 +6,11 @@ import { folderService } from "@/services";
 
 export async function deleteFolderAction(
   courseId: string,
-  folderId: string
+  folderId: string,
 ) {
-  await folderService.deleteFolder(folderId);
+  await folderService.deleteFolder(folderId, courseId);
 
   redirect(
-    `/dashboard/admin/course/${courseId}/explorer`
+    `/dashboard/admin/course/${courseId}/explorer`,
   );
 }

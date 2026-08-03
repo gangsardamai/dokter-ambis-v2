@@ -4,43 +4,24 @@ type CourseInsert =
   Database["public"]["Tables"]["courses"]["Insert"];
 
 export function mapCourseForm(
-  formData: FormData
+  formData: FormData,
 ): CourseInsert {
-
   return {
-
-    organization_id:
-      formData.get("organization_id") as string,
-
-    program_id:
-      formData.get("program_id") as string,
-
-    payment_account_id:
-      formData.get("payment_account_id") as string,
-
-    title:
-      formData.get("title") as string,
-
-    slug:
-      (formData.get("slug") as string).toLowerCase(),
-
+    organization_id: String(
+      formData.get("organization_id") ?? "",
+    ),
+    program_id: String(formData.get("program_id") ?? ""),
+    payment_account_id: String(
+      formData.get("payment_account_id") ?? "",
+    ),
+    title: String(formData.get("title") ?? "").trim(),
+    slug: "",
     description:
-      (formData.get("description") as string) || null,
-
+      String(formData.get("description") ?? "").trim() || null,
     thumbnail_path:
-      (formData.get("thumbnail_path") as string) || null,
-
-    status:
-      formData.get("status") as CourseInsert["status"],
-
-    price:
-      Number(
-        formData.get("price")
-      ),
-
-    is_free:
-      formData.get("is_free") === "on",
-
+      String(formData.get("thumbnail_path") ?? "").trim() || null,
+    status: formData.get("status") as CourseInsert["status"],
+    price: Number(formData.get("price") ?? 0),
+    is_free: formData.get("is_free") === "on",
   };
-
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { lessonService } from "@/services";
@@ -14,71 +15,63 @@ interface PageProps {
 export default async function DeleteLessonPage({
   params,
 }: PageProps) {
-
   const {
     id: courseId,
     lessonId,
   } = await params;
+  const lesson = await lessonService.getLessonById(lessonId);
 
-  const lesson =
-    await lessonService.getLessonById(
-      lessonId,
-    );
-
-  if (!lesson) {
+  if (!lesson || lesson.course_id !== courseId) {
     notFound();
   }
 
   return (
-
-    <div className="mx-auto max-w-xl space-y-6">
-
+    <main className="mx-auto max-w-xl space-y-6 p-6">
       <div>
-
         <h1 className="text-3xl font-bold text-red-600">
           Hapus Lesson
         </h1>
-
         <p className="mt-2 text-gray-500">
           Tindakan ini tidak dapat dibatalkan.
         </p>
-
       </div>
 
-      <div className="rounded-lg border p-6">
-
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
         <p className="text-lg">
           Apakah Anda yakin ingin menghapus lesson:
         </p>
-
         <p className="mt-3 font-semibold">
           {lesson.title}
         </p>
-
+        <p className="mt-4 text-sm leading-6 text-red-700">
+          Seluruh file, video, quiz, progres peserta, dan pesan pada
+          lesson ini akan ikut dihapus. File upload akan dibersihkan
+          dari storage sebelum data lesson dihapus.
+        </p>
       </div>
 
-      <form
-        action={async () => {
-          "use server";
-
-          await deleteLessonAction(
-            courseId,
-            lessonId,
-          );
-        }}
-      >
-
-        <button
-          type="submit"
-          className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+      <div className="flex flex-wrap gap-3">
+        <form
+          action={async () => {
+            "use server";
+            await deleteLessonAction(courseId, lessonId);
+          }}
         >
-          Ya, Hapus Lesson
-        </button>
+          <button
+            type="submit"
+            className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+          >
+            Ya, Hapus Lesson
+          </button>
+        </form>
 
-      </form>
-
-    </div>
-
+        <Link
+          href={`/dashboard/admin/course/${courseId}/explorer`}
+          className="rounded border px-4 py-2 text-slate-700 hover:bg-slate-50"
+        >
+          Batal
+        </Link>
+      </div>
+    </main>
   );
-
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import DeleteExplorerItemButton from "@/components/course-explorer/DeleteExplorerItemButton";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import type {
   CourseExplorerContent,
@@ -16,6 +17,8 @@ interface MentorCourseContentAccordionProps {
 
 const menuLinkClass =
   "flex min-h-10 w-full items-center rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200";
+const deleteMenuClass =
+  `${menuLinkClass} text-red-600 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60`;
 
 function ActionMenu({
   label,
@@ -93,7 +96,7 @@ function LessonPanel({
             Edit Lesson
           </Link>
 
-          <ActionMenu label={`Tambah konten lesson ${lesson.title}`}>
+          <ActionMenu label={`Aksi lesson ${lesson.title}`}>
             <Link
               href={`/dashboard/mentor/file/new?lessonId=${lesson.id}`}
               className={menuLinkClass}
@@ -112,6 +115,15 @@ function LessonPanel({
             >
               Tambah Quiz
             </Link>
+            <DeleteExplorerItemButton
+              managerRole="mentor"
+              resourceType="lesson"
+              courseId={courseId}
+              itemId={lesson.id}
+              itemTitle={lesson.title}
+              label="Hapus Lesson"
+              className={deleteMenuClass}
+            />
           </ActionMenu>
         </div>
 
@@ -151,6 +163,15 @@ function LessonPanel({
                     >
                       Edit File
                     </Link>
+                    <DeleteExplorerItemButton
+                      managerRole="mentor"
+                      resourceType="file"
+                      courseId={courseId}
+                      itemId={file.id}
+                      itemTitle={file.title}
+                      label="Hapus File"
+                      className={deleteMenuClass}
+                    />
                   </ActionMenu>
                 </div>
               </article>
@@ -290,6 +311,15 @@ export default function MentorCourseContentAccordion({
                 >
                   Edit Folder
                 </Link>
+                <DeleteExplorerItemButton
+                  managerRole="mentor"
+                  resourceType="folder"
+                  courseId={courseId}
+                  itemId={folder.id}
+                  itemTitle={folder.title}
+                  label="Hapus Folder"
+                  className={deleteMenuClass}
+                />
               </ActionMenu>
             </div>
 

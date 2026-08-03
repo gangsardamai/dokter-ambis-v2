@@ -90,9 +90,6 @@ export default function FileForm({
         ? getGoogleDriveInputUrl(initialGoogleDriveId)
         : "",
     );
-  const [fileOrder, setFileOrder] = useState(
-    initialData?.file_order ?? 1,
-  );
   const [publicationStatus, setPublicationStatus] =
     useState(
       initialData?.publication_status ?? "draft",
@@ -230,16 +227,6 @@ export default function FileForm({
     }
 
     if (
-      !Number.isInteger(fileOrder) ||
-      fileOrder < 1
-    ) {
-      setErrorMessage(
-        "Urutan file harus berupa bilangan bulat minimal 1.",
-      );
-      return;
-    }
-
-    if (
       sourceProvider === "google_drive" &&
       !googleDriveFileId
     ) {
@@ -283,7 +270,6 @@ export default function FileForm({
         file_type: fileType,
         source_provider: sourceProvider,
         file_path: nextFilePath,
-        file_order: fileOrder,
         publication_status: publicationStatus,
         is_required: isRequired,
       });
@@ -354,35 +340,24 @@ export default function FileForm({
         ]}
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <SelectField
-          label="Tipe File"
-          value={fileType}
-          onChange={(value) =>
-            setFileType(value as FileType)
-          }
-          options={[
-            { value: "pdf", label: "PDF" },
-            { value: "ppt", label: "PPT" },
-            { value: "pptx", label: "PPTX" },
-            { value: "doc", label: "DOC" },
-            { value: "docx", label: "DOCX" },
-            { value: "xls", label: "XLS" },
-            { value: "xlsx", label: "XLSX" },
-            { value: "zip", label: "ZIP" },
-            { value: "mp3", label: "MP3" },
-          ]}
-        />
-
-        <TextInput
-          label="Urutan File"
-          type="number"
-          value={String(fileOrder)}
-          onChange={(value) =>
-            setFileOrder(Number(value))
-          }
-        />
-      </div>
+      <SelectField
+        label="Tipe File"
+        value={fileType}
+        onChange={(value) =>
+          setFileType(value as FileType)
+        }
+        options={[
+          { value: "pdf", label: "PDF" },
+          { value: "ppt", label: "PPT" },
+          { value: "pptx", label: "PPTX" },
+          { value: "doc", label: "DOC" },
+          { value: "docx", label: "DOCX" },
+          { value: "xls", label: "XLS" },
+          { value: "xlsx", label: "XLSX" },
+          { value: "zip", label: "ZIP" },
+          { value: "mp3", label: "MP3" },
+        ]}
+      />
 
       {sourceProvider === "upload" ? (
         <label className="block">
