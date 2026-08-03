@@ -13,7 +13,6 @@ export interface FileFormPayload {
   file_type: CourseFileType;
   source_provider: FileSourceProvider;
   file_path: string;
-  file_order: number;
   publication_status: string;
   is_required: boolean;
 }
