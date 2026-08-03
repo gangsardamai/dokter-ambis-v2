@@ -17,6 +17,41 @@ type LessonLocation = Pick<
 
 const MATERIAL_BUCKET = "course-materials";
 
+function isExpectedR2ObjectKey(
+  objectKey: string,
+  lesson: LessonLocation,
+): boolean {
+  const segments = objectKey.split("/");
+
+  return (
+    segments.length >= 7 &&
+    segments[0] === "courses" &&
+    segments[1] === lesson.course_id &&
+    segments[2] === "folders" &&
+    Boolean(segments[3]) &&
+    segments[4] === "lessons" &&
+    segments[5] === lesson.id &&
+    Boolean(segments[6])
+  );
+}
+
+function isExpectedSupabaseObjectPath(
+  objectPath: string,
+  lesson: LessonLocation,
+): boolean {
+  const segments = objectPath.split("/");
+
+  return (
+    segments.length >= 6 &&
+    segments[0] === lesson.course_id &&
+    segments[1] === "folders" &&
+    Boolean(segments[2]) &&
+    segments[3] === "lessons" &&
+    segments[4] === lesson.id &&
+    Boolean(segments[5])
+  );
+}
+
 export async function deleteStoredCourseFile(
   filePath: string,
   lesson: LessonLocation,
@@ -27,31 +62,13 @@ export async function deleteStoredCourseFile(
     return;
   }
 
-  const folderSegment = lesson.folder_id ?? "ungrouped";
-  const r2Prefix = [
-    "courses",
-    lesson.course_id,
-    "folders",
-    folderSegment,
-    "lessons",
-    lesson.id,
-    "",
-  ].join("/");
-  const supabasePrefix = [
-    lesson.course_id,
-    "folders",
-    folderSegment,
-    "lessons",
-    lesson.id,
-    "",
-  ].join("/");
   const parsedR2Path = parseR2FilePath(normalizedPath);
 
   if (parsedR2Path) {
     if (
       !isR2Configured() ||
       parsedR2Path.bucket !== getR2BucketName() ||
-      !parsedR2Path.key.startsWith(r2Prefix)
+      !isExpectedR2ObjectKey(parsedR2Path.key, lesson)
     ) {
       throw new Error(
         "Path file Cloudflare R2 tidak valid atau konfigurasi R2 tidak tersedia.",
@@ -75,7 +92,7 @@ export async function deleteStoredCourseFile(
     return;
   }
 
-  if (!normalizedPath.startsWith(supabasePrefix)) {
+  if (!isExpectedSupabaseObjectPath(normalizedPath, lesson)) {
     throw new Error(
       "Path file tidak sesuai dengan lesson yang dipilih.",
     );
