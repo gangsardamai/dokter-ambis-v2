@@ -71,7 +71,9 @@ export default async function StudentDashboardPage({
   );
   const pendingCourses = await Promise.all(
     pendingDeferredEnrollments.map(async (enrollment) => {
-      const course = await courseService.getCourseById(enrollment.course_id);
+      const course = await courseService.getAvailableCourseDetailById(
+        enrollment.course_id,
+      );
       if (!course) return null;
 
       return {
