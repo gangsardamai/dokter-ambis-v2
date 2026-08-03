@@ -3,12 +3,23 @@ import type { AdminStudentManagementFunctions } from "./admin-student-management
 import type { CourseCommunityLinkTables } from "./course-community-link.types";
 import type { MentorFeatureFunctions } from "./mentor-feature.types";
 import type { TryoutFollowupFunctions } from "./tryout.followup.types";
-import type { PaymentAccountFunctions, PaymentAccountTables } from "./payment-account.types";
+import type {
+  PaymentAccountFunctions,
+  PaymentAccountTables,
+  PaymentPolicy,
+  PaymentTiming,
+} from "./payment-account.types";
 import type { TryoutFunctions, TryoutTables } from "./tryout.types";
 
 export type Database = Omit<ApplicationDatabase, "public"> & {
-  public: Omit<ApplicationDatabase["public"], "Tables" | "Functions"> & {
-    Tables: Omit<ApplicationDatabase["public"]["Tables"], "courses" | "payments"> &
+  public: Omit<
+    ApplicationDatabase["public"],
+    "Tables" | "Functions" | "Enums"
+  > & {
+    Tables: Omit<
+      ApplicationDatabase["public"]["Tables"],
+      "courses" | "enrollments" | "payments"
+    > &
       TryoutTables &
       PaymentAccountTables &
       CourseCommunityLinkTables;
@@ -18,5 +29,9 @@ export type Database = Omit<ApplicationDatabase, "public"> & {
       PaymentAccountFunctions &
       MentorFeatureFunctions &
       AdminStudentManagementFunctions;
+    Enums: ApplicationDatabase["public"]["Enums"] & {
+      payment_policy: PaymentPolicy;
+      payment_timing: PaymentTiming;
+    };
   };
 };
