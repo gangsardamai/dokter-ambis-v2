@@ -8,13 +8,9 @@ export async function deleteLessonAction(
   courseId: string,
   lessonId: string,
 ) {
-
-  await lessonService.deleteLesson(
-    lessonId,
-  );
+  await lessonService.deleteLesson(lessonId, courseId);
 
   redirect(
     `/dashboard/admin/course/${courseId}/explorer`,
   );
-
 }
