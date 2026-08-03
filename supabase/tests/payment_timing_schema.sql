@@ -6,6 +6,7 @@ declare
   actual_default text;
   actual_nullable text;
   function_name text;
+  policy_expression text;
 begin
   select array_agg(e.enumlabel order by e.enumsortorder)
   into actual_labels
@@ -79,10 +80,12 @@ begin
   end if;
 
   foreach function_name in array array[
-    'public.get_enrollment_payment_account(uuid)',
     'public.admin_update_enrollment_payment_timing(uuid,public.payment_timing)',
     'public.apply_deferred_promotion_code(uuid,text)',
-    'public.submit_deferred_zero_payment(uuid)'
+    'public.submit_deferred_zero_payment(uuid)',
+    'public.student_submit_payment(uuid,numeric,text)',
+    'public.admin_review_payment(uuid,public.payment_status,text)',
+    'public.admin_approve_all_pending_payments()'
   ]
   loop
     if to_regprocedure(function_name) is null then
@@ -99,6 +102,10 @@ begin
     end if;
   end loop;
 
+  if to_regprocedure('public.get_enrollment_payment_account(uuid)') is not null then
+    raise exception 'RPC rekening yang tidak digunakan seharusnya sudah dihapus.';
+  end if;
+
   if not exists (
     select 1 from pg_policies
     where schemaname = 'public'
@@ -108,34 +115,47 @@ begin
     raise exception 'Policy enrollments_student_insert tidak ditemukan.';
   end if;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'payment_accounts'
-      and policyname = 'payment_accounts_select_authorized'
-  ) then
-    raise exception 'Policy payment_accounts_select_authorized tidak ditemukan.';
+  select coalesce(qual, '') || ' ' || coalesce(with_check, '')
+  into policy_expression
+  from pg_policies
+  where schemaname = 'public'
+    and tablename = 'payment_accounts'
+    and policyname = 'payment_accounts_select_authorized';
+
+  if policy_expression is null
+     or policy_expression not like '%payment_timing%'
+     or policy_expression not like '%active%' then
+    raise exception 'Policy rekening belum membatasi deferred ke enrollment aktif.';
   end if;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'payments'
-      and policyname = 'payments_student_insert'
-  ) then
-    raise exception 'Policy payments_student_insert tidak ditemukan.';
+  select coalesce(qual, '') || ' ' || coalesce(with_check, '')
+  into policy_expression
+  from pg_policies
+  where schemaname = 'public'
+    and tablename = 'payments'
+    and policyname = 'payments_student_insert';
+
+  if policy_expression is null
+     or policy_expression not like '%payment_timing%'
+     or policy_expression not like '%pending_payment%'
+     or policy_expression not like '%active%' then
+    raise exception 'Policy insert payment belum memisahkan upfront dan deferred.';
   end if;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'payments'
-      and policyname = 'payments_update_authorized'
-  ) then
-    raise exception 'Policy payments_update_authorized tidak ditemukan.';
+  select coalesce(qual, '') || ' ' || coalesce(with_check, '')
+  into policy_expression
+  from pg_policies
+  where schemaname = 'public'
+    and tablename = 'payments'
+    and policyname = 'payments_update_authorized';
+
+  if policy_expression is null
+     or policy_expression not like '%rejected%'
+     or policy_expression not like '%pending%' then
+    raise exception 'Policy kirim ulang payment belum dibatasi rejected ke pending.';
   end if;
 
-  raise notice 'Payment timing schema verification passed.';
+  raise notice 'Payment timing hardened schema verification passed.';
 end
 $payment_timing_test$;
 
