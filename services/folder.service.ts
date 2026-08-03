@@ -1,3 +1,4 @@
+import { createUniqueSlug } from "@/lib/slug";
 import { folderRepository } from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -9,98 +10,67 @@ type LessonFolderUpdate =
   Database["public"]["Tables"]["lesson_folders"]["Update"];
 
 export class FolderService {
-
-  /* ========================================
-     READ
-  ======================================== */
-
   async getFolders() {
     return await folderRepository.getAll();
   }
 
-  async getFolderById(
-    id: string
-  ) {
+  async getFolderById(id: string) {
     return await folderRepository.getById(id);
   }
 
-  async getFoldersByCourse(
-    courseId: string
-  ) {
-    return await folderRepository.getByCourse(
-      courseId
-    );
+  async getFoldersByCourse(courseId: string) {
+    return await folderRepository.getByCourse(courseId);
   }
 
-  async getRootFolders(
-    courseId: string
-  ) {
-    return await folderRepository.getRootFolders(
-      courseId
-    );
+  async getRootFolders(courseId: string) {
+    return await folderRepository.getRootFolders(courseId);
   }
 
-  async getChildren(
-    parentFolderId: string
-  ) {
-    return await folderRepository.getChildren(
-      parentFolderId
-    );
+  async getChildren(parentFolderId: string) {
+    return await folderRepository.getChildren(parentFolderId);
   }
 
   async countFolders() {
     return await folderRepository.count();
   }
 
-  /* ========================================
-     CREATE
-  ======================================== */
-
-  async createFolder(
-    data: LessonFolderInsert
-  ) {
-
-    // Sprint 1
-    // Business validation akan ditambahkan
-    // pada Sprint Explorer.
-
-    return await folderRepository.create(
-      data
+  async createFolder(data: LessonFolderInsert) {
+    const existingFolders = await folderRepository.getByCourse(
+      data.course_id,
+    );
+    const usedSlugs = new Set(
+      existingFolders.map((folder) => folder.slug),
+    );
+    const slug = await createUniqueSlug(
+      data.title,
+      async (candidate) => !usedSlugs.has(candidate),
     );
 
+    return await folderRepository.create({
+      ...data,
+      slug,
+    });
   }
-
-  /* ========================================
-     UPDATE
-  ======================================== */
 
   async updateFolder(
     id: string,
-    data: LessonFolderUpdate
+    data: LessonFolderUpdate,
   ) {
+    const existing = await folderRepository.getById(id);
 
-    return await folderRepository.update(
-      id,
-      data
-    );
+    if (!existing) {
+      throw new Error("Folder tidak ditemukan.");
+    }
 
+    return await folderRepository.update(id, {
+      ...data,
+      slug: existing.slug,
+    });
   }
 
-  /* ========================================
-     DELETE
-  ======================================== */
-
-  async deleteFolder(
-    id: string
-  ) {
-
-    return await folderRepository.delete(
-      id
-    );
-
+  async deleteFolder(id: string) {
+    return await folderRepository.delete(id);
   }
-
 }
 
-export const folderService =
-  new FolderService();
+export const folderService = new FolderService();
