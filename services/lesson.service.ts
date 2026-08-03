@@ -1,5 +1,9 @@
+import { deleteStoredCourseFile } from "@/lib/file/delete-stored-course-file";
 import { createUniqueSlug } from "@/lib/slug";
-import { lessonRepository } from "@/repositories";
+import {
+  lessonFileRepository,
+  lessonRepository,
+} from "@/repositories";
 
 import type { Database } from "@/supabase/types/database.types";
 
@@ -85,7 +89,35 @@ export class LessonService {
     });
   }
 
-  async deleteLesson(id: string) {
+  async deleteLesson(
+    id: string,
+    expectedCourseId?: string,
+  ) {
+    const lesson = await lessonRepository.getById(id);
+
+    if (!lesson) {
+      throw new Error(
+        "Lesson tidak ditemukan atau Anda tidak memiliki akses.",
+      );
+    }
+
+    if (
+      expectedCourseId &&
+      lesson.course_id !== expectedCourseId
+    ) {
+      throw new Error(
+        "Lesson tidak termasuk dalam course yang dipilih.",
+      );
+    }
+
+    const files = await lessonFileRepository.getByLesson(id);
+
+    await Promise.all(
+      files.map((file) =>
+        deleteStoredCourseFile(file.file_path, lesson),
+      ),
+    );
+
     return await lessonRepository.delete(id);
   }
 
