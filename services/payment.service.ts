@@ -53,20 +53,11 @@ export class PaymentService {
       throw new Error("Payment untuk enrollment ini sudah tersedia.");
     }
 
-    const payment = await paymentRepository.create({
+    return paymentRepository.create({
       ...data,
       status: data.status ?? "pending",
       payment_method: data.payment_method ?? "bank_transfer",
     });
-
-    if (enrollment.payment_timing === "upfront") {
-      await enrollmentRepository.update(data.enrollment_id, {
-        status: "pending_approval",
-        activated_at: null,
-      });
-    }
-
-    return payment;
   }
 
   async submitPaymentProof(
@@ -75,52 +66,18 @@ export class PaymentService {
     paymentProofPath: string,
   ): Promise<Payment> {
     if (!enrollmentId) throw new Error("Enrollment tidak ditemukan.");
-    if (!paymentProofPath) throw new Error("Bukti pembayaran tidak ditemukan.");
-    if (amount < 0) throw new Error("Nominal pembayaran tidak valid.");
-
-    const enrollment = await enrollmentRepository.getById(enrollmentId);
-    if (!enrollment) throw new Error("Enrollment tidak ditemukan.");
-
-    const existingPayment = await paymentRepository.getByEnrollment(enrollmentId);
-    if (existingPayment?.status === "approved") {
-      throw new Error("Pembayaran sudah disetujui.");
+    if (!paymentProofPath.trim()) {
+      throw new Error("Bukti pembayaran tidak ditemukan.");
     }
-    if (existingPayment?.status === "pending") {
-      throw new Error("Pembayaran sedang menunggu verifikasi Admin.");
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("Nominal pembayaran tidak valid.");
     }
 
-    const now = new Date().toISOString();
-
-    if (existingPayment) {
-      const updatedPayment = await paymentRepository.update(existingPayment.id, {
-        amount,
-        payment_proof_path: paymentProofPath,
-        payment_method: "bank_transfer",
-        status: "pending",
-        paid_at: now,
-        verified_by: null,
-        verified_at: null,
-        notes: null,
-      });
-
-      if (enrollment.payment_timing === "upfront") {
-        await enrollmentRepository.update(enrollmentId, {
-          status: "pending_approval",
-          activated_at: null,
-        });
-      }
-
-      return updatedPayment;
-    }
-
-    return this.createPayment({
-      enrollment_id: enrollmentId,
+    return paymentRepository.submitAsStudent(
+      enrollmentId,
       amount,
-      payment_method: "bank_transfer",
-      payment_proof_path: paymentProofPath,
-      paid_at: now,
-      status: "pending",
-    });
+      paymentProofPath.trim(),
+    );
   }
 
   async updatePayment(id: string, data: PaymentUpdate): Promise<Payment> {
@@ -134,37 +91,20 @@ export class PaymentService {
     id: string,
     paymentProofPath: string,
   ): Promise<Payment> {
-    if (!paymentProofPath) throw new Error("Bukti pembayaran wajib diisi.");
+    if (!paymentProofPath.trim()) {
+      throw new Error("Bukti pembayaran wajib diisi.");
+    }
     return this.updatePayment(id, {
-      payment_proof_path: paymentProofPath,
+      payment_proof_path: paymentProofPath.trim(),
       paid_at: new Date().toISOString(),
       status: "pending",
     });
   }
 
   async approvePayment(id: string, verifiedBy: string): Promise<Payment> {
+    if (!id) throw new Error("Payment tidak ditemukan.");
     if (!verifiedBy) throw new Error("Admin verifier wajib diisi.");
-
-    const payment = await paymentRepository.getById(id);
-    if (!payment) throw new Error("Payment tidak ditemukan.");
-
-    const enrollment = await enrollmentRepository.getById(payment.enrollment_id);
-    if (!enrollment) throw new Error("Enrollment tidak ditemukan.");
-
-    const updatedPayment = await paymentRepository.update(id, {
-      status: "approved",
-      verified_by: verifiedBy,
-      verified_at: new Date().toISOString(),
-    });
-
-    if (enrollment.payment_timing === "upfront") {
-      await enrollmentRepository.update(payment.enrollment_id, {
-        status: "active",
-        activated_at: new Date().toISOString(),
-      });
-    }
-
-    return updatedPayment;
+    return paymentRepository.reviewAsAdmin(id, "approved");
   }
 
   async rejectPayment(
@@ -172,29 +112,9 @@ export class PaymentService {
     verifiedBy: string,
     notes?: string | null,
   ): Promise<Payment> {
+    if (!id) throw new Error("Payment tidak ditemukan.");
     if (!verifiedBy) throw new Error("Admin verifier wajib diisi.");
-
-    const payment = await paymentRepository.getById(id);
-    if (!payment) throw new Error("Payment tidak ditemukan.");
-
-    const enrollment = await enrollmentRepository.getById(payment.enrollment_id);
-    if (!enrollment) throw new Error("Enrollment tidak ditemukan.");
-
-    const updatedPayment = await paymentRepository.update(id, {
-      status: "rejected",
-      verified_by: verifiedBy,
-      verified_at: new Date().toISOString(),
-      notes: notes ?? null,
-    });
-
-    if (enrollment.payment_timing === "upfront") {
-      await enrollmentRepository.update(payment.enrollment_id, {
-        status: "pending_payment",
-        activated_at: null,
-      });
-    }
-
-    return updatedPayment;
+    return paymentRepository.reviewAsAdmin(id, "rejected", notes);
   }
 
   async resetToPending(id: string): Promise<Payment> {
@@ -207,29 +127,7 @@ export class PaymentService {
 
   async approveAllPendingPayments(verifiedBy: string): Promise<Payment[]> {
     if (!verifiedBy) throw new Error("Admin verifier wajib tersedia.");
-
-    const pendingPayments = await paymentRepository.getPendingPayments();
-    if (pendingPayments.length === 0) return [];
-
-    const approvedPayments = await paymentRepository.approveAllPending(verifiedBy);
-    const now = new Date().toISOString();
-
-    await Promise.all(
-      approvedPayments.map(async (payment) => {
-        const enrollment = await enrollmentRepository.getById(
-          payment.enrollment_id,
-        );
-
-        if (enrollment?.payment_timing === "upfront") {
-          await enrollmentRepository.update(payment.enrollment_id, {
-            status: "active",
-            activated_at: now,
-          });
-        }
-      }),
-    );
-
-    return approvedPayments;
+    return paymentRepository.approveAllPendingAsAdmin();
   }
 
   async deletePayment(id: string): Promise<void> {
