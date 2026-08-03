@@ -5,8 +5,8 @@ set local statement_timeout = '30s';
 do $$
 declare
   test_profile_id uuid;
-  test_course_id uuid;
-  test_price numeric;
+  test_course_id constant uuid := 'f0000000-0000-0000-0000-000000000001';
+  test_price numeric := 100000;
   duplicate_blocked boolean := false;
   index_definition text;
 begin
@@ -20,24 +20,50 @@ begin
     raise exception 'uq_student_course harus berupa partial unique index untuk enrollment yang belum berakhir: %', index_definition;
   end if;
 
-  select p.id, c.id, case when c.is_free then 0::numeric else c.price end
-  into test_profile_id, test_course_id, test_price
+  select p.id
+  into test_profile_id
   from public.profiles p
-  cross join public.courses c
   where p.role = 'student'::public.profile_role
     and p.status = 'active'::public.profile_status
-    and c.status = 'active'::public.course_status
-    and not exists (
-      select 1
-      from public.enrollments e
-      where e.profile_id = p.id
-        and e.course_id = c.id
-    )
-  order by p.created_at, c.created_at
+  order by p.created_at
   limit 1;
 
-  if test_profile_id is null or test_course_id is null then
-    raise exception 'Tidak ada pasangan peserta-course kosong untuk pengujian re-enrollment.';
+  if test_profile_id is null then
+    raise exception 'Tidak ada peserta aktif untuk pengujian re-enrollment.';
+  end if;
+
+  insert into public.courses (
+    id,
+    organization_id,
+    program_id,
+    slug,
+    title,
+    description,
+    status,
+    price,
+    is_free,
+    payment_account_id,
+    payment_policy
+  )
+  select
+    test_course_id,
+    c.organization_id,
+    c.program_id,
+    'reenrollment-ci-test',
+    'Re-enrollment CI Test',
+    'Course sementara untuk pengujian; seluruh transaksi akan di-rollback.',
+    'active'::public.course_status,
+    test_price,
+    false,
+    c.payment_account_id,
+    'upfront_only'::public.payment_policy
+  from public.courses c
+  where c.status = 'active'::public.course_status
+  order by c.created_at
+  limit 1;
+
+  if not found then
+    raise exception 'Tidak ada course aktif yang dapat menjadi template pengujian.';
   end if;
 
   insert into public.enrollments (
@@ -102,6 +128,8 @@ begin
   if not duplicate_blocked then
     raise exception 'Enrollment aktif/proses ganda untuk peserta dan course yang sama tidak terblokir.';
   end if;
+
+  raise notice 'Re-enrollment after a closed enrollment verification passed.';
 end
 $$;
 
