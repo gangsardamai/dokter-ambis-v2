@@ -12,6 +12,11 @@ type LessonFileInsert =
 type LessonFileUpdate =
   Database["public"]["Tables"]["lesson_files"]["Update"];
 
+type LessonFileCreateData = Omit<
+  LessonFileInsert,
+  "file_order"
+>;
+
 export class LessonFileService {
   async getFiles() {
     return await lessonFileRepository.getAll();
@@ -33,15 +38,47 @@ export class LessonFileService {
     return await lessonFileRepository.count();
   }
 
-  async createFile(data: LessonFileInsert) {
-    return await lessonFileRepository.create(data);
+  async createFile(data: LessonFileCreateData) {
+    const fileOrder = await this.getNextFileOrder(
+      data.lesson_id,
+    );
+
+    return await lessonFileRepository.create({
+      ...data,
+      file_order: fileOrder,
+    });
   }
 
   async updateFile(
     id: string,
     data: LessonFileUpdate,
   ) {
-    return await lessonFileRepository.update(id, data);
+    const existing = await lessonFileRepository.getById(id);
+
+    if (!existing) {
+      throw new Error(
+        "File tidak ditemukan atau Anda tidak memiliki akses.",
+      );
+    }
+
+    const {
+      file_order: _ignoredFileOrder,
+      ...safeData
+    } = data;
+    void _ignoredFileOrder;
+
+    const targetLessonId =
+      safeData.lesson_id ?? existing.lesson_id;
+    const lessonChanged =
+      targetLessonId !== existing.lesson_id;
+    const fileOrder = lessonChanged
+      ? await this.getNextFileOrder(targetLessonId)
+      : existing.file_order;
+
+    return await lessonFileRepository.update(id, {
+      ...safeData,
+      file_order: fileOrder,
+    });
   }
 
   async deleteFile(
@@ -79,6 +116,20 @@ export class LessonFileService {
     await lessonFileRepository.delete(id);
 
     return { courseId: lesson.course_id };
+  }
+
+  private async getNextFileOrder(
+    lessonId: string,
+  ): Promise<number> {
+    const files = await lessonFileRepository.getByLesson(
+      lessonId,
+    );
+
+    return files.reduce(
+      (highestOrder, file) =>
+        Math.max(highestOrder, file.file_order),
+      0,
+    ) + 1;
   }
 }
 
