@@ -2,7 +2,11 @@ import type { Database as GeneratedDatabase } from "./database.types";
 
 type GeneratedPublic = GeneratedDatabase["public"];
 type GeneratedCourses = GeneratedPublic["Tables"]["courses"];
+type GeneratedEnrollments = GeneratedPublic["Tables"]["enrollments"];
 type GeneratedPayments = GeneratedPublic["Tables"]["payments"];
+
+export type PaymentPolicy = "upfront_only" | "upfront_or_deferred";
+export type PaymentTiming = "upfront" | "deferred";
 
 export type PaymentAccountRow = {
   id: string;
@@ -34,10 +38,31 @@ export type PaymentAccountTables = {
     Relationships: [];
   };
   courses: {
-    Row: GeneratedCourses["Row"] & { payment_account_id: string };
-    Insert: GeneratedCourses["Insert"] & { payment_account_id?: string };
-    Update: GeneratedCourses["Update"] & { payment_account_id?: string };
+    Row: GeneratedCourses["Row"] & {
+      payment_account_id: string;
+      payment_policy: PaymentPolicy;
+    };
+    Insert: GeneratedCourses["Insert"] & {
+      payment_account_id?: string;
+      payment_policy?: PaymentPolicy;
+    };
+    Update: GeneratedCourses["Update"] & {
+      payment_account_id?: string;
+      payment_policy?: PaymentPolicy;
+    };
     Relationships: GeneratedCourses["Relationships"];
+  };
+  enrollments: {
+    Row: GeneratedEnrollments["Row"] & {
+      payment_timing: PaymentTiming;
+    };
+    Insert: GeneratedEnrollments["Insert"] & {
+      payment_timing?: PaymentTiming;
+    };
+    Update: GeneratedEnrollments["Update"] & {
+      payment_timing?: PaymentTiming;
+    };
+    Relationships: GeneratedEnrollments["Relationships"];
   };
   payments: {
     Row: GeneratedPayments["Row"] & {
@@ -69,5 +94,12 @@ export type PaymentAccountFunctions = {
   admin_set_default_payment_account: {
     Args: { target_account_id: string };
     Returns: string;
+  };
+  admin_update_enrollment_payment_timing: {
+    Args: {
+      target_enrollment_id: string;
+      target_payment_timing: PaymentTiming;
+    };
+    Returns: undefined;
   };
 };
