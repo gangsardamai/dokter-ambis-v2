@@ -118,15 +118,6 @@ export default async function StudentMyCoursePage({
               {getPaymentStatusLabel(payment?.status ?? null)}
             </span>
 
-            {canPayNow && (
-              <Link
-                href={`/dashboard/student/payment/${enrollment.id}`}
-                className="inline-flex min-h-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                Bayar Sekarang
-              </Link>
-            )}
-
             {payment?.status === "pending" && (
               <Link
                 href={`/dashboard/student/payment/${enrollment.id}`}
@@ -136,6 +127,15 @@ export default async function StudentMyCoursePage({
               </Link>
             )}
           </div>
+
+          {canPayNow && (
+            <Link
+              href={`/dashboard/student/payment/${enrollment.id}`}
+              className="inline-flex min-h-9 w-full shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md lg:ml-auto lg:w-auto"
+            >
+              Bayar Sekarang
+            </Link>
+          )}
         </div>
 
         {payment?.status === "rejected" && payment.notes && (
