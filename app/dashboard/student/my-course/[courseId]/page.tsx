@@ -88,6 +88,63 @@ export default async function StudentMyCoursePage({
         ← Kembali ke dashboard
       </Link>
 
+      <section className="rounded-3xl border border-blue-100 bg-white px-5 py-4 shadow-sm shadow-blue-950/5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+              Kategori Pembayaran
+            </p>
+            <p className="text-sm font-black text-slate-950 sm:text-base">
+              {enrollment.payment_timing === "deferred"
+                ? "Bayar di Akhir"
+                : "Bayar di Awal"}
+            </p>
+          </div>
+
+          <div
+            aria-hidden="true"
+            className="hidden h-10 w-px shrink-0 bg-slate-200 lg:block"
+          />
+
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+              Status Pembayaran
+            </p>
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-sm font-black ${getPaymentStatusClass(
+                payment?.status ?? null,
+              )}`}
+            >
+              {getPaymentStatusLabel(payment?.status ?? null)}
+            </span>
+
+            {canPayNow && (
+              <Link
+                href={`/dashboard/student/payment/${enrollment.id}`}
+                className="inline-flex min-h-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                Bayar Sekarang
+              </Link>
+            )}
+
+            {payment?.status === "pending" && (
+              <Link
+                href={`/dashboard/student/payment/${enrollment.id}`}
+                className="text-sm font-black text-blue-700 hover:underline"
+              >
+                Lihat status pembayaran
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {payment?.status === "rejected" && payment.notes && (
+          <p className="mt-4 border-t border-red-100 pt-4 text-sm leading-6 text-red-600">
+            {payment.notes}
+          </p>
+        )}
+      </section>
+
       <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
         <div className="grid min-w-0 gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="min-w-0">
@@ -139,58 +196,6 @@ export default async function StudentMyCoursePage({
           </div>
 
           <CourseProgressSummaryCards summary={progressSummary} />
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-            Kategori Pembayaran
-          </p>
-          <p className="mt-3 text-xl font-black text-slate-950">
-            {enrollment.payment_timing === "deferred"
-              ? "Bayar di Akhir"
-              : "Bayar di Awal"}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            {enrollment.payment_timing === "deferred"
-              ? "Akses course tetap aktif selama pembayaran belum dilakukan atau sedang diverifikasi."
-              : "Pembayaran dilakukan sebelum course diaktifkan."}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-            Status Pembayaran
-          </p>
-          <span
-            className={`mt-3 inline-flex rounded-full px-3 py-1 text-sm font-black ${getPaymentStatusClass(
-              payment?.status ?? null,
-            )}`}
-          >
-            {getPaymentStatusLabel(payment?.status ?? null)}
-          </span>
-          {payment?.status === "rejected" && payment.notes && (
-            <p className="mt-3 text-sm leading-6 text-red-600">
-              {payment.notes}
-            </p>
-          )}
-          {canPayNow && (
-            <Link
-              href={`/dashboard/student/payment/${enrollment.id}`}
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-auto"
-            >
-              Bayar Sekarang
-            </Link>
-          )}
-          {payment?.status === "pending" && (
-            <Link
-              href={`/dashboard/student/payment/${enrollment.id}`}
-              className="mt-4 inline-flex text-sm font-black text-blue-700 hover:underline"
-            >
-              Lihat status pembayaran
-            </Link>
-          )}
         </div>
       </section>
 
