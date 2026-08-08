@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -15,6 +16,9 @@ interface LoginPageProps {
     next?: string | string[];
   }>;
 }
+
+const DEVICE_COOKIE_NAME =
+  "dokter_ambis_device_identifier";
 
 function getParamValue(
   value: string | string[] | undefined,
@@ -71,6 +75,9 @@ export default async function LoginPage({
     }
   }
 
+  const cookieStore = await cookies();
+  const initialDeviceIdentifier =
+    cookieStore.get(DEVICE_COOKIE_NAME)?.value ?? "";
   const errorMessage = getParamValue(params.error);
   const showConfirmationNotice =
     getParamValue(params.registered) === "check-email";
@@ -123,7 +130,10 @@ export default async function LoginPage({
           </div>
         )}
 
-        <LoginForm nextPath={nextPath} />
+        <LoginForm
+          nextPath={nextPath}
+          initialDeviceIdentifier={initialDeviceIdentifier}
+        />
 
         <p className="mt-5 text-center text-sm text-slate-600">
           Belum punya akun?{" "}
