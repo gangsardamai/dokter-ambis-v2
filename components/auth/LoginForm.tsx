@@ -13,27 +13,50 @@ type DeviceType =
 
 interface LoginFormProps {
   nextPath?: string;
+  initialDeviceIdentifier?: string;
 }
 
 const DEVICE_STORAGE_KEY =
   "dokter_ambis_device_identifier";
 
-function createDeviceIdentifier(): string {
-  const existing = window.localStorage.getItem(
-    DEVICE_STORAGE_KEY,
-  );
+function createDeviceIdentifier(
+  initialDeviceIdentifier = "",
+): string {
+  if (initialDeviceIdentifier) {
+    try {
+      window.localStorage.setItem(
+        DEVICE_STORAGE_KEY,
+        initialDeviceIdentifier,
+      );
+    } catch {
+      // Cookie server tetap menjadi sumber identitas utama jika
+      // localStorage diblokir atau tidak tersedia.
+    }
 
-  if (existing) {
-    return existing;
+    return initialDeviceIdentifier;
   }
 
-  const identifier = window.crypto.randomUUID();
-  window.localStorage.setItem(
-    DEVICE_STORAGE_KEY,
-    identifier,
-  );
+  try {
+    const existing = window.localStorage.getItem(
+      DEVICE_STORAGE_KEY,
+    );
 
-  return identifier;
+    if (existing) {
+      return existing;
+    }
+
+    const identifier = window.crypto.randomUUID();
+    window.localStorage.setItem(
+      DEVICE_STORAGE_KEY,
+      identifier,
+    );
+
+    return identifier;
+  } catch {
+    // Login tetap dapat berjalan walaupun penyimpanan browser
+    // tidak tersedia. Server akan menyimpan identifier ini ke cookie.
+    return window.crypto.randomUUID();
+  }
 }
 
 function detectDeviceType(): DeviceType {
@@ -88,6 +111,7 @@ function detectOperatingSystem(): string {
 
 export default function LoginForm({
   nextPath = "",
+  initialDeviceIdentifier = "",
 }: LoginFormProps) {
   const deviceIdentifierRef = useRef<HTMLInputElement>(null);
   const deviceNameRef = useRef<HTMLInputElement>(null);
@@ -97,7 +121,7 @@ export default function LoginForm({
   useEffect(() => {
     if (deviceIdentifierRef.current) {
       deviceIdentifierRef.current.value =
-        createDeviceIdentifier();
+        createDeviceIdentifier(initialDeviceIdentifier);
     }
 
     if (deviceNameRef.current) {
@@ -112,7 +136,7 @@ export default function LoginForm({
     if (submitButtonRef.current) {
       submitButtonRef.current.disabled = false;
     }
-  }, []);
+  }, [initialDeviceIdentifier]);
 
   return (
     <form action={loginAction} className="space-y-5">
