@@ -37,7 +37,7 @@ export default async function StudentQuizPage({
   const quiz = data as unknown as QuizAttemptPayload;
   let review: QuizReviewPayload | null = null;
 
-  if (quiz.attempts_remaining === 0) {
+  if (quiz.attempts_used > 0) {
     const reviewResult = await supabase.rpc(
       "get_quiz_review",
       {

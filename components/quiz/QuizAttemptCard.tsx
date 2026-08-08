@@ -61,9 +61,9 @@ export default function QuizAttemptCard({
       setResult(submission);
       setAnswers({});
 
-      if (submission.show_review) {
-        router.refresh();
-      }
+      // Refresh server data after every completed attempt so the review
+      // becomes available immediately after the first submission.
+      router.refresh();
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -115,10 +115,10 @@ export default function QuizAttemptCard({
             {result.score}
           </p>
           <p className="mt-1 text-sm text-slate-600">
-            Nilai terbaik {result.best_score}.{" "}
-            {result.show_review
-              ? "Pembahasan jawaban kini tersedia di bawah."
-              : `Anda masih memiliki ${result.attempts_remaining} percobaan.`}
+            Nilai terbaik {result.best_score}. Pembahasan jawaban kini tersedia di bawah.{" "}
+            {result.attempts_remaining > 0
+              ? `Anda masih memiliki ${result.attempts_remaining} percobaan.`
+              : "Batas percobaan telah tercapai."}
           </p>
         </div>
       )}
@@ -208,7 +208,7 @@ export default function QuizAttemptCard({
             Batas percobaan telah tercapai.
           </p>
           <p className="mt-2 text-sm text-slate-500">
-            Jawaban benar dan pembahasan ditampilkan setelah percobaan terakhir.
+            Jawaban benar dan pembahasan tetap tersedia di bawah.
           </p>
         </div>
       )}
