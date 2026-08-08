@@ -79,20 +79,30 @@ function detectDeviceType(): DeviceType {
 function detectBrowser(): string {
   const userAgent = navigator.userAgent;
 
-  if (userAgent.includes("Edg/")) return "Edge";
   if (
-    userAgent.includes("Chrome/") &&
-    !userAgent.includes("Edg/")
+    userAgent.includes("Edg/") ||
+    userAgent.includes("EdgiOS/")
+  ) {
+    return "Edge";
+  }
+
+  if (
+    userAgent.includes("Chrome/") ||
+    userAgent.includes("CriOS/")
   ) {
     return "Chrome";
   }
+
   if (
-    userAgent.includes("Safari/") &&
-    !userAgent.includes("Chrome/")
+    userAgent.includes("Firefox/") ||
+    userAgent.includes("FxiOS/")
   ) {
+    return "Firefox";
+  }
+
+  if (userAgent.includes("Safari/")) {
     return "Safari";
   }
-  if (userAgent.includes("Firefox/")) return "Firefox";
 
   return "Browser";
 }
