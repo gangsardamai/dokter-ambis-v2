@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import {
+  PendingFormControls,
+  PendingSubmitButton,
+} from "@/components/forms/PendingForm";
+import {
   courseService,
   enrollmentService,
   paymentAccountService,
@@ -206,26 +210,28 @@ export default async function StudentPaymentPage({
             action={applyPromotionCodeAction.bind(null, enrollment.id)}
             className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 p-5"
           >
-            <h2 className="font-black text-violet-950">Punya kode promosi?</h2>
-            <p className="mt-1 text-sm leading-6 text-violet-700">
-              Masukkan kode sebelum mengirim bukti pembayaran.
-            </p>
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <input
-                type="text"
-                name="promotionCode"
-                required
-                autoComplete="off"
-                placeholder="Masukkan kode promosi"
-                className="min-h-11 flex-1 rounded-xl border border-violet-200 bg-white px-4 py-2 font-mono text-sm uppercase outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
-              />
-              <button
-                type="submit"
-                className="min-h-11 rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-black text-white hover:bg-violet-800"
-              >
-                Terapkan Kode
-              </button>
-            </div>
+            <PendingFormControls pendingMessage="Kode promosi sedang diperiksa. Mohon tunggu.">
+              <h2 className="font-black text-violet-950">Punya kode promosi?</h2>
+              <p className="mt-1 text-sm leading-6 text-violet-700">
+                Masukkan kode sebelum mengirim bukti pembayaran.
+              </p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <input
+                  type="text"
+                  name="promotionCode"
+                  required
+                  autoComplete="off"
+                  placeholder="Masukkan kode promosi"
+                  className="min-h-11 flex-1 rounded-xl border border-violet-200 bg-white px-4 py-2 font-mono text-sm uppercase outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-500"
+                />
+                <PendingSubmitButton
+                  pendingLabel="Memeriksa voucher..."
+                  className="min-h-11 rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-black text-white hover:bg-violet-800 disabled:opacity-80"
+                >
+                  Terapkan Kode
+                </PendingSubmitButton>
+              </div>
+            </PendingFormControls>
           </form>
         )}
 
@@ -253,23 +259,25 @@ export default async function StudentPaymentPage({
               action={uploadPaymentProofAction.bind(null, enrollment.id)}
               className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-5"
             >
-              <h2 className="font-black text-blue-950">Upload bukti pembayaran</h2>
-              <p className="mt-2 text-sm leading-6 text-blue-700">
-                Format JPG, PNG, WEBP, atau PDF. Ukuran maksimal 5 MB.
-              </p>
-              <input
-                type="file"
-                name="paymentProof"
-                required
-                accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
-                className="mt-4 block w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                className="mt-4 w-full rounded-xl bg-blue-600 px-5 py-3 font-black text-white hover:bg-blue-700"
-              >
-                Kirim Bukti Pembayaran
-              </button>
+              <PendingFormControls pendingMessage="Bukti pembayaran sedang diunggah dan dikirim. Mohon tunggu.">
+                <h2 className="font-black text-blue-950">Upload bukti pembayaran</h2>
+                <p className="mt-2 text-sm leading-6 text-blue-700">
+                  Format JPG, PNG, WEBP, atau PDF. Ukuran maksimal 5 MB.
+                </p>
+                <input
+                  type="file"
+                  name="paymentProof"
+                  required
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                  className="mt-4 block w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-500"
+                />
+                <PendingSubmitButton
+                  pendingLabel="Mengirim bukti..."
+                  className="mt-4 w-full rounded-xl bg-blue-600 px-5 py-3 font-black text-white hover:bg-blue-700 disabled:opacity-80"
+                >
+                  Kirim Bukti Pembayaran
+                </PendingSubmitButton>
+              </PendingFormControls>
             </form>
           </>
         )}
@@ -279,16 +287,18 @@ export default async function StudentPaymentPage({
             action={submitZeroPaymentAction.bind(null, enrollment.id)}
             className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"
           >
-            <h2 className="font-black text-emerald-950">Tidak perlu transfer</h2>
-            <p className="mt-2 text-sm leading-6 text-emerald-700">
-              Total pembayaran Anda Rp0. Kirim data ini untuk diperiksa Admin.
-            </p>
-            <button
-              type="submit"
-              className="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700"
-            >
-              Kirim Pembayaran Rp0
-            </button>
+            <PendingFormControls pendingMessage="Pembayaran Rp0 sedang dikirim. Mohon tunggu.">
+              <h2 className="font-black text-emerald-950">Tidak perlu transfer</h2>
+              <p className="mt-2 text-sm leading-6 text-emerald-700">
+                Total pembayaran Anda Rp0. Kirim data ini untuk diperiksa Admin.
+              </p>
+              <PendingSubmitButton
+                pendingLabel="Mengirim pembayaran..."
+                className="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700 disabled:opacity-80"
+              >
+                Kirim Pembayaran Rp0
+              </PendingSubmitButton>
+            </PendingFormControls>
           </form>
         )}
 
