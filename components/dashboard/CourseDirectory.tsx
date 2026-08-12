@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+
+import PendingLink from "@/components/navigation/PendingLink";
 
 export interface DashboardCourseItem {
   id: string;
@@ -262,12 +263,13 @@ export default function CourseDirectory({
                     </div>
                   )}
 
-                  <Link
+                  <PendingLink
                     href={course.href}
+                    pendingLabel="Memuat..."
                     className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10 transition group-hover:shadow-blue-950/20 hover:from-blue-700 hover:to-[#032f50] focus:outline-none focus:ring-2 focus:ring-blue-300"
                   >
                     {course.actionLabel}
-                  </Link>
+                  </PendingLink>
                 </div>
               </div>
             </article>
