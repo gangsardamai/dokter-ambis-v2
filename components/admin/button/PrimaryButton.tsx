@@ -10,6 +10,8 @@ interface PrimaryButtonProps {
 
   className?: string;
 
+  disabled?: boolean;
+
 }
 
 export default function PrimaryButton({
@@ -21,6 +23,8 @@ export default function PrimaryButton({
   type = "button",
 
   className = "",
+
+  disabled = false,
 
 }: PrimaryButtonProps) {
 
@@ -50,7 +54,9 @@ export default function PrimaryButton({
 
       type={type}
 
-      className={`inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${className}`}
+      disabled={disabled}
+
+      className={`inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm ${className}`}
 
     >
 
