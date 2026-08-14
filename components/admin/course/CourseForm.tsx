@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 import {
   CheckboxInput,
@@ -44,6 +44,11 @@ export default function CourseForm({
   const [programId, setProgramId] = useState(
     defaultValues?.program_id ?? "",
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const filteredPrograms = organizationId
     ? programOptions.filter(
@@ -51,9 +56,40 @@ export default function CourseForm({
       )
     : [];
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+
+    setIsSubmitting(true);
+    setFeedback(null);
+
+    try {
+      await action(formData);
+      setFeedback({
+        type: "success",
+        message: "Kelas berhasil tersimpan.",
+      });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error && error.message
+            ? error.message
+            : "Kelas gagal disimpan. Silakan coba lagi.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <FormCard>
-      <form action={action} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <SelectInput
           label="Organization"
           name="organization_id"
@@ -156,7 +192,24 @@ export default function CourseForm({
           ]}
         />
 
-        <PrimaryButton type="submit">{submitLabel}</PrimaryButton>
+        <div className="flex flex-wrap items-center gap-3">
+          <PrimaryButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Loading..." : submitLabel}
+          </PrimaryButton>
+
+          {feedback ? (
+            <p
+              role={feedback.type === "error" ? "alert" : "status"}
+              className={`text-sm font-semibold ${
+                feedback.type === "success"
+                  ? "text-emerald-700"
+                  : "text-red-600"
+              }`}
+            >
+              {feedback.message}
+            </p>
+          ) : null}
+        </div>
       </form>
     </FormCard>
   );
