@@ -1,5 +1,5 @@
 import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
-import CourseStructureOrganizer from "@/components/course-explorer/CourseStructureOrganizer";
+import InlineCourseStructureDnd from "@/components/course-explorer/InlineCourseStructureDndV2";
 import MentorCourseContentAccordion from "@/components/course-explorer/MentorCourseContentAccordion";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -32,6 +32,20 @@ export function ExplorerPage({
       0,
     );
 
+  const accordion =
+    managerRole === "mentor" ? (
+      <MentorCourseContentAccordion
+        courseId={course.id}
+        content={content}
+      />
+    ) : (
+      <CourseContentAccordion
+        courseId={course.id}
+        content={content}
+        mode="manager"
+      />
+    );
+
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 overflow-x-hidden p-4 sm:p-6 lg:p-8">
       <ExplorerHeader
@@ -45,24 +59,13 @@ export function ExplorerPage({
         managerRole={managerRole}
       />
 
-      <CourseStructureOrganizer
+      <InlineCourseStructureDnd
         courseId={course.id}
         content={content}
         managerRole={managerRole}
-      />
-
-      {managerRole === "mentor" ? (
-        <MentorCourseContentAccordion
-          courseId={course.id}
-          content={content}
-        />
-      ) : (
-        <CourseContentAccordion
-          courseId={course.id}
-          content={content}
-          mode="manager"
-        />
-      )}
+      >
+        {accordion}
+      </InlineCourseStructureDnd>
     </main>
   );
 }
