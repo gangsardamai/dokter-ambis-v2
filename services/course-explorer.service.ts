@@ -145,6 +145,10 @@ export class CourseExplorerService {
       currentFolders.map((folder) => folder.id),
     );
     const submittedGroupKeys = new Set<string>();
+    const submittedGroupsByKey = new Map<
+      string,
+      CourseStructureLessonGroup
+    >();
     const submittedLessonIds: string[] = [];
 
     for (const group of order.lessonGroups) {
@@ -166,6 +170,7 @@ export class CourseExplorerService {
       }
 
       submittedGroupKeys.add(groupKey);
+      submittedGroupsByKey.set(groupKey, group);
       submittedLessonIds.push(...group.lessonIds);
     }
 
@@ -223,16 +228,64 @@ export class CourseExplorerService {
       }
     }
 
-    await Promise.all(
-      order.lessonGroups.flatMap((group) =>
-        group.lessonIds.map((lessonId, index) =>
-          lessonRepository.update(lessonId, {
-            folder_id: group.folderId,
-            lesson_order: index + 1,
-          }),
-        ),
-      ),
-    );
+    const orderedLessonAssignments: Array<{
+      lessonId: string;
+      folderId: string | null;
+    }> = [];
+
+    for (const folderId of order.folderIds) {
+      const group = submittedGroupsByKey.get(folderId);
+
+      if (!group) {
+        throw new Error(
+          "Susunan lesson tidak lengkap. Muat ulang halaman lalu coba lagi.",
+        );
+      }
+
+      for (const lessonId of group.lessonIds) {
+        orderedLessonAssignments.push({
+          lessonId,
+          folderId,
+        });
+      }
+    }
+
+    const ungroupedGroup = submittedGroupsByKey.get("__ungrouped__");
+
+    if (!ungroupedGroup) {
+      throw new Error(
+        "Susunan lesson tanpa folder tidak ditemukan. Muat ulang halaman lalu coba lagi.",
+      );
+    }
+
+    for (const lessonId of ungroupedGroup.lessonIds) {
+      orderedLessonAssignments.push({
+        lessonId,
+        folderId: null,
+      });
+    }
+
+    if (orderedLessonAssignments.length > 0) {
+      const maxCurrentLessonOrder = Math.max(
+        0,
+        ...currentLessons.map((lesson) => lesson.lesson_order),
+      );
+      const temporaryLessonBase =
+        maxCurrentLessonOrder + orderedLessonAssignments.length + 1000;
+
+      for (const [index, assignment] of orderedLessonAssignments.entries()) {
+        await lessonRepository.update(assignment.lessonId, {
+          lesson_order: temporaryLessonBase + index,
+        });
+      }
+
+      for (const [index, assignment] of orderedLessonAssignments.entries()) {
+        await lessonRepository.update(assignment.lessonId, {
+          folder_id: assignment.folderId,
+          lesson_order: index + 1,
+        });
+      }
+    }
   }
 }
 
