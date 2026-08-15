@@ -1,4 +1,5 @@
 import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
+import CourseStructureOrganizer from "@/components/course-explorer/CourseStructureOrganizer";
 import MentorCourseContentAccordion from "@/components/course-explorer/MentorCourseContentAccordion";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -41,6 +42,12 @@ export function ExplorerPage({
 
       <ExplorerToolbar
         courseId={course.id}
+        managerRole={managerRole}
+      />
+
+      <CourseStructureOrganizer
+        courseId={course.id}
+        content={content}
         managerRole={managerRole}
       />
 
