@@ -1,3 +1,8 @@
+import {
+  folderRepository,
+  lessonRepository,
+} from "@/repositories";
+
 import { folderService } from "./folder.service";
 import { lessonFileService } from "./file.service";
 import { lessonService } from "./lesson.service";
@@ -13,6 +18,16 @@ import type {
   ExplorerVideo,
 } from "@/types/course-explorer";
 
+export interface CourseStructureLessonGroup {
+  folderId: string | null;
+  lessonIds: string[];
+}
+
+export interface CourseStructureOrder {
+  folderIds: string[];
+  lessonGroups: CourseStructureLessonGroup[];
+}
+
 function groupByLesson<T extends { lesson_id: string }>(
   items: T[],
 ): Map<string, T[]> {
@@ -25,6 +40,26 @@ function groupByLesson<T extends { lesson_id: string }>(
   }
 
   return grouped;
+}
+
+function assertExactIds(
+  label: string,
+  submittedIds: string[],
+  currentIds: string[],
+): void {
+  const submittedSet = new Set(submittedIds);
+  const currentSet = new Set(currentIds);
+
+  if (
+    submittedIds.length !== submittedSet.size ||
+    submittedIds.length !== currentIds.length ||
+    currentIds.some((id) => !submittedSet.has(id)) ||
+    submittedIds.some((id) => !currentSet.has(id))
+  ) {
+    throw new Error(
+      `Susunan ${label} sudah berubah. Muat ulang halaman lalu coba lagi.`,
+    );
+  }
 }
 
 export class CourseExplorerService {
@@ -89,6 +124,115 @@ export class CourseExplorerService {
             Boolean(content),
         ),
     };
+  }
+
+  async saveCourseStructureOrder(
+    courseId: string,
+    order: CourseStructureOrder,
+  ): Promise<void> {
+    const [currentFolders, currentLessons] = await Promise.all([
+      folderRepository.getByCourse(courseId),
+      lessonRepository.getByCourse(courseId),
+    ]);
+
+    assertExactIds(
+      "folder",
+      order.folderIds,
+      currentFolders.map((folder) => folder.id),
+    );
+
+    const allowedFolderIds = new Set(
+      currentFolders.map((folder) => folder.id),
+    );
+    const submittedGroupKeys = new Set<string>();
+    const submittedLessonIds: string[] = [];
+
+    for (const group of order.lessonGroups) {
+      const groupKey = group.folderId ?? "__ungrouped__";
+
+      if (submittedGroupKeys.has(groupKey)) {
+        throw new Error(
+          "Susunan lesson tidak valid karena folder tercatat lebih dari satu kali.",
+        );
+      }
+
+      if (
+        group.folderId !== null &&
+        !allowedFolderIds.has(group.folderId)
+      ) {
+        throw new Error(
+          "Folder tujuan lesson tidak termasuk dalam course ini.",
+        );
+      }
+
+      submittedGroupKeys.add(groupKey);
+      submittedLessonIds.push(...group.lessonIds);
+    }
+
+    const expectedGroupKeys = new Set<string>([
+      "__ungrouped__",
+      ...currentFolders.map((folder) => folder.id),
+    ]);
+
+    if (
+      submittedGroupKeys.size !== expectedGroupKeys.size ||
+      [...expectedGroupKeys].some(
+        (key) => !submittedGroupKeys.has(key),
+      )
+    ) {
+      throw new Error(
+        "Susunan lesson tidak lengkap. Muat ulang halaman lalu coba lagi.",
+      );
+    }
+
+    assertExactIds(
+      "lesson",
+      submittedLessonIds,
+      currentLessons.map((lesson) => lesson.id),
+    );
+
+    for (const lesson of currentLessons) {
+      if (
+        lesson.folder_id !== null &&
+        !allowedFolderIds.has(lesson.folder_id)
+      ) {
+        throw new Error(
+          "Terdapat lesson yang terhubung ke folder di luar course ini.",
+        );
+      }
+    }
+
+    if (order.folderIds.length > 0) {
+      const maxCurrentOrder = Math.max(
+        0,
+        ...currentFolders.map((folder) => folder.folder_order),
+      );
+      const temporaryBase =
+        maxCurrentOrder + order.folderIds.length + 1000;
+
+      for (const [index, folderId] of order.folderIds.entries()) {
+        await folderRepository.update(folderId, {
+          folder_order: temporaryBase + index,
+        });
+      }
+
+      for (const [index, folderId] of order.folderIds.entries()) {
+        await folderRepository.update(folderId, {
+          folder_order: index + 1,
+        });
+      }
+    }
+
+    await Promise.all(
+      order.lessonGroups.flatMap((group) =>
+        group.lessonIds.map((lessonId, index) =>
+          lessonRepository.update(lessonId, {
+            folder_id: group.folderId,
+            lesson_order: index + 1,
+          }),
+        ),
+      ),
+    );
   }
 }
 
