@@ -205,12 +205,12 @@ export class CourseExplorerService {
       currentLessons.map((lesson) => lesson.id),
     );
 
-    const currentGroupsByKey = new Map<string, string[]>([
-      [UNGROUPED_KEY, []],
-      ...currentFolderIds.map(
-        (folderId) => [folderId, []] as [string, string[]],
-      ),
-    ]);
+    const currentGroupsByKey = new Map<string, string[]>();
+    currentGroupsByKey.set(UNGROUPED_KEY, []);
+
+    for (const folderId of currentFolderIds) {
+      currentGroupsByKey.set(folderId, []);
+    }
 
     for (const lesson of currentLessons) {
       const groupKey = lesson.folder_id ?? UNGROUPED_KEY;
