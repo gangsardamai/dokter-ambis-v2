@@ -28,6 +28,8 @@ export interface CourseStructureOrder {
   lessonGroups: CourseStructureLessonGroup[];
 }
 
+const UNGROUPED_KEY = "__ungrouped__";
+
 function groupByLesson<T extends { lesson_id: string }>(
   items: T[],
 ): Map<string, T[]> {
@@ -60,6 +62,13 @@ function assertExactIds(
       `Susunan ${label} sudah berubah. Muat ulang halaman lalu coba lagi.`,
     );
   }
+}
+
+function sameOrder(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((id, index) => id === right[index])
+  );
 }
 
 export class CourseExplorerService {
@@ -135,15 +144,15 @@ export class CourseExplorerService {
       lessonRepository.getByCourse(courseId),
     ]);
 
+    const currentFolderIds = currentFolders.map((folder) => folder.id);
+
     assertExactIds(
       "folder",
       order.folderIds,
-      currentFolders.map((folder) => folder.id),
+      currentFolderIds,
     );
 
-    const allowedFolderIds = new Set(
-      currentFolders.map((folder) => folder.id),
-    );
+    const allowedFolderIds = new Set(currentFolderIds);
     const submittedGroupKeys = new Set<string>();
     const submittedGroupsByKey = new Map<
       string,
@@ -152,7 +161,7 @@ export class CourseExplorerService {
     const submittedLessonIds: string[] = [];
 
     for (const group of order.lessonGroups) {
-      const groupKey = group.folderId ?? "__ungrouped__";
+      const groupKey = group.folderId ?? UNGROUPED_KEY;
 
       if (submittedGroupKeys.has(groupKey)) {
         throw new Error(
@@ -175,8 +184,8 @@ export class CourseExplorerService {
     }
 
     const expectedGroupKeys = new Set<string>([
-      "__ungrouped__",
-      ...currentFolders.map((folder) => folder.id),
+      UNGROUPED_KEY,
+      ...currentFolderIds,
     ]);
 
     if (
@@ -196,18 +205,43 @@ export class CourseExplorerService {
       currentLessons.map((lesson) => lesson.id),
     );
 
+    const currentGroupsByKey = new Map<string, string[]>([
+      [UNGROUPED_KEY, []],
+      ...currentFolderIds.map(
+        (folderId) => [folderId, []] as [string, string[]],
+      ),
+    ]);
+
     for (const lesson of currentLessons) {
-      if (
-        lesson.folder_id !== null &&
-        !allowedFolderIds.has(lesson.folder_id)
-      ) {
+      const groupKey = lesson.folder_id ?? UNGROUPED_KEY;
+      const currentGroup = currentGroupsByKey.get(groupKey);
+
+      if (!currentGroup) {
         throw new Error(
           "Terdapat lesson yang terhubung ke folder di luar course ini.",
         );
       }
+
+      currentGroup.push(lesson.id);
     }
 
-    if (order.folderIds.length > 0) {
+    const folderOrderChanged = !sameOrder(
+      order.folderIds,
+      currentFolderIds,
+    );
+
+    const lessonStructureChanged = [...expectedGroupKeys].some((key) => {
+      const submittedGroup = submittedGroupsByKey.get(key);
+      const currentGroup = currentGroupsByKey.get(key);
+
+      if (!submittedGroup || !currentGroup) return true;
+
+      return !sameOrder(submittedGroup.lessonIds, currentGroup);
+    });
+
+    // Folder drag only touches folder_order. Lesson rows are intentionally
+    // left untouched so moving a folder cannot silently reindex lessons.
+    if (folderOrderChanged && order.folderIds.length > 0) {
       const maxCurrentOrder = Math.max(
         0,
         ...currentFolders.map((folder) => folder.folder_order),
@@ -227,6 +261,10 @@ export class CourseExplorerService {
         });
       }
     }
+
+    // Lesson drag only touches lesson assignment/order. Folder ordering is
+    // not rewritten when the folder sequence itself did not change.
+    if (!lessonStructureChanged) return;
 
     const orderedLessonAssignments: Array<{
       lessonId: string;
@@ -250,7 +288,7 @@ export class CourseExplorerService {
       }
     }
 
-    const ungroupedGroup = submittedGroupsByKey.get("__ungrouped__");
+    const ungroupedGroup = submittedGroupsByKey.get(UNGROUPED_KEY);
 
     if (!ungroupedGroup) {
       throw new Error(
@@ -265,26 +303,26 @@ export class CourseExplorerService {
       });
     }
 
-    if (orderedLessonAssignments.length > 0) {
-      const maxCurrentLessonOrder = Math.max(
-        0,
-        ...currentLessons.map((lesson) => lesson.lesson_order),
-      );
-      const temporaryLessonBase =
-        maxCurrentLessonOrder + orderedLessonAssignments.length + 1000;
+    if (orderedLessonAssignments.length === 0) return;
 
-      for (const [index, assignment] of orderedLessonAssignments.entries()) {
-        await lessonRepository.update(assignment.lessonId, {
-          lesson_order: temporaryLessonBase + index,
-        });
-      }
+    const maxCurrentLessonOrder = Math.max(
+      0,
+      ...currentLessons.map((lesson) => lesson.lesson_order),
+    );
+    const temporaryLessonBase =
+      maxCurrentLessonOrder + orderedLessonAssignments.length + 1000;
 
-      for (const [index, assignment] of orderedLessonAssignments.entries()) {
-        await lessonRepository.update(assignment.lessonId, {
-          folder_id: assignment.folderId,
-          lesson_order: index + 1,
-        });
-      }
+    for (const [index, assignment] of orderedLessonAssignments.entries()) {
+      await lessonRepository.update(assignment.lessonId, {
+        lesson_order: temporaryLessonBase + index,
+      });
+    }
+
+    for (const [index, assignment] of orderedLessonAssignments.entries()) {
+      await lessonRepository.update(assignment.lessonId, {
+        folder_id: assignment.folderId,
+        lesson_order: index + 1,
+      });
     }
   }
 }
