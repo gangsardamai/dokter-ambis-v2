@@ -5,6 +5,7 @@ import {
   getEnrollmentStatusLabel,
   getPaymentMethodLabel,
   getPaymentStatusLabel,
+  getPaymentTimingLabel,
   parseAdminEnrollmentFilters,
 } from "@/lib/enrollment/admin-enrollment-filter";
 import {
@@ -36,6 +37,7 @@ const columns: XlsxColumn[] = [
   { header: "Metode Payment", width: 18 },
   { header: "Status Payment", width: 23 },
   { header: "Status Enrollment", width: 24 },
+  { header: "Kategori Pembayaran", width: 20 },
   { header: "Kategori Peserta", width: 18 },
   { header: "Tanggal Pembayaran", width: 22 },
   { header: "Tanggal Verifikasi", width: 22 },
@@ -79,6 +81,14 @@ function getFilterParams(url: URL) {
     paymentStatus:
       url.searchParams.get("paymentStatus") ??
       undefined,
+    paymentTiming:
+      url.searchParams.get("paymentTiming") ??
+      undefined,
+    courseId:
+      url.searchParams.get("courseId") ?? undefined,
+    programId:
+      url.searchParams.get("programId") ?? undefined,
+    sort: url.searchParams.get("sort") ?? undefined,
   };
 }
 
@@ -161,6 +171,9 @@ export async function GET(
             ),
             getEnrollmentStatusLabel(
               enrollment.status,
+            ),
+            getPaymentTimingLabel(
+              enrollment.payment_timing,
             ),
             getEnrollmentCategoryLabel(
               enrollment.category,
