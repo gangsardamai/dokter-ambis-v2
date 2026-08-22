@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import DeleteExplorerItemButton from "@/components/course-explorer/DeleteExplorerItemButton";
 import LessonCompletionButton from "@/components/student/course/LessonCompletionButton";
@@ -19,6 +19,8 @@ import type {
 import type { StudentLessonMessageThread } from "@/types/lesson-messages";
 
 type ExplorerMode = "manager" | "student";
+
+type ActiveVideoChangeHandler = (videoId: string | null) => void;
 
 interface CourseContentAccordionProps {
   courseId: string;
@@ -246,13 +248,17 @@ function FileItem({
 function VideoItem({
   video,
   mode,
+  isActive,
+  onActiveVideoChange,
 }: {
   video: ExplorerVideo;
   mode: ExplorerMode;
+  isActive: boolean;
+  onActiveVideoChange: ActiveVideoChangeHandler;
 }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="flex min-w-0 items-start justify-between gap-3 p-4">
+      <div className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <ContentIcon type="video" />
           <div className="min-w-0">
@@ -267,16 +273,39 @@ function VideoItem({
             </div>
           </div>
         </div>
-        {mode === "manager" && (
-          <ManagerItemMenu type="video" id={video.id} />
-        )}
+
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onActiveVideoChange(isActive ? null : video.id)}
+            className={`inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-black transition focus:outline-none focus:ring-2 ${
+              isActive
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-200"
+                : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300"
+            }`}
+          >
+            {isActive ? "Tutup Video" : "Putar Video"}
+          </button>
+          {mode === "manager" && (
+            <ManagerItemMenu type="video" id={video.id} />
+          )}
+        </div>
       </div>
-      <div className="border-t border-slate-100 bg-slate-950 p-2 sm:p-3">
-        <VideoPlayer
-          provider={video.provider}
-          videoId={video.provider_video_id}
-        />
-      </div>
+
+      {isActive ? (
+        <div className="border-t border-slate-100 bg-slate-950 p-2 sm:p-3">
+          <VideoPlayer
+            provider={video.provider}
+            videoId={video.provider_video_id}
+            title={video.title}
+          />
+        </div>
+      ) : (
+        <div className="border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold leading-5 text-slate-500">
+          Player video baru dimuat setelah tombol Putar Video ditekan. Hanya satu
+          video dapat aktif pada satu waktu.
+        </div>
+      )}
     </article>
   );
 }
@@ -332,20 +361,37 @@ function LessonPanel({
   mode,
   completed,
   messageThread,
+  activeVideoId,
+  onActiveVideoChange,
 }: {
   courseId: string;
   content: ExplorerLessonContent;
   mode: ExplorerMode;
   completed: boolean;
   messageThread?: StudentLessonMessageThread;
+  activeVideoId: string | null;
+  onActiveVideoChange: ActiveVideoChangeHandler;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
   const { lesson, files, videos, quizzes } = content;
   const itemCount = files.length + videos.length + quizzes.length;
+  const containsActiveVideo =
+    activeVideoId !== null && videos.some((video) => video.id === activeVideoId);
 
   return (
     <details
       id={`lesson-${lesson.id}`}
       className="group min-w-0 scroll-mt-24 overflow-visible rounded-2xl border border-blue-100 bg-slate-50/80"
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return;
+
+        const nextOpen = event.currentTarget.open;
+        setIsOpen(nextOpen);
+
+        if (!nextOpen && containsActiveVideo) {
+          onActiveVideoChange(null);
+        }
+      }}
     >
       <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-5">
         <div className="min-w-0">
@@ -372,100 +418,240 @@ function LessonPanel({
         </span>
       </summary>
 
-      <div className="border-t border-blue-100 p-3 sm:p-4">
-        {mode === "manager" && (
-          <div className="mb-4 flex justify-end">
-            <ActionMenu label={`Aksi lesson ${lesson.title}`}>
-              <Link
-                href={`/dashboard/admin/file/new?lessonId=${lesson.id}`}
-                className={menuLinkClass}
-              >
-                Tambah File
-              </Link>
-              <Link
-                href={`/dashboard/admin/video/new?lessonId=${lesson.id}`}
-                className={menuLinkClass}
-              >
-                Tambah Video
-              </Link>
-              <Link
-                href={`/dashboard/quiz/new?lessonId=${lesson.id}`}
-                className={menuLinkClass}
-              >
-                Tambah Quiz
-              </Link>
-              <Link
-                href={`/dashboard/admin/course/${courseId}/explorer/lesson/${lesson.id}/edit`}
-                className={menuLinkClass}
-              >
-                Edit Lesson
-              </Link>
-              <DeleteExplorerItemButton
-                managerRole="admin"
-                resourceType="lesson"
-                courseId={courseId}
-                itemId={lesson.id}
-                itemTitle={lesson.title}
-                label="Hapus Lesson"
-                className={deleteMenuClass}
-              />
-            </ActionMenu>
-          </div>
-        )}
+      {isOpen && (
+        <div className="border-t border-blue-100 p-3 sm:p-4">
+          {mode === "manager" && (
+            <div className="mb-4 flex justify-end">
+              <ActionMenu label={`Aksi lesson ${lesson.title}`}>
+                <Link
+                  href={`/dashboard/admin/file/new?lessonId=${lesson.id}`}
+                  className={menuLinkClass}
+                >
+                  Tambah File
+                </Link>
+                <Link
+                  href={`/dashboard/admin/video/new?lessonId=${lesson.id}`}
+                  className={menuLinkClass}
+                >
+                  Tambah Video
+                </Link>
+                <Link
+                  href={`/dashboard/quiz/new?lessonId=${lesson.id}`}
+                  className={menuLinkClass}
+                >
+                  Tambah Quiz
+                </Link>
+                <Link
+                  href={`/dashboard/admin/course/${courseId}/explorer/lesson/${lesson.id}/edit`}
+                  className={menuLinkClass}
+                >
+                  Edit Lesson
+                </Link>
+                <DeleteExplorerItemButton
+                  managerRole="admin"
+                  resourceType="lesson"
+                  courseId={courseId}
+                  itemId={lesson.id}
+                  itemTitle={lesson.title}
+                  label="Hapus Lesson"
+                  className={deleteMenuClass}
+                />
+              </ActionMenu>
+            </div>
+          )}
 
-        {itemCount === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
-            <p className="text-sm font-bold text-slate-700">
-              Belum ada konten dalam lesson ini.
+          {itemCount === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+              <p className="text-sm font-bold text-slate-700">
+                Belum ada konten dalam lesson ini.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {files.map((file) => (
+                <FileItem
+                  key={file.id}
+                  courseId={courseId}
+                  file={file}
+                  mode={mode}
+                />
+              ))}
+              {videos.map((video) => (
+                <VideoItem
+                  key={video.id}
+                  video={video}
+                  mode={mode}
+                  isActive={activeVideoId === video.id}
+                  onActiveVideoChange={onActiveVideoChange}
+                />
+              ))}
+              {quizzes.map((quiz) => (
+                <QuizItem key={quiz.id} quiz={quiz} mode={mode} />
+              ))}
+            </div>
+          )}
+
+          {mode === "student" && (
+            <>
+              <div className="mt-4 border-t border-blue-100 pt-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-black text-slate-800">
+                      Sudah memahami lesson ini?
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Status progres hanya berubah setelah peserta menekan tombol.
+                    </p>
+                  </div>
+                  <LessonCompletionButton
+                    courseId={courseId}
+                    lessonId={lesson.id}
+                    initialCompleted={completed}
+                  />
+                </div>
+              </div>
+
+              <LessonMessageThread
+                courseId={courseId}
+                lessonId={lesson.id}
+                thread={messageThread}
+              />
+            </>
+          )}
+        </div>
+      )}
+    </details>
+  );
+}
+
+function FolderPanel({
+  courseId,
+  folderContent,
+  mode,
+  completedLessonSet,
+  lessonMessages,
+  activeVideoId,
+  onActiveVideoChange,
+}: {
+  courseId: string;
+  folderContent: CourseExplorerContent["folders"][number];
+  mode: ExplorerMode;
+  completedLessonSet: Set<string>;
+  lessonMessages: Record<string, StudentLessonMessageThread>;
+  activeVideoId: string | null;
+  onActiveVideoChange: ActiveVideoChangeHandler;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { folder, lessons } = folderContent;
+  const containsActiveVideo =
+    activeVideoId !== null &&
+    lessons.some((lessonContent) =>
+      lessonContent.videos.some((video) => video.id === activeVideoId),
+    );
+
+  return (
+    <details
+      className="group min-w-0 overflow-visible rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5"
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return;
+
+        const nextOpen = event.currentTarget.open;
+        setIsOpen(nextOpen);
+
+        if (!nextOpen && containsActiveVideo) {
+          onActiveVideoChange(null);
+        }
+      }}
+    >
+      <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-[#063d67] text-white shadow-sm">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="break-words text-base font-black text-slate-950 sm:text-lg">
+                {folder.title}
+              </h2>
+              {mode === "manager" && (
+                <StatusBadge status={folder.publication_status} />
+              )}
+            </div>
+            <p className="mt-1 text-xs font-semibold text-slate-500">
+              {lessons.length} lesson
             </p>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {files.map((file) => (
-              <FileItem
-                key={file.id}
-                courseId={courseId}
-                file={file}
-                mode={mode}
-              />
-            ))}
-            {videos.map((video) => (
-              <VideoItem key={video.id} video={video} mode={mode} />
-            ))}
-            {quizzes.map((quiz) => (
-              <QuizItem key={quiz.id} quiz={quiz} mode={mode} />
-            ))}
-          </div>
-        )}
+        </div>
+        <span className="shrink-0 rounded-xl bg-blue-50 p-2 text-blue-700">
+          <ChevronIcon />
+        </span>
+      </summary>
 
-        {mode === "student" && (
-          <>
-            <div className="mt-4 border-t border-blue-100 pt-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-black text-slate-800">
-                    Sudah memahami lesson ini?
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Status progres hanya berubah setelah peserta menekan tombol.
-                  </p>
-                </div>
-                <LessonCompletionButton
+      {isOpen && (
+        <div className="border-t border-blue-100 p-3 sm:p-5">
+          {mode === "manager" && (
+            <div className="mb-4 flex justify-end">
+              <ActionMenu label={`Aksi folder ${folder.title}`}>
+                <Link
+                  href={`/dashboard/admin/course/${courseId}/explorer/lesson/create?folderId=${folder.id}`}
+                  className={menuLinkClass}
+                >
+                  Tambah Lesson
+                </Link>
+                <Link
+                  href={`/dashboard/admin/course/${courseId}/explorer/folder/${folder.id}/edit`}
+                  className={menuLinkClass}
+                >
+                  Edit Folder
+                </Link>
+                <DeleteExplorerItemButton
+                  managerRole="admin"
+                  resourceType="folder"
                   courseId={courseId}
-                  lessonId={lesson.id}
-                  initialCompleted={completed}
+                  itemId={folder.id}
+                  itemTitle={folder.title}
+                  label="Hapus Folder"
+                  className={deleteMenuClass}
                 />
-              </div>
+              </ActionMenu>
             </div>
+          )}
 
-            <LessonMessageThread
-              courseId={courseId}
-              lessonId={lesson.id}
-              thread={messageThread}
-            />
-          </>
-        )}
-      </div>
+          {lessons.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm font-semibold text-slate-500">
+              Belum ada lesson di dalam folder ini.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {lessons.map((lessonContent) => (
+                <LessonPanel
+                  key={lessonContent.lesson.id}
+                  courseId={courseId}
+                  content={lessonContent}
+                  mode={mode}
+                  completed={completedLessonSet.has(lessonContent.lesson.id)}
+                  messageThread={lessonMessages[lessonContent.lesson.id]}
+                  activeVideoId={activeVideoId}
+                  onActiveVideoChange={onActiveVideoChange}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </details>
   );
 }
@@ -477,6 +663,7 @@ export default function CourseContentAccordion({
   completedLessonIds = [],
   lessonMessages = {},
 }: CourseContentAccordionProps) {
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const isEmpty =
     content.folders.length === 0 &&
     content.ungroupedLessons.length === 0;
@@ -495,101 +682,17 @@ export default function CourseContentAccordion({
 
   return (
     <div className="min-w-0 space-y-4">
-      {content.folders.map(({ folder, lessons }) => (
-        <details
-          key={folder.id}
-          className="group min-w-0 overflow-visible rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5"
-        >
-          <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-[#063d67] text-white shadow-sm">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="break-words text-base font-black text-slate-950 sm:text-lg">
-                    {folder.title}
-                  </h2>
-                  {mode === "manager" && (
-                    <StatusBadge status={folder.publication_status} />
-                  )}
-                </div>
-                <p className="mt-1 text-xs font-semibold text-slate-500">
-                  {lessons.length} lesson
-                </p>
-              </div>
-            </div>
-            <span className="shrink-0 rounded-xl bg-blue-50 p-2 text-blue-700">
-              <ChevronIcon />
-            </span>
-          </summary>
-
-          <div className="border-t border-blue-100 p-3 sm:p-5">
-            {mode === "manager" && (
-              <div className="mb-4 flex justify-end">
-                <ActionMenu label={`Aksi folder ${folder.title}`}>
-                  <Link
-                    href={`/dashboard/admin/course/${courseId}/explorer/lesson/create?folderId=${folder.id}`}
-                    className={menuLinkClass}
-                  >
-                    Tambah Lesson
-                  </Link>
-                  <Link
-                    href={`/dashboard/admin/course/${courseId}/explorer/folder/${folder.id}/edit`}
-                    className={menuLinkClass}
-                  >
-                    Edit Folder
-                  </Link>
-                  <DeleteExplorerItemButton
-                    managerRole="admin"
-                    resourceType="folder"
-                    courseId={courseId}
-                    itemId={folder.id}
-                    itemTitle={folder.title}
-                    label="Hapus Folder"
-                    className={deleteMenuClass}
-                  />
-                </ActionMenu>
-              </div>
-            )}
-
-            {lessons.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm font-semibold text-slate-500">
-                Belum ada lesson di dalam folder ini.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {lessons.map((lessonContent) => (
-                  <LessonPanel
-                    key={lessonContent.lesson.id}
-                    courseId={courseId}
-                    content={lessonContent}
-                    mode={mode}
-                    completed={completedLessonSet.has(
-                      lessonContent.lesson.id,
-                    )}
-                    messageThread={
-                      lessonMessages[lessonContent.lesson.id]
-                    }
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </details>
+      {content.folders.map((folderContent) => (
+        <FolderPanel
+          key={folderContent.folder.id}
+          courseId={courseId}
+          folderContent={folderContent}
+          mode={mode}
+          completedLessonSet={completedLessonSet}
+          lessonMessages={lessonMessages}
+          activeVideoId={activeVideoId}
+          onActiveVideoChange={setActiveVideoId}
+        />
       ))}
 
       {content.ungroupedLessons.length > 0 && (
@@ -604,12 +707,10 @@ export default function CourseContentAccordion({
                 courseId={courseId}
                 content={lessonContent}
                 mode={mode}
-                completed={completedLessonSet.has(
-                  lessonContent.lesson.id,
-                )}
-                messageThread={
-                  lessonMessages[lessonContent.lesson.id]
-                }
+                completed={completedLessonSet.has(lessonContent.lesson.id)}
+                messageThread={lessonMessages[lessonContent.lesson.id]}
+                activeVideoId={activeVideoId}
+                onActiveVideoChange={setActiveVideoId}
               />
             ))}
           </div>
