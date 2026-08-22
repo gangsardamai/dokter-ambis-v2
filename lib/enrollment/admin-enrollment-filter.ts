@@ -1,5 +1,8 @@
 import type { Database } from "@/supabase/types/database.types";
-import type { EnrollmentDetail } from "@/repositories/enrollment.repository";
+import type {
+  EnrollmentDetail,
+  PaymentTiming,
+} from "@/repositories/enrollment.repository";
 
 export type EnrollmentStatus =
   Database["public"]["Enums"]["enrollment_status"];
@@ -13,6 +16,12 @@ export type PaymentStatus =
 export type PaymentMethod =
   Database["public"]["Enums"]["payment_method"];
 
+export type EnrollmentSort =
+  | "date_desc"
+  | "date_asc"
+  | "name_asc"
+  | "name_desc";
+
 export type EnrollmentFilterParams = Record<
   string,
   string | string[] | undefined
@@ -22,6 +31,10 @@ export interface AdminEnrollmentFilters {
   searchQuery: string;
   enrollmentStatus: EnrollmentStatus | "all";
   paymentStatus: PaymentStatus | "none" | "all";
+  paymentTiming: PaymentTiming | "all";
+  courseId: string;
+  programId: string;
+  sort: EnrollmentSort;
 }
 
 const enrollmentStatuses: EnrollmentStatus[] = [
@@ -36,6 +49,18 @@ const paymentStatuses: PaymentStatus[] = [
   "pending",
   "approved",
   "rejected",
+];
+
+const paymentTimings: PaymentTiming[] = [
+  "upfront",
+  "deferred",
+];
+
+const enrollmentSorts: EnrollmentSort[] = [
+  "date_desc",
+  "date_asc",
+  "name_asc",
+  "name_desc",
 ];
 
 export function getStringParam(
@@ -64,6 +89,22 @@ function isPaymentStatus(
   );
 }
 
+function isPaymentTiming(
+  value: string,
+): value is PaymentTiming {
+  return paymentTimings.includes(
+    value as PaymentTiming,
+  );
+}
+
+function isEnrollmentSort(
+  value: string,
+): value is EnrollmentSort {
+  return enrollmentSorts.includes(
+    value as EnrollmentSort,
+  );
+}
+
 export function parseAdminEnrollmentFilters(
   params: EnrollmentFilterParams,
 ): AdminEnrollmentFilters {
@@ -73,6 +114,10 @@ export function parseAdminEnrollmentFilters(
   const paymentStatusParam = getStringParam(
     params.paymentStatus,
   );
+  const paymentTimingParam = getStringParam(
+    params.paymentTiming,
+  );
+  const sortParam = getStringParam(params.sort);
 
   return {
     searchQuery: getStringParam(params.q)
@@ -88,6 +133,14 @@ export function parseAdminEnrollmentFilters(
       paymentStatusParam === "none"
         ? paymentStatusParam
         : "all",
+    paymentTiming: isPaymentTiming(paymentTimingParam)
+      ? paymentTimingParam
+      : "all",
+    courseId: getStringParam(params.courseId),
+    programId: getStringParam(params.programId),
+    sort: isEnrollmentSort(sortParam)
+      ? sortParam
+      : "date_desc",
   };
 }
 
@@ -97,7 +150,7 @@ export function filterAdminEnrollments<
   enrollments: T[],
   filters: AdminEnrollmentFilters,
 ): T[] {
-  return enrollments.filter((enrollment) => {
+  const filtered = enrollments.filter((enrollment) => {
     const profile = enrollment.profiles as
       | (NonNullable<EnrollmentDetail["profiles"]> & {
           university_origin?: string | null;
@@ -137,11 +190,44 @@ export function filterAdminEnrollments<
       (filters.paymentStatus !== "none" &&
         payment?.status === filters.paymentStatus);
 
+    const matchesPaymentTiming =
+      filters.paymentTiming === "all" ||
+      enrollment.payment_timing === filters.paymentTiming;
+
+    const matchesCourse =
+      !filters.courseId || course?.id === filters.courseId;
+
+    const matchesProgram =
+      !filters.programId || program?.id === filters.programId;
+
     return (
       matchesSearch &&
       matchesEnrollmentStatus &&
-      matchesPaymentStatus
+      matchesPaymentStatus &&
+      matchesPaymentTiming &&
+      matchesCourse &&
+      matchesProgram
     );
+  });
+
+  return filtered.sort((a, b) => {
+    if (
+      filters.sort === "name_asc" ||
+      filters.sort === "name_desc"
+    ) {
+      const result = (a.profiles?.full_name ?? "").localeCompare(
+        b.profiles?.full_name ?? "",
+        "id",
+      );
+
+      return filters.sort === "name_desc" ? -result : result;
+    }
+
+    const result =
+      new Date(b.enrolled_at).getTime() -
+      new Date(a.enrolled_at).getTime();
+
+    return filters.sort === "date_asc" ? -result : result;
   });
 }
 
@@ -166,6 +252,25 @@ export function buildAdminEnrollmentFilterQuery(
       "paymentStatus",
       filters.paymentStatus,
     );
+  }
+
+  if (filters.paymentTiming !== "all") {
+    params.set(
+      "paymentTiming",
+      filters.paymentTiming,
+    );
+  }
+
+  if (filters.courseId) {
+    params.set("courseId", filters.courseId);
+  }
+
+  if (filters.programId) {
+    params.set("programId", filters.programId);
+  }
+
+  if (filters.sort !== "date_desc") {
+    params.set("sort", filters.sort);
   }
 
   return params;
@@ -194,6 +299,14 @@ export function getEnrollmentCategoryLabel(
   };
 
   return labels[category];
+}
+
+export function getPaymentTimingLabel(
+  timing: PaymentTiming,
+): string {
+  return timing === "deferred"
+    ? "Bayar di Akhir"
+    : "Bayar di Awal";
 }
 
 export function getPaymentStatusLabel(
