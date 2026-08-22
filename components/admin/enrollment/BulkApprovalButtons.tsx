@@ -113,6 +113,10 @@ export function BulkApprovalButtons() {
       "q",
       "enrollmentStatus",
       "paymentStatus",
+      "paymentTiming",
+      "courseId",
+      "programId",
+      "sort",
     ]) {
       const value = currentParams.get(key);
 
