@@ -51,6 +51,7 @@ export default async function NewVideoPage({
     }),
   )}
   submitLabel="Simpan"
+  showVideoOrder={false}
   onSubmit={createVideoAction}
 />
 
