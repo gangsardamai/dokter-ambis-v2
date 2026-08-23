@@ -32,6 +32,7 @@ interface VideoFormProps {
   initialLessonId?: string;
   lessonOptions: SelectOption[];
   submitLabel?: string;
+  showVideoOrder?: boolean;
   onSubmit: (
     data: VideoFormData,
   ) => Promise<void>;
@@ -42,6 +43,7 @@ export default function VideoForm({
   initialLessonId,
   lessonOptions,
   submitLabel = "Simpan",
+  showVideoOrder = true,
   onSubmit,
 }: VideoFormProps) {
   const [lessonId, setLessonId] = useState(
@@ -169,8 +171,9 @@ export default function VideoForm({
     }
 
     if (
-      !Number.isInteger(videoOrder) ||
-      videoOrder < 0
+      showVideoOrder &&
+      (!Number.isInteger(videoOrder) ||
+        videoOrder < 0)
     ) {
       setErrorMessage(
         "Urutan video harus berupa bilangan bulat 0 atau lebih.",
@@ -260,7 +263,13 @@ export default function VideoForm({
           )}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div
+        className={
+          showVideoOrder
+            ? "grid gap-5 sm:grid-cols-2"
+            : undefined
+        }
+      >
         <TextInput
           label="Durasi (menit)"
           type="number"
@@ -270,14 +279,16 @@ export default function VideoForm({
           }
         />
 
-        <TextInput
-          label="Urutan Video"
-          type="number"
-          value={String(videoOrder)}
-          onChange={(value) =>
-            setVideoOrder(Number(value))
-          }
-        />
+        {showVideoOrder && (
+          <TextInput
+            label="Urutan Video"
+            type="number"
+            value={String(videoOrder)}
+            onChange={(value) =>
+              setVideoOrder(Number(value))
+            }
+          />
+        )}
       </div>
 
       <SelectField
