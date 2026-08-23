@@ -164,9 +164,11 @@ export default function VideoForm({
 
     if (
       !Number.isFinite(duration) ||
-      duration < 0
+      duration <= 0
     ) {
-      setErrorMessage("Durasi video tidak valid.");
+      setErrorMessage(
+        "Durasi video wajib lebih dari 0 menit.",
+      );
       return;
     }
 
@@ -273,6 +275,7 @@ export default function VideoForm({
         <TextInput
           label="Durasi (menit)"
           type="number"
+          required
           value={String(duration)}
           onChange={(value) =>
             setDuration(Number(value))
