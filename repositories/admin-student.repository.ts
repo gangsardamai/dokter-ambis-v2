@@ -309,6 +309,64 @@ export class AdminStudentRepository extends BaseRepository {
     }
   }
 
+  async resetStudentDevices(profileId: string): Promise<number> {
+    const supabase = await this.db();
+    const { data, error } = await supabase.rpc(
+      "admin_reset_student_devices",
+      {
+        target_profile_id: profileId,
+      },
+    );
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    return data ?? 0;
+  }
+
+  async setStudentPassword(
+    profileId: string,
+    newPassword: string,
+  ): Promise<void> {
+    const supabase = await this.db();
+    const { data, error } = await supabase.rpc(
+      "admin_set_student_password",
+      {
+        target_profile_id: profileId,
+        new_password: newPassword,
+      },
+    );
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    if (!data) {
+      throw new Error("Password mahasiswa gagal diubah.");
+    }
+  }
+
+  async promoteStudentToMentor(profileId: string): Promise<string> {
+    const supabase = await this.db();
+    const { data, error } = await supabase.rpc(
+      "admin_promote_student_to_mentor",
+      {
+        target_profile_id: profileId,
+      },
+    );
+
+    if (error) {
+      this.handleError(error);
+    }
+
+    if (!data) {
+      throw new Error("Akun mahasiswa gagal dijadikan mentor.");
+    }
+
+    return data;
+  }
+
   async deleteStudentAccount(
     profileId: string,
     confirmationEmail: string,

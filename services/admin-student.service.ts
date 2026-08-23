@@ -159,6 +159,41 @@ export class AdminStudentService {
     };
   }
 
+  async resetStudentDevices(profileId: string): Promise<number> {
+    if (!profileId) {
+      throw new Error("Akun mahasiswa tidak ditemukan.");
+    }
+
+    return adminStudentRepository.resetStudentDevices(profileId);
+  }
+
+  async setStudentPassword(
+    profileId: string,
+    newPassword: string,
+  ): Promise<void> {
+    if (!profileId) {
+      throw new Error("Akun mahasiswa tidak ditemukan.");
+    }
+
+    if (newPassword.trim().length < 6) {
+      throw new Error("Password baru minimal 6 karakter.");
+    }
+
+    if (new TextEncoder().encode(newPassword).length > 72) {
+      throw new Error("Password baru maksimal 72 byte.");
+    }
+
+    await adminStudentRepository.setStudentPassword(profileId, newPassword);
+  }
+
+  async promoteStudentToMentor(profileId: string): Promise<string> {
+    if (!profileId) {
+      throw new Error("Akun mahasiswa tidak ditemukan.");
+    }
+
+    return adminStudentRepository.promoteStudentToMentor(profileId);
+  }
+
   async deleteStudentAccount(
     profileId: string,
     confirmationEmail: string,
