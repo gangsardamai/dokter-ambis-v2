@@ -35,9 +35,11 @@ function validateVideoPayload(
 
   if (
     !Number.isFinite(data.duration) ||
-    data.duration < 0
+    data.duration <= 0
   ) {
-    throw new Error("Durasi video tidak valid.");
+    throw new Error(
+      "Durasi video wajib lebih dari 0 menit.",
+    );
   }
 
   if (
