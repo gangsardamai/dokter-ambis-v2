@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -22,6 +24,36 @@ import {
 export type VideoProvider = SupportedVideoProvider;
 export type VideoFormData = VideoFormPayload;
 
+type DurationStatus =
+  | "idle"
+  | "loading"
+  | "ready"
+  | "error";
+
+type YoutubePlayer = {
+  destroy: () => void;
+  getDuration: () => number;
+};
+
+type YoutubeWindow = Window & {
+  YT?: {
+    Player: new (
+      element: HTMLElement,
+      options: {
+        videoId: string;
+        playerVars?: Record<string, number>;
+        events?: {
+          onReady?: (event: {
+            target: YoutubePlayer;
+          }) => void;
+          onError?: () => void;
+        };
+      },
+    ) => YoutubePlayer;
+  };
+  onYouTubeIframeAPIReady?: () => void;
+};
+
 interface SelectOption {
   value: string;
   label: string;
@@ -33,9 +65,17 @@ interface VideoFormProps {
   lessonOptions: SelectOption[];
   submitLabel?: string;
   showVideoOrder?: boolean;
+  showDuration?: boolean;
   onSubmit: (
     data: VideoFormData,
   ) => Promise<void>;
+}
+
+function secondsToMinutes(seconds: number) {
+  return Math.max(
+    1,
+    Math.ceil(seconds / 60),
+  );
 }
 
 export default function VideoForm({
@@ -44,6 +84,7 @@ export default function VideoForm({
   lessonOptions,
   submitLabel = "Simpan",
   showVideoOrder = true,
+  showDuration = true,
   onSubmit,
 }: VideoFormProps) {
   const [lessonId, setLessonId] = useState(
@@ -67,6 +108,12 @@ export default function VideoForm({
   const [duration, setDuration] = useState(
     initialData?.duration ?? 0,
   );
+  const [durationStatus, setDurationStatus] =
+    useState<DurationStatus>(
+      initialData?.duration
+        ? "ready"
+        : "idle",
+    );
   const [videoOrder, setVideoOrder] = useState(
     initialData?.video_order ?? 1,
   );
@@ -80,6 +127,8 @@ export default function VideoForm({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] =
     useState("");
+  const youtubeDurationRef =
+    useRef<HTMLDivElement | null>(null);
 
   const providerOptions: SelectOption[] = [
     {
@@ -130,9 +179,131 @@ export default function VideoForm({
     }
   }, [provider, sourceInput]);
 
+  const normalizedProvider =
+    sourceValidation.normalized?.provider;
+  const normalizedProviderVideoId =
+    sourceValidation.normalized?.providerVideoId;
+
+  useEffect(() => {
+    if (showDuration) {
+      return;
+    }
+
+    if (
+      !normalizedProvider ||
+      !normalizedProviderVideoId
+    ) {
+      setDuration(0);
+      setDurationStatus("idle");
+      return;
+    }
+
+    setDuration(0);
+    setDurationStatus("loading");
+
+    if (normalizedProvider !== "youtube") {
+      if (normalizedProvider !== "google_drive") {
+        setDurationStatus("error");
+      }
+      return;
+    }
+
+    let cancelled = false;
+    let player: YoutubePlayer | null = null;
+
+    const youtubeWindow =
+      window as YoutubeWindow;
+
+    const initializePlayer = () => {
+      if (
+        cancelled ||
+        !youtubeWindow.YT?.Player ||
+        !youtubeDurationRef.current
+      ) {
+        return;
+      }
+
+      player?.destroy();
+
+      player = new youtubeWindow.YT.Player(
+        youtubeDurationRef.current,
+        {
+          videoId: normalizedProviderVideoId,
+          playerVars: {
+            controls: 0,
+            playsinline: 1,
+          },
+          events: {
+            onReady: (event) => {
+              if (cancelled) {
+                return;
+              }
+
+              const seconds =
+                event.target.getDuration();
+
+              if (
+                Number.isFinite(seconds) &&
+                seconds > 0
+              ) {
+                setDuration(
+                  secondsToMinutes(seconds),
+                );
+                setDurationStatus("ready");
+              } else {
+                setDurationStatus("error");
+              }
+            },
+            onError: () => {
+              if (!cancelled) {
+                setDurationStatus("error");
+              }
+            },
+          },
+        },
+      );
+    };
+
+    if (youtubeWindow.YT?.Player) {
+      initializePlayer();
+    } else {
+      const previousReady =
+        youtubeWindow.onYouTubeIframeAPIReady;
+
+      youtubeWindow.onYouTubeIframeAPIReady = () => {
+        previousReady?.();
+        initializePlayer();
+      };
+
+      if (
+        !document.querySelector(
+          'script[src="https://www.youtube.com/iframe_api"]',
+        )
+      ) {
+        const script =
+          document.createElement("script");
+        script.src =
+          "https://www.youtube.com/iframe_api";
+        script.async = true;
+        document.head.appendChild(script);
+      }
+    }
+
+    return () => {
+      cancelled = true;
+      player?.destroy();
+    };
+  }, [
+    normalizedProvider,
+    normalizedProviderVideoId,
+    showDuration,
+  ]);
+
   function handleProviderChange(value: string) {
     setProvider(value as SupportedVideoProvider);
     setSourceInput("");
+    setDuration(0);
+    setDurationStatus("idle");
     setErrorMessage("");
   }
 
@@ -167,7 +338,9 @@ export default function VideoForm({
       duration <= 0
     ) {
       setErrorMessage(
-        "Durasi video wajib lebih dari 0 menit.",
+        showDuration
+          ? "Durasi video wajib lebih dari 0 menit."
+          : "Durasi video belum berhasil dideteksi otomatis. Pastikan video dapat diakses lalu coba lagi.",
       );
       return;
     }
@@ -265,34 +438,99 @@ export default function VideoForm({
           )}
       </div>
 
-      <div
-        className={
-          showVideoOrder
-            ? "grid gap-5 sm:grid-cols-2"
-            : undefined
-        }
-      >
-        <TextInput
-          label="Durasi (menit)"
-          type="number"
-          required
-          value={String(duration)}
-          onChange={(value) =>
-            setDuration(Number(value))
+      {showDuration ? (
+        <div
+          className={
+            showVideoOrder
+              ? "grid gap-5 sm:grid-cols-2"
+              : undefined
           }
-        />
-
-        {showVideoOrder && (
+        >
           <TextInput
-            label="Urutan Video"
+            label="Durasi (menit)"
             type="number"
-            value={String(videoOrder)}
+            required
+            value={String(duration)}
             onChange={(value) =>
-              setVideoOrder(Number(value))
+              setDuration(Number(value))
+            }
+          />
+
+          {showVideoOrder && (
+            <TextInput
+              label="Urutan Video"
+              type="number"
+              value={String(videoOrder)}
+              onChange={(value) =>
+                setVideoOrder(Number(value))
+              }
+            />
+          )}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          {durationStatus === "idle" &&
+            "Durasi akan terdeteksi otomatis setelah URL video dimasukkan."}
+          {durationStatus === "loading" &&
+            "Mendeteksi durasi video secara otomatis..."}
+          {durationStatus === "ready" &&
+            `Durasi terdeteksi otomatis: ${duration} menit.`}
+          {durationStatus === "error" &&
+            "Durasi belum dapat dideteksi otomatis. Pastikan video dapat diakses dan URL benar."}
+        </div>
+      )}
+
+      {!showDuration &&
+        normalizedProvider === "youtube" && (
+          <div
+            ref={youtubeDurationRef}
+            className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0"
+            aria-hidden="true"
+          />
+        )}
+
+      {!showDuration &&
+        normalizedProvider === "google_drive" &&
+        normalizedProviderVideoId && (
+          <video
+            key={normalizedProviderVideoId}
+            className="hidden"
+            preload="metadata"
+            src={`https://drive.google.com/uc?export=download&id=${normalizedProviderVideoId}`}
+            onLoadedMetadata={(event) => {
+              const seconds =
+                event.currentTarget.duration;
+
+              if (
+                Number.isFinite(seconds) &&
+                seconds > 0
+              ) {
+                setDuration(
+                  secondsToMinutes(seconds),
+                );
+                setDurationStatus("ready");
+              } else {
+                setDurationStatus("error");
+              }
+            }}
+            onError={() =>
+              setDurationStatus("error")
             }
           />
         )}
-      </div>
+
+      {showDuration && showVideoOrder && null}
+
+      {!showDuration && showVideoOrder && (
+        <TextInput
+          label="Urutan Video"
+          type="number"
+          value={String(videoOrder)}
+          onChange={(value) =>
+            setVideoOrder(Number(value))
+          }
+        />
+      )}
 
       <SelectField
         label="Status Publikasi"
@@ -350,7 +588,9 @@ export default function VideoForm({
           type="submit"
           disabled={
             loading ||
-            !sourceValidation.normalized
+            !sourceValidation.normalized ||
+            (!showDuration &&
+              durationStatus !== "ready")
           }
           className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
