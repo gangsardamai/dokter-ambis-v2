@@ -43,17 +43,18 @@ export default async function NewVideoPage({
         <div className="p-6">
 
           <VideoForm
-  initialLessonId={lessonId}
-  lessonOptions={lessons.map(
-    (lesson) => ({
-      value: lesson.id,
-      label: lesson.title,
-    }),
-  )}
-  submitLabel="Simpan"
-  showVideoOrder={false}
-  onSubmit={createVideoAction}
-/>
+            initialLessonId={lessonId}
+            lessonOptions={lessons.map(
+              (lesson) => ({
+                value: lesson.id,
+                label: lesson.title,
+              }),
+            )}
+            submitLabel="Simpan"
+            showVideoOrder={false}
+            showDuration={false}
+            onSubmit={createVideoAction}
+          />
 
         </div>
 
