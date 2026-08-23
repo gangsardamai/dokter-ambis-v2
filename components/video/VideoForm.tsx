@@ -24,12 +24,6 @@ import {
 export type VideoProvider = SupportedVideoProvider;
 export type VideoFormData = VideoFormPayload;
 
-type DurationStatus =
-  | "idle"
-  | "loading"
-  | "ready"
-  | "error";
-
 type YoutubePlayer = {
   destroy: () => void;
   getDuration: () => number;
@@ -71,6 +65,8 @@ interface VideoFormProps {
   ) => Promise<void>;
 }
 
+const DEFAULT_VIDEO_DURATION_MINUTES = 45;
+
 function secondsToMinutes(seconds: number) {
   return Math.max(
     1,
@@ -106,14 +102,11 @@ export default function VideoForm({
       : "",
   );
   const [duration, setDuration] = useState(
-    initialData?.duration ?? 0,
+    initialData?.duration ??
+      (showDuration
+        ? 0
+        : DEFAULT_VIDEO_DURATION_MINUTES),
   );
-  const [durationStatus, setDurationStatus] =
-    useState<DurationStatus>(
-      initialData?.duration
-        ? "ready"
-        : "idle",
-    );
   const [videoOrder, setVideoOrder] = useState(
     initialData?.video_order ?? 1,
   );
@@ -189,22 +182,16 @@ export default function VideoForm({
       return;
     }
 
+    setDuration(DEFAULT_VIDEO_DURATION_MINUTES);
+
     if (
       !normalizedProvider ||
       !normalizedProviderVideoId
     ) {
-      setDuration(0);
-      setDurationStatus("idle");
       return;
     }
 
-    setDuration(0);
-    setDurationStatus("loading");
-
     if (normalizedProvider !== "youtube") {
-      if (normalizedProvider !== "google_drive") {
-        setDurationStatus("error");
-      }
       return;
     }
 
@@ -249,14 +236,13 @@ export default function VideoForm({
                 setDuration(
                   secondsToMinutes(seconds),
                 );
-                setDurationStatus("ready");
-              } else {
-                setDurationStatus("error");
               }
             },
             onError: () => {
               if (!cancelled) {
-                setDurationStatus("error");
+                setDuration(
+                  DEFAULT_VIDEO_DURATION_MINUTES,
+                );
               }
             },
           },
@@ -302,8 +288,11 @@ export default function VideoForm({
   function handleProviderChange(value: string) {
     setProvider(value as SupportedVideoProvider);
     setSourceInput("");
-    setDuration(0);
-    setDurationStatus("idle");
+    setDuration(
+      showDuration
+        ? 0
+        : DEFAULT_VIDEO_DURATION_MINUTES,
+    );
     setErrorMessage("");
   }
 
@@ -334,13 +323,11 @@ export default function VideoForm({
     }
 
     if (
-      !Number.isFinite(duration) ||
-      duration <= 0
+      showDuration &&
+      (!Number.isFinite(duration) || duration <= 0)
     ) {
       setErrorMessage(
-        showDuration
-          ? "Durasi video wajib lebih dari 0 menit."
-          : "Durasi video belum berhasil dideteksi otomatis. Pastikan video dapat diakses lalu coba lagi.",
+        "Durasi video wajib lebih dari 0 menit.",
       );
       return;
     }
@@ -356,6 +343,12 @@ export default function VideoForm({
       return;
     }
 
+    const durationToSave =
+      !showDuration &&
+      (!Number.isFinite(duration) || duration <= 0)
+        ? DEFAULT_VIDEO_DURATION_MINUTES
+        : duration;
+
     setLoading(true);
 
     try {
@@ -364,7 +357,7 @@ export default function VideoForm({
         title: title.trim(),
         provider,
         provider_video_id: sourceInput.trim(),
-        duration,
+        duration: durationToSave,
         video_order: videoOrder,
         publication_status: publicationStatus,
         is_required: isRequired,
@@ -438,7 +431,7 @@ export default function VideoForm({
           )}
       </div>
 
-      {showDuration ? (
+      {showDuration && (
         <div
           className={
             showVideoOrder
@@ -466,17 +459,6 @@ export default function VideoForm({
               }
             />
           )}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          {durationStatus === "idle" &&
-            "Durasi akan terdeteksi otomatis setelah URL video dimasukkan."}
-          {durationStatus === "loading" &&
-            "Mendeteksi durasi video secara otomatis..."}
-          {durationStatus === "ready" &&
-            `Durasi terdeteksi otomatis: ${duration} menit.`}
-          {durationStatus === "error" &&
-            "Durasi belum dapat dideteksi otomatis. Pastikan video dapat diakses dan URL benar."}
         </div>
       )}
 
@@ -508,18 +490,15 @@ export default function VideoForm({
                 setDuration(
                   secondsToMinutes(seconds),
                 );
-                setDurationStatus("ready");
-              } else {
-                setDurationStatus("error");
               }
             }}
             onError={() =>
-              setDurationStatus("error")
+              setDuration(
+                DEFAULT_VIDEO_DURATION_MINUTES,
+              )
             }
           />
         )}
-
-      {showDuration && showVideoOrder && null}
 
       {!showDuration && showVideoOrder && (
         <TextInput
@@ -588,9 +567,7 @@ export default function VideoForm({
           type="submit"
           disabled={
             loading ||
-            !sourceValidation.normalized ||
-            (!showDuration &&
-              durationStatus !== "ready")
+            !sourceValidation.normalized
           }
           className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
