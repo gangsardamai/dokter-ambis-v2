@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
@@ -40,11 +41,26 @@ export default async function EditFilePage({
   const lessons =
     await lessonService.getLessons();
 
+  const currentLesson = lessons.find(
+    (lesson) => lesson.id === file.lesson_id
+  );
+
+  if (!currentLesson) {
+    notFound();
+  }
+
   const updateCurrentFileAction =
     updateFileAction.bind(null, file.id);
 
   return (
     <Container>
+      <Link
+        href={`/dashboard/admin/course/${currentLesson.course_id}/explorer`}
+        className="mb-5 inline-flex items-center text-sm text-blue-600 hover:underline"
+      >
+        ← Kembali ke Course
+      </Link>
+
       <PageHeader
         title="Edit File"
         description="Perbarui informasi file materi."
