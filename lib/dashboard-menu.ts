@@ -45,6 +45,27 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
       ],
     },
     {
+      title: "Operasional",
+      items: [
+        {
+          title: "Rekening Pembayaran",
+          href: "/dashboard/admin/payment-account",
+        },
+        {
+          title: "Kotak Pesan",
+          href: "/dashboard/admin/messages",
+        },
+        {
+          title: "Promotion",
+          href: "/dashboard/admin/promotion",
+        },
+        {
+          title: "Enrollment",
+          href: "/dashboard/admin/enrollment",
+        },
+      ],
+    },
+    {
       title: "Pembelajaran",
       items: [
         {
@@ -66,27 +87,6 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
         {
           title: "Try Out",
           href: "/dashboard/admin/tryout",
-        },
-      ],
-    },
-    {
-      title: "Operasional",
-      items: [
-        {
-          title: "Rekening Pembayaran",
-          href: "/dashboard/admin/payment-account",
-        },
-        {
-          title: "Kotak Pesan",
-          href: "/dashboard/admin/messages",
-        },
-        {
-          title: "Promotion",
-          href: "/dashboard/admin/promotion",
-        },
-        {
-          title: "Enrollment",
-          href: "/dashboard/admin/enrollment",
         },
       ],
     },
