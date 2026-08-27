@@ -61,21 +61,38 @@ export default async function LoginPage({
   const nextPath = getSafeStudentNextPath(
     getParamValue(params.next),
   );
-  const authenticated = await authService.isAuthenticated();
+  const cookieStore = await cookies();
+  const hasSupabaseAuthCookie = cookieStore
+    .getAll()
+    .some(
+      ({ name }) =>
+        name.startsWith("sb-") &&
+        name.includes("-auth-token"),
+    );
 
-  if (authenticated) {
-    const profile = await profileService.getCurrentProfile();
+  if (hasSupabaseAuthCookie) {
+    try {
+      const authenticated = await authService.isAuthenticated();
 
-    if (profile && profile.status === "active") {
-      redirect(
-        profile.role === "student" && nextPath
-          ? nextPath
-          : getDashboardPath(profile.role),
+      if (authenticated) {
+        const profile = await profileService.getCurrentProfile();
+
+        if (profile && profile.status === "active") {
+          redirect(
+            profile.role === "student" && nextPath
+              ? nextPath
+              : getDashboardPath(profile.role),
+          );
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "Login page could not verify the existing session; rendering the login form instead.",
+        error,
       );
     }
   }
 
-  const cookieStore = await cookies();
   const initialDeviceIdentifier =
     cookieStore.get(DEVICE_COOKIE_NAME)?.value ?? "";
   const errorMessage = getParamValue(params.error);
