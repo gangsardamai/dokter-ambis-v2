@@ -61,17 +61,9 @@ function normalizeFilePayload(
     normalizedFilePath =
       createGoogleDriveFilePath(fileId);
   } else if (data.source_provider === "upload") {
-    normalizedFilePath = data.file_path.trim();
-
-    if (
-      !normalizedFilePath ||
-      /^https?:\/\//i.test(normalizedFilePath) ||
-      normalizedFilePath.startsWith("google-drive://")
-    ) {
-      throw new Error(
-        "Path upload tidak valid. Gunakan proses Upload File yang tersedia.",
-      );
-    }
+    throw new Error(
+      "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive.",
+    );
   } else {
     throw new Error("Sumber file tidak valid.");
   }
