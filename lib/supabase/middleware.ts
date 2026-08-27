@@ -1,12 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+import { fetchWithSupabaseTimeout } from "@/lib/supabase/fetch-with-timeout";
+
 import type { NextRequest } from "next/server";
 import type { Database } from "@/supabase/types/database.types";
 
 interface AuthErrorLike {
   code?: unknown;
   message?: unknown;
+  name?: unknown;
 }
 
 function isStaleRefreshTokenError(
@@ -30,6 +33,27 @@ function isStaleRefreshTokenError(
     normalizedMessage.includes("invalid refresh token") ||
     normalizedMessage.includes("refresh token not found") ||
     normalizedMessage.includes("refresh token already used")
+  );
+}
+
+function isTransientAuthError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const { code, message, name } = error as AuthErrorLike;
+  const normalized = [code, message, name]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    normalized.includes("authretryablefetcherror") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("network request failed") ||
+    normalized.includes("abort") ||
+    normalized.includes("timeout") ||
+    normalized.includes("timed out")
   );
 }
 
@@ -85,6 +109,9 @@ export async function updateSession(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: {
+        fetch: fetchWithSupabaseTimeout,
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -141,15 +168,28 @@ export async function updateSession(
         response,
       );
     }
+
+    if (error && isTransientAuthError(error)) {
+      console.warn(
+        "Supabase auth temporarily unavailable in proxy; continuing without session refresh.",
+      );
+    }
   } catch (error) {
-    if (!isStaleRefreshTokenError(error)) {
-      throw error;
+    if (isStaleRefreshTokenError(error)) {
+      return clearSupabaseAuthCookies(
+        request,
+        response,
+      );
     }
 
-    return clearSupabaseAuthCookies(
-      request,
-      response,
-    );
+    if (isTransientAuthError(error)) {
+      console.warn(
+        "Supabase auth temporarily unavailable in proxy; continuing without session refresh.",
+      );
+      return response;
+    }
+
+    throw error;
   }
 
   return response;
