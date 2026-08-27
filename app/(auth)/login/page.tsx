@@ -69,6 +69,7 @@ export default async function LoginPage({
         name.startsWith("sb-") &&
         name.includes("-auth-token"),
     );
+  let authenticatedRedirectPath = "";
 
   if (hasSupabaseAuthCookie) {
     try {
@@ -78,11 +79,10 @@ export default async function LoginPage({
         const profile = await profileService.getCurrentProfile();
 
         if (profile && profile.status === "active") {
-          redirect(
+          authenticatedRedirectPath =
             profile.role === "student" && nextPath
               ? nextPath
-              : getDashboardPath(profile.role),
-          );
+              : getDashboardPath(profile.role);
         }
       }
     } catch (error) {
@@ -91,6 +91,10 @@ export default async function LoginPage({
         error,
       );
     }
+  }
+
+  if (authenticatedRedirectPath) {
+    redirect(authenticatedRedirectPath);
   }
 
   const initialDeviceIdentifier =
