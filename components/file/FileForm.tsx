@@ -234,9 +234,39 @@ export default function FileForm({
       <button
         type="submit"
         disabled={loading || !googleDriveFileId}
+        aria-busy={loading}
         className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
-        {loading ? "Menyimpan..." : submitLabel}
+        {loading ? (
+          <>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="mr-2 h-4 w-4 animate-spin"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="opacity-25"
+              />
+              <path
+                d="M21 12a9 9 0 0 0-9-9"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="3"
+                className="opacity-90"
+              />
+            </svg>
+            Menyimpan...
+          </>
+        ) : (
+          submitLabel
+        )}
       </button>
     </form>
   );
