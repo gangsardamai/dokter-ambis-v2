@@ -21,6 +21,10 @@ export type FileFormData = Omit<
   "source_provider"
 >;
 
+interface FileSubmitResult {
+  error?: string;
+}
+
 interface SelectOption {
   value: string;
   label: string;
@@ -34,7 +38,7 @@ interface FileFormProps {
   submitLabel?: string;
   onSubmit: (
     data: FileFormPayload,
-  ) => Promise<void>;
+  ) => Promise<FileSubmitResult | undefined>;
 }
 
 export default function FileForm({
@@ -107,7 +111,7 @@ export default function FileForm({
     setLoading(true);
 
     try {
-      await onSubmit({
+      const result = await onSubmit({
         lesson_id: lessonId,
         title: title.trim(),
         file_type: fileType,
@@ -116,6 +120,10 @@ export default function FileForm({
         publication_status: publicationStatus,
         is_required: isRequired,
       });
+
+      if (result?.error) {
+        setErrorMessage(result.error);
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error
