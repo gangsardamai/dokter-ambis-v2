@@ -8,13 +8,21 @@ import {
 } from "@/components/ui";
 import {
   extractGoogleDriveFileId,
+  extractGoogleSheetsFileId,
   getGoogleDriveInputUrl,
+  getGoogleSheetsInputUrl,
   parseGoogleDriveFilePath,
+  parseGoogleSheetsFilePath,
   type CourseFileType,
   type FileFormPayload,
+  type FileSourceProvider,
 } from "@/lib/file/file-source";
 
 export type FileType = CourseFileType;
+type SelectableSourceProvider = Exclude<
+  FileSourceProvider,
+  "upload"
+>;
 
 export type FileFormData = Omit<
   FileFormPayload,
@@ -49,9 +57,22 @@ export default function FileForm({
   submitLabel = "Simpan",
   onSubmit,
 }: FileFormProps) {
+  const initialGoogleSheetsId = initialData
+    ? parseGoogleSheetsFilePath(initialData.file_path)
+    : null;
   const initialGoogleDriveId = initialData
     ? parseGoogleDriveFilePath(initialData.file_path)
     : null;
+  const initialSourceProvider: SelectableSourceProvider =
+    initialGoogleSheetsId
+      ? "google_sheets"
+      : "google_drive";
+  const initialSourceUrl = initialGoogleSheetsId
+    ? getGoogleSheetsInputUrl(initialGoogleSheetsId)
+    : initialGoogleDriveId
+      ? getGoogleDriveInputUrl(initialGoogleDriveId)
+      : "";
+
   const [lessonId, setLessonId] = useState(
     initialData?.lesson_id ?? initialLessonId ?? "",
   );
@@ -60,14 +81,16 @@ export default function FileForm({
   );
   const [fileType, setFileType] =
     useState<FileType>(
-      initialData?.file_type ?? "pdf",
+      initialGoogleSheetsId
+        ? "xlsx"
+        : initialData?.file_type ?? "pdf",
     );
-  const [googleDriveUrl, setGoogleDriveUrl] =
-    useState(
-      initialGoogleDriveId
-        ? getGoogleDriveInputUrl(initialGoogleDriveId)
-        : "",
+  const [sourceProvider, setSourceProvider] =
+    useState<SelectableSourceProvider>(
+      initialSourceProvider,
     );
+  const [sourceUrl, setSourceUrl] =
+    useState(initialSourceUrl);
   const [publicationStatus, setPublicationStatus] =
     useState(
       initialData?.publication_status ?? "draft",
@@ -78,8 +101,26 @@ export default function FileForm({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const googleDriveFileId =
-    extractGoogleDriveFileId(googleDriveUrl);
+  const sourceFileId =
+    sourceProvider === "google_sheets"
+      ? extractGoogleSheetsFileId(sourceUrl)
+      : extractGoogleDriveFileId(sourceUrl);
+
+  const isGoogleSheets =
+    sourceProvider === "google_sheets";
+
+  function handleSourceProviderChange(value: string) {
+    const nextProvider =
+      value as SelectableSourceProvider;
+
+    setSourceProvider(nextProvider);
+    setSourceUrl("");
+    setErrorMessage("");
+
+    if (nextProvider === "google_sheets") {
+      setFileType("xlsx");
+    }
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
@@ -101,9 +142,11 @@ export default function FileForm({
       return;
     }
 
-    if (!googleDriveFileId) {
+    if (!sourceFileId) {
       setErrorMessage(
-        "URL Google Drive tidak valid. Gunakan link file drive.google.com, bukan link folder.",
+        isGoogleSheets
+          ? "URL Google Spreadsheet tidak valid. Gunakan link docs.google.com/spreadsheets."
+          : "URL Google Drive tidak valid. Gunakan link file drive.google.com, bukan link folder.",
       );
       return;
     }
@@ -114,9 +157,9 @@ export default function FileForm({
       const result = await onSubmit({
         lesson_id: lessonId,
         title: title.trim(),
-        file_type: fileType,
-        source_provider: "google_drive",
-        file_path: googleDriveUrl.trim(),
+        file_type: isGoogleSheets ? "xlsx" : fileType,
+        source_provider: sourceProvider,
+        file_path: sourceUrl.trim(),
         publication_status: publicationStatus,
         is_required: isRequired,
       });
@@ -168,48 +211,69 @@ export default function FileForm({
 
       <SelectField
         label="Sumber File"
-        value="google_drive"
-        onChange={() => undefined}
+        value={sourceProvider}
+        onChange={handleSourceProviderChange}
         options={[
           {
             value: "google_drive",
             label: "Google Drive",
+          },
+          {
+            value: "google_sheets",
+            label: "Google Spreadsheet (Sheets)",
           },
         ]}
       />
 
       <SelectField
         label="Tipe File"
-        value={fileType}
+        value={isGoogleSheets ? "xlsx" : fileType}
         onChange={(value) =>
           setFileType(value as FileType)
         }
-        options={[
-          { value: "pdf", label: "PDF" },
-          { value: "ppt", label: "PPT" },
-          { value: "pptx", label: "PPTX" },
-          { value: "doc", label: "DOC" },
-          { value: "docx", label: "DOCX" },
-          { value: "xls", label: "XLS" },
-          { value: "xlsx", label: "XLSX" },
-          { value: "zip", label: "ZIP" },
-          { value: "mp3", label: "MP3" },
-        ]}
+        options={
+          isGoogleSheets
+            ? [
+                {
+                  value: "xlsx",
+                  label: "Google Spreadsheet (XLSX)",
+                },
+              ]
+            : [
+                { value: "pdf", label: "PDF" },
+                { value: "ppt", label: "PPT" },
+                { value: "pptx", label: "PPTX" },
+                { value: "doc", label: "DOC" },
+                { value: "docx", label: "DOCX" },
+                { value: "xls", label: "XLS" },
+                { value: "xlsx", label: "XLSX" },
+                { value: "zip", label: "ZIP" },
+                { value: "mp3", label: "MP3" },
+              ]
+        }
       />
 
       <div>
         <TextInput
-          label="URL File Google Drive"
+          label={
+            isGoogleSheets
+              ? "URL Google Spreadsheet"
+              : "URL File Google Drive"
+          }
           required
-          value={googleDriveUrl}
-          onChange={setGoogleDriveUrl}
+          value={sourceUrl}
+          onChange={setSourceUrl}
         />
         <p className="mt-2 text-xs leading-5 text-slate-500">
-          Gunakan link file drive.google.com. Pastikan General access adalah Anyone with the link sebagai Viewer dan opsi download diizinkan. File yang diterima: PDF, PPT/PPTX, DOC/DOCX, XLS/XLSX, ZIP, dan MP3.
+          {isGoogleSheets
+            ? "Tempel link Google Sheets dari docs.google.com/spreadsheets. Pastikan General access adalah Anyone with the link sebagai Viewer. Peserta akan membuka spreadsheet di tab baru tanpa dipaksa mengunduh file."
+            : "Gunakan link file drive.google.com. Pastikan General access adalah Anyone with the link sebagai Viewer dan opsi download diizinkan. File yang diterima: PDF, PPT/PPTX, DOC/DOCX, XLS/XLSX, ZIP, dan MP3."}
         </p>
-        {googleDriveUrl && !googleDriveFileId && (
+        {sourceUrl && !sourceFileId && (
           <p className="mt-2 text-sm font-semibold text-red-600">
-            URL Google Drive belum valid atau merupakan link folder.
+            {isGoogleSheets
+              ? "URL Google Spreadsheet belum valid. Gunakan link docs.google.com/spreadsheets."
+              : "URL Google Drive belum valid atau merupakan link folder."}
           </p>
         )}
       </div>
@@ -241,7 +305,7 @@ export default function FileForm({
 
       <button
         type="submit"
-        disabled={loading || !googleDriveFileId}
+        disabled={loading || !sourceFileId}
         aria-busy={loading}
         className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
