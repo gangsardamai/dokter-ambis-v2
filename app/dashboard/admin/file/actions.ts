@@ -22,6 +22,40 @@ type NormalizedFileData = Omit<
   "file_order"
 >;
 
+export interface FileActionResult {
+  error?: string;
+}
+
+const VALIDATION_MESSAGES = new Set([
+  "Lesson dan judul file wajib diisi.",
+  "Tipe file tidak diizinkan.",
+  "Status publikasi tidak valid.",
+  "URL Google Drive tidak valid. Gunakan URL file drive.google.com, bukan URL folder.",
+  "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive.",
+  "Sumber file tidak valid.",
+]);
+
+function getFileActionError(error: unknown): string {
+  const message =
+    error instanceof Error
+      ? error.message
+      : String(error);
+
+  if (VALIDATION_MESSAGES.has(message)) {
+    return message;
+  }
+
+  if (
+    message.includes("uq_lesson_files_lesson_path") ||
+    message.includes("23505")
+  ) {
+    return "File Google Drive ini sudah terhubung pada lesson tersebut.";
+  }
+
+  console.error("File action failed:", error);
+  return "File gagal disimpan. Silakan coba lagi.";
+}
+
 function normalizeFilePayload(
   data: FileFormPayload,
 ): NormalizedFileData {
@@ -80,36 +114,48 @@ function normalizeFilePayload(
 
 export async function createFileAction(
   data: FileFormPayload,
-) {
-  await lessonFileService.createFile(
-    normalizeFilePayload(data),
-  );
+): Promise<FileActionResult> {
+  try {
+    await lessonFileService.createFile(
+      normalizeFilePayload(data),
+    );
 
-  revalidatePath("/dashboard/admin/file");
+    revalidatePath("/dashboard/admin/file");
+    revalidatePath("/dashboard/mentor");
+    return {};
+  } catch (error) {
+    return { error: getFileActionError(error) };
+  }
 }
 
 export async function updateFileAction(
   id: string,
   data: FileFormPayload,
-) {
-  const normalized = normalizeFilePayload(data);
-  const updateData: LessonFileUpdate = {
-    lesson_id: normalized.lesson_id,
-    title: normalized.title,
-    file_type: normalized.file_type,
-    file_path: normalized.file_path,
-    publication_status:
-      normalized.publication_status,
-    is_required: normalized.is_required,
-  };
+): Promise<FileActionResult> {
+  try {
+    const normalized = normalizeFilePayload(data);
+    const updateData: LessonFileUpdate = {
+      lesson_id: normalized.lesson_id,
+      title: normalized.title,
+      file_type: normalized.file_type,
+      file_path: normalized.file_path,
+      publication_status:
+        normalized.publication_status,
+      is_required: normalized.is_required,
+    };
 
-  await lessonFileService.updateFile(
-    id,
-    updateData,
-  );
+    await lessonFileService.updateFile(
+      id,
+      updateData,
+    );
 
-  revalidatePath("/dashboard/admin/file");
-  revalidatePath(`/dashboard/admin/file/${id}`);
+    revalidatePath("/dashboard/admin/file");
+    revalidatePath(`/dashboard/admin/file/${id}`);
+    revalidatePath("/dashboard/mentor");
+    return {};
+  } catch (error) {
+    return { error: getFileActionError(error) };
+  }
 }
 
 export async function deleteFileAction(
@@ -118,4 +164,5 @@ export async function deleteFileAction(
   await lessonFileService.deleteFile(id);
 
   revalidatePath("/dashboard/admin/file");
+  revalidatePath("/dashboard/mentor");
 }
