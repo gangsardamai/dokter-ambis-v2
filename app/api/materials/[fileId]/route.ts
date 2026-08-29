@@ -7,7 +7,9 @@ import {
 } from "@/lib/cloudflare/r2";
 import {
   getGoogleDriveDownloadUrl,
+  getGoogleSheetsViewUrl,
   parseGoogleDriveFilePath,
+  parseGoogleSheetsFilePath,
 } from "@/lib/file/file-source";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,7 +19,7 @@ interface MaterialRouteContext {
   }>;
 }
 
-function downloadErrorResponse(
+function materialErrorResponse(
   status: number,
   detail: string,
 ): Response {
@@ -26,7 +28,7 @@ function downloadErrorResponse(
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>File tidak dapat diunduh</title>
+    <title>Materi tidak dapat dibuka</title>
     <style>
       body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f8fafc; color: #0f172a; font-family: Arial, sans-serif; }
       main { width: min(92vw, 560px); border: 1px solid #e2e8f0; border-radius: 20px; background: white; padding: 28px; box-shadow: 0 18px 50px rgba(15, 23, 42, .08); }
@@ -37,7 +39,7 @@ function downloadErrorResponse(
   </head>
   <body>
     <main>
-      <h1>File tidak dapat diunduh</h1>
+      <h1>Materi tidak dapat dibuka</h1>
       <p class="detail">${detail}</p>
       <p>Link mungkin sudah tidak aktif atau izin file telah berubah. Silakan hubungi Admin Dokter Ambis.</p>
       <p>Anda dapat menutup tab ini dan kembali ke halaman materi.</p>
@@ -69,9 +71,18 @@ export async function GET(
     .maybeSingle();
 
   if (error || !file) {
-    return downloadErrorResponse(
+    return materialErrorResponse(
       404,
       "File tidak ditemukan atau Anda tidak memiliki akses.",
+    );
+  }
+
+  const googleSheetsFileId =
+    parseGoogleSheetsFilePath(file.file_path);
+
+  if (googleSheetsFileId) {
+    return NextResponse.redirect(
+      getGoogleSheetsViewUrl(googleSheetsFileId),
     );
   }
 
@@ -88,7 +99,7 @@ export async function GET(
 
   if (r2File) {
     if (r2File.bucket !== getR2BucketName()) {
-      return downloadErrorResponse(
+      return materialErrorResponse(
         500,
         "Lokasi penyimpanan file tidak valid.",
       );
@@ -104,7 +115,7 @@ export async function GET(
 
       return NextResponse.redirect(signed.url);
     } catch {
-      return downloadErrorResponse(
+      return materialErrorResponse(
         500,
         "Tautan unduhan sementara gagal dibuat.",
       );
@@ -112,7 +123,7 @@ export async function GET(
   }
 
   if (/^https?:\/\//i.test(file.file_path)) {
-    return downloadErrorResponse(
+    return materialErrorResponse(
       400,
       "Sumber file eksternal tidak diizinkan.",
     );
@@ -132,7 +143,7 @@ export async function GET(
       });
 
   if (signedUrlError || !data?.signedUrl) {
-    return downloadErrorResponse(
+    return materialErrorResponse(
       500,
       "Tautan unduhan sementara gagal dibuat.",
     );
