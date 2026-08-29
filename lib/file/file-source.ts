@@ -5,7 +5,8 @@ export type CourseFileType =
 
 export type FileSourceProvider =
   | "upload"
-  | "google_drive";
+  | "google_drive"
+  | "google_sheets";
 
 export interface FileFormPayload {
   lesson_id: string;
@@ -18,7 +19,8 @@ export interface FileFormPayload {
 }
 
 const GOOGLE_DRIVE_PATH_PREFIX = "google-drive://";
-const GOOGLE_DRIVE_ID_PATTERN = /^[a-zA-Z0-9_-]{10,}$/;
+const GOOGLE_SHEETS_PATH_PREFIX = "google-sheets://";
+const GOOGLE_FILE_ID_PATTERN = /^[a-zA-Z0-9_-]{10,}$/;
 
 const SUPPORTED_FILE_TYPES = new Set<CourseFileType>([
   "pdf",
@@ -73,7 +75,7 @@ export function extractGoogleDriveFileId(
       const fileId = pathParts[2];
 
       return fileId &&
-        GOOGLE_DRIVE_ID_PATTERN.test(fileId)
+        GOOGLE_FILE_ID_PATTERN.test(fileId)
         ? fileId
         : null;
     }
@@ -85,7 +87,7 @@ export function extractGoogleDriveFileId(
       const fileId = url.searchParams.get("id");
 
       return fileId &&
-        GOOGLE_DRIVE_ID_PATTERN.test(fileId)
+        GOOGLE_FILE_ID_PATTERN.test(fileId)
         ? fileId
         : null;
     }
@@ -96,14 +98,75 @@ export function extractGoogleDriveFileId(
   return null;
 }
 
+export function extractGoogleSheetsFileId(
+  value: string,
+): string | null {
+  const input = value.trim();
+
+  if (!input) {
+    return null;
+  }
+
+  try {
+    const url = new URL(input);
+    const hostname = url.hostname
+      .replace(/^www\./, "")
+      .toLowerCase();
+
+    if (
+      url.protocol !== "https:" ||
+      hostname !== "docs.google.com"
+    ) {
+      return null;
+    }
+
+    const pathParts = url.pathname
+      .split("/")
+      .filter(Boolean);
+    const spreadsheetsIndex =
+      pathParts.indexOf("spreadsheets");
+
+    if (spreadsheetsIndex === -1) {
+      return null;
+    }
+
+    const dIndex = pathParts.indexOf(
+      "d",
+      spreadsheetsIndex + 1,
+    );
+
+    if (dIndex === -1) {
+      return null;
+    }
+
+    const fileId = pathParts[dIndex + 1];
+
+    return fileId && GOOGLE_FILE_ID_PATTERN.test(fileId)
+      ? fileId
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export function createGoogleDriveFilePath(
   fileId: string,
 ): string {
-  if (!GOOGLE_DRIVE_ID_PATTERN.test(fileId)) {
+  if (!GOOGLE_FILE_ID_PATTERN.test(fileId)) {
     throw new Error("Google Drive File ID tidak valid.");
   }
 
   return `${GOOGLE_DRIVE_PATH_PREFIX}${fileId}`;
+}
+
+export function createGoogleSheetsFilePath(
+  fileId: string,
+): string {
+  if (!GOOGLE_FILE_ID_PATTERN.test(fileId)) {
+    throw new Error("Google Sheets File ID tidak valid.");
+  }
+
+  return `${GOOGLE_SHEETS_PATH_PREFIX}${fileId}`;
 }
 
 export function parseGoogleDriveFilePath(
@@ -116,12 +179,30 @@ export function parseGoogleDriveFilePath(
       GOOGLE_DRIVE_PATH_PREFIX.length,
     );
 
-    return GOOGLE_DRIVE_ID_PATTERN.test(fileId)
+    return GOOGLE_FILE_ID_PATTERN.test(fileId)
       ? fileId
       : null;
   }
 
   return extractGoogleDriveFileId(input);
+}
+
+export function parseGoogleSheetsFilePath(
+  value: string,
+): string | null {
+  const input = value.trim();
+
+  if (input.startsWith(GOOGLE_SHEETS_PATH_PREFIX)) {
+    const fileId = input.slice(
+      GOOGLE_SHEETS_PATH_PREFIX.length,
+    );
+
+    return GOOGLE_FILE_ID_PATTERN.test(fileId)
+      ? fileId
+      : null;
+  }
+
+  return extractGoogleSheetsFileId(input);
 }
 
 export function isGoogleDriveFilePath(
@@ -130,12 +211,34 @@ export function isGoogleDriveFilePath(
   return parseGoogleDriveFilePath(value) !== null;
 }
 
+export function isGoogleSheetsFilePath(
+  value: string,
+): boolean {
+  return parseGoogleSheetsFilePath(value) !== null;
+}
+
 export function getGoogleDriveInputUrl(
   fileId: string,
 ): string {
   return `https://drive.google.com/file/d/${encodeURIComponent(
     fileId,
   )}/view`;
+}
+
+export function getGoogleSheetsInputUrl(
+  fileId: string,
+): string {
+  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(
+    fileId,
+  )}/edit`;
+}
+
+export function getGoogleSheetsViewUrl(
+  fileId: string,
+): string {
+  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(
+    fileId,
+  )}/edit?usp=sharing`;
 }
 
 export function getGoogleDriveDownloadUrl(
