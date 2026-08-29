@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import {
   createGoogleDriveFilePath,
+  createGoogleSheetsFilePath,
   extractGoogleDriveFileId,
+  extractGoogleSheetsFileId,
   isSupportedCourseFileType,
   type FileFormPayload,
 } from "@/lib/file/file-source";
@@ -31,7 +33,8 @@ const VALIDATION_MESSAGES = new Set([
   "Tipe file tidak diizinkan.",
   "Status publikasi tidak valid.",
   "URL Google Drive tidak valid. Gunakan URL file drive.google.com, bukan URL folder.",
-  "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive.",
+  "URL Google Spreadsheet tidak valid. Gunakan URL docs.google.com/spreadsheets.",
+  "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive atau Google Spreadsheet.",
   "Sumber file tidak valid.",
 ]);
 
@@ -49,7 +52,7 @@ function getFileActionError(error: unknown): string {
     message.includes("uq_lesson_files_lesson_path") ||
     message.includes("23505")
   ) {
-    return "File Google Drive ini sudah terhubung pada lesson tersebut.";
+    return "Materi ini sudah terhubung pada lesson tersebut.";
   }
 
   console.error("File action failed:", error);
@@ -94,9 +97,24 @@ function normalizeFilePayload(
 
     normalizedFilePath =
       createGoogleDriveFilePath(fileId);
+  } else if (
+    data.source_provider === "google_sheets"
+  ) {
+    const fileId = extractGoogleSheetsFileId(
+      data.file_path,
+    );
+
+    if (!fileId) {
+      throw new Error(
+        "URL Google Spreadsheet tidak valid. Gunakan URL docs.google.com/spreadsheets.",
+      );
+    }
+
+    normalizedFilePath =
+      createGoogleSheetsFilePath(fileId);
   } else if (data.source_provider === "upload") {
     throw new Error(
-      "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive.",
+      "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive atau Google Spreadsheet.",
     );
   } else {
     throw new Error("Sumber file tidak valid.");
