@@ -122,6 +122,21 @@ export default function FileForm({
     }
   }
 
+  function handleSourceUrlChange(value: string) {
+    setSourceUrl(value);
+    setErrorMessage("");
+
+    if (extractGoogleSheetsFileId(value)) {
+      setSourceProvider("google_sheets");
+      setFileType("xlsx");
+      return;
+    }
+
+    if (extractGoogleDriveFileId(value)) {
+      setSourceProvider("google_drive");
+    }
+  }
+
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ) {
@@ -262,7 +277,7 @@ export default function FileForm({
           }
           required
           value={sourceUrl}
-          onChange={setSourceUrl}
+          onChange={handleSourceUrlChange}
         />
         <p className="mt-2 text-xs leading-5 text-slate-500">
           {isGoogleSheets
