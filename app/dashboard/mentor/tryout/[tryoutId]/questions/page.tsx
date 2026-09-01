@@ -100,7 +100,7 @@ export default async function MentorTryoutQuestionsPage({
           <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Soal Baru</p>
           <h2 className="mt-2 text-xl font-black text-slate-950">Tambahkan Pertanyaan</h2>
           <p className="mt-2 text-sm text-slate-500">
-            Isi pilihan A–D, tentukan satu jawaban benar, dan tambahkan gambar soal atau pembahasan bila diperlukan.
+            Pilih format A-D atau A-E, tentukan satu jawaban benar, dan tambahkan gambar soal atau pembahasan bila diperlukan.
           </p>
         </div>
         <TryoutQuestionForm tryoutId={tryoutId} action={createAction} />

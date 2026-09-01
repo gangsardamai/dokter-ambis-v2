@@ -206,14 +206,18 @@ export default function TryoutQuestionForm({
   const [removeExplanationImage, setRemoveExplanationImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<ActionResult | null>(null);
-
-  const optionValues = Array.from(
-    { length: 4 },
-    (_, index) => question?.options[index]?.option_text ?? "",
+  const [optionCount, setOptionCount] = useState<4 | 5>(
+    question?.options.length === 5 ? 5 : 4,
   );
-  const correctIndex = Math.max(
+  const initialCorrectIndex = Math.max(
     (question?.options.findIndex((item) => item.is_correct) ?? 0) + 1,
     1,
+  );
+  const [correctIndex, setCorrectIndex] = useState(initialCorrectIndex);
+
+  const optionValues = Array.from(
+    { length: optionCount },
+    (_, index) => question?.options[index]?.option_text ?? "",
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -282,6 +286,8 @@ export default function TryoutQuestionForm({
         setExplanationImage(null);
         setRemoveQuestionImage(false);
         setRemoveExplanationImage(false);
+        setOptionCount(4);
+        setCorrectIndex(1);
         router.refresh();
       }
     } catch (error) {
@@ -387,6 +393,26 @@ export default function TryoutQuestionForm({
         </div>
       </div>
 
+      <div className="max-w-xs">
+        <label htmlFor="optionCount" className={labelClass}>
+          Jumlah Pilihan
+        </label>
+        <select
+          id="optionCount"
+          name="optionCount"
+          value={optionCount}
+          onChange={(event) => {
+            const nextCount = event.target.value === "5" ? 5 : 4;
+            setOptionCount(nextCount);
+            if (correctIndex > nextCount) setCorrectIndex(nextCount);
+          }}
+          className={inputClass}
+        >
+          <option value={4}>A-D (4 pilihan)</option>
+          <option value={5}>A-E (5 pilihan)</option>
+        </select>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         {optionValues.map((value, index) => {
           const letter = String.fromCharCode(65 + index);
@@ -415,10 +441,16 @@ export default function TryoutQuestionForm({
           <select
             id="correctOptionIndex"
             name="correctOptionIndex"
-            defaultValue={String(correctIndex)}
+            value={correctIndex}
+            onChange={(event) =>
+              setCorrectIndex(Number.parseInt(event.target.value, 10))
+            }
             className={inputClass}
           >
-            {[1, 2, 3, 4].map((index) => (
+            {Array.from(
+              { length: optionCount },
+              (_, index) => index + 1,
+            ).map((index) => (
               <option key={index} value={index}>
                 {String.fromCharCode(64 + index)}
               </option>

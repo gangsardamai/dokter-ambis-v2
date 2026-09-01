@@ -105,8 +105,13 @@ export function parseTryoutQuestionForm(
   tryoutId: string,
   formData: FormData,
 ): CreateTryoutQuestionInput {
-  const options = ["optionA", "optionB", "optionC", "optionD"].map(
-    (key) => getString(formData, key),
+  const optionCount = getInteger(formData, "optionCount", 4);
+  if (optionCount !== 4 && optionCount !== 5) {
+    throw new Error("Jumlah pilihan harus 4 atau 5.");
+  }
+
+  const options = Array.from({ length: optionCount }, (_, index) =>
+    getString(formData, `option${String.fromCharCode(65 + index)}`),
   );
   const correctOptionIndex = getInteger(
     formData,
@@ -131,10 +136,14 @@ export function parseTryoutQuestionForm(
     throw new Error("Pertanyaan wajib diisi.");
   }
   if (options.some((option) => !option)) {
-    throw new Error("Pilihan A, B, C, dan D wajib diisi.");
+    throw new Error(
+      optionCount === 5
+        ? "Pilihan A, B, C, D, dan E wajib diisi."
+        : "Pilihan A, B, C, dan D wajib diisi.",
+    );
   }
-  if (correctOptionIndex < 1 || correctOptionIndex > 4) {
-    throw new Error("Jawaban benar harus A, B, C, atau D.");
+  if (correctOptionIndex < 1 || correctOptionIndex > optionCount) {
+    throw new Error("Jawaban benar harus sesuai dengan jumlah pilihan.");
   }
   if (input.points < 1) {
     throw new Error("Bobot soal minimal 1.");
