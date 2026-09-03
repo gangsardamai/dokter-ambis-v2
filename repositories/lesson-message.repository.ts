@@ -13,6 +13,8 @@ type Entry =
   Database["public"]["Tables"]["lesson_message_entries"]["Row"];
 type EntryInsert =
   Database["public"]["Tables"]["lesson_message_entries"]["Insert"];
+type ThreadRead =
+  Database["public"]["Tables"]["lesson_message_thread_reads"]["Row"];
 
 export class LessonMessageRepository extends BaseRepository {
   async getThreadsForStudentCourse(
@@ -26,6 +28,19 @@ export class LessonMessageRepository extends BaseRepository {
       .eq("student_profile_id", studentProfileId)
       .eq("course_id", courseId)
       .order("last_message_at", { ascending: false });
+
+    if (error) this.handleError(error);
+    return data ?? [];
+  }
+
+  async getThreadsForStudent(studentProfileId: string): Promise<Thread[]> {
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("lesson_message_threads")
+      .select("*")
+      .eq("student_profile_id", studentProfileId)
+      .order("last_message_at", { ascending: false })
+      .limit(200);
 
     if (error) this.handleError(error);
     return data ?? [];
@@ -124,6 +139,65 @@ export class LessonMessageRepository extends BaseRepository {
 
     if (error) this.handleError(error);
     return created;
+  }
+
+  async getReadStatesByThreadIds(
+    threadIds: string[],
+    profileId: string,
+  ): Promise<ThreadRead[]> {
+    if (threadIds.length === 0) return [];
+
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("lesson_message_thread_reads")
+      .select("*")
+      .eq("profile_id", profileId)
+      .in("thread_id", threadIds);
+
+    if (error) this.handleError(error);
+    return data ?? [];
+  }
+
+  async markThreadRead(
+    threadId: string,
+    profileId: string,
+    lastReadAt: string,
+  ): Promise<void> {
+    const supabase = await this.db();
+    const { data: existing, error: readError } = await supabase
+      .from("lesson_message_thread_reads")
+      .select("last_read_at")
+      .eq("thread_id", threadId)
+      .eq("profile_id", profileId)
+      .maybeSingle();
+    if (readError) this.handleError(readError);
+
+    const nextReadAt = existing?.last_read_at &&
+      existing.last_read_at > lastReadAt
+      ? existing.last_read_at
+      : lastReadAt;
+    const { error } = await supabase
+      .from("lesson_message_thread_reads")
+      .upsert(
+        {
+          thread_id: threadId,
+          profile_id: profileId,
+          last_read_at: nextReadAt,
+        },
+        { onConflict: "thread_id,profile_id" },
+      );
+
+    if (error) this.handleError(error);
+  }
+
+  async countUnreadMessages(): Promise<number> {
+    const supabase = await this.db();
+    const { data, error } = await supabase.rpc(
+      "count_unread_lesson_messages",
+    );
+
+    if (error) this.handleError(error);
+    return Number(data ?? 0);
   }
 
   async updateThreadStatus(

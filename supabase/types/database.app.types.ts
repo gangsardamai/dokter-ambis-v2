@@ -51,7 +51,7 @@ type LessonMessageThreads = {
     id: string;
     student_profile_id: string;
     course_id: string;
-    lesson_id: string;
+    lesson_id: string | null;
     status: LessonMessageThreadStatus;
     last_message_at: string;
     created_at: string;
@@ -61,7 +61,7 @@ type LessonMessageThreads = {
     id?: string;
     student_profile_id: string;
     course_id: string;
-    lesson_id: string;
+    lesson_id?: string | null;
     status?: LessonMessageThreadStatus;
     last_message_at?: string;
     created_at?: string;
@@ -71,7 +71,7 @@ type LessonMessageThreads = {
     id?: string;
     student_profile_id?: string;
     course_id?: string;
-    lesson_id?: string;
+    lesson_id?: string | null;
     status?: LessonMessageThreadStatus;
     last_message_at?: string;
     created_at?: string;
@@ -148,9 +148,49 @@ type LessonMessageEntries = {
   ];
 };
 
+type LessonMessageThreadReads = {
+  Row: {
+    thread_id: string;
+    profile_id: string;
+    last_read_at: string;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    thread_id: string;
+    profile_id: string;
+    last_read_at?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: {
+    thread_id?: string;
+    profile_id?: string;
+    last_read_at?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Relationships: [
+    {
+      foreignKeyName: "lesson_message_thread_reads_thread_id_fkey";
+      columns: ["thread_id"];
+      isOneToOne: false;
+      referencedRelation: "lesson_message_threads";
+      referencedColumns: ["id"];
+    },
+    {
+      foreignKeyName: "lesson_message_thread_reads_profile_id_fkey";
+      columns: ["profile_id"];
+      isOneToOne: false;
+      referencedRelation: "profiles";
+      referencedColumns: ["id"];
+    },
+  ];
+};
+
 type PublicWithApplicationExtensions = Omit<
   GeneratedPublic,
-  "Tables" | "Enums"
+  "Tables" | "Enums" | "Functions"
 > & {
   Tables: Omit<
     GeneratedPublic["Tables"],
@@ -159,6 +199,13 @@ type PublicWithApplicationExtensions = Omit<
     videos: VideosWithGoogleDrive;
     lesson_message_threads: LessonMessageThreads;
     lesson_message_entries: LessonMessageEntries;
+    lesson_message_thread_reads: LessonMessageThreadReads;
+  };
+  Functions: GeneratedPublic["Functions"] & {
+    count_unread_lesson_messages: {
+      Args: Record<PropertyKey, never>;
+      Returns: number;
+    };
   };
   Enums: Omit<
     GeneratedPublic["Enums"],

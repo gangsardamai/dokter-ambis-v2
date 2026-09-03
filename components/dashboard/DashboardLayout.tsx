@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 
+import { getLessonMessageUnreadCountAction } from "@/app/actions/lesson-message.actions";
 import type { ProfileRole } from "@/lib/dashboard-menu";
 
 import Sidebar from "./Sidebar";
@@ -34,6 +36,47 @@ export default function DashboardLayout({
   messageUnreadCount = 0,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentMessageUnreadCount, setCurrentMessageUnreadCount] = useState(
+    messageUnreadCount,
+  );
+
+  useEffect(() => {
+    function updateUnreadCount(event: Event) {
+      const detail = (event as CustomEvent<number>).detail;
+      if (Number.isFinite(detail)) setCurrentMessageUnreadCount(detail);
+    }
+
+    window.addEventListener(
+      "dashboard-message-unread-count",
+      updateUnreadCount,
+    );
+    return () => {
+      window.removeEventListener(
+        "dashboard-message-unread-count",
+        updateUnreadCount,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function refreshUnreadCount() {
+      const count = await getLessonMessageUnreadCountAction();
+      if (active) setCurrentMessageUnreadCount(count);
+    }
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshUnreadCount();
+      }
+    }, 30_000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
   const sidebarContext = useMemo(
     () => ({
       openSidebar: () => setSidebarOpen(true),
@@ -47,7 +90,7 @@ export default function DashboardLayout({
         <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">
           <Sidebar
             role={role}
-            messageUnreadCount={messageUnreadCount}
+            messageUnreadCount={currentMessageUnreadCount}
           />
         </div>
 
@@ -62,7 +105,7 @@ export default function DashboardLayout({
             <div className="relative h-full">
               <Sidebar
                 role={role}
-                messageUnreadCount={messageUnreadCount}
+                messageUnreadCount={currentMessageUnreadCount}
                 onNavigate={() => setSidebarOpen(false)}
               />
             </div>

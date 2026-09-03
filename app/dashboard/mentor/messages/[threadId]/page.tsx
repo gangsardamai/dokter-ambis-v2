@@ -1,7 +1,12 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { replyLessonMessageAsMentorAction } from "@/app/actions/lesson-message.actions";
+import {
+  PendingFormControls,
+  PendingSubmitButton,
+} from "@/components/forms/PendingForm";
+import BackButton from "@/components/messages/BackButton";
+import ThreadReadTracker from "@/components/messages/ThreadReadTracker";
 import {
   lessonMessageService,
   profileService,
@@ -16,15 +21,6 @@ function formatDate(value: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
-}
-
-function senderLabel(
-  role: "student" | "mentor" | "admin",
-  studentName: string,
-): string {
-  if (role === "admin") return "Admin Dokter Ambis";
-  if (role === "mentor") return "Mentor Dokter Ambis";
-  return studentName;
 }
 
 export default async function MentorMessageThreadPage({
@@ -42,12 +38,11 @@ export default async function MentorMessageThreadPage({
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
-      <Link
-        href="/dashboard/mentor/messages"
-        className="inline-flex min-h-10 items-center rounded-xl bg-white px-4 py-2 text-sm font-black text-blue-700 shadow-sm ring-1 ring-blue-100 hover:bg-blue-50"
-      >
-        ← Kembali ke Kotak Pesan
-      </Link>
+      <ThreadReadTracker
+        threadId={thread.id}
+        readThrough={thread.lastMessageAt}
+      />
+      <BackButton label="Kembali ke Kotak Pesan" />
 
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-center gap-2">
@@ -96,12 +91,14 @@ export default async function MentorMessageThreadPage({
               {thread.courseTitle}
             </dd>
           </div>
-          <div className="sm:col-span-2">
-            <dt className="font-black text-slate-500">Lesson</dt>
-            <dd className="mt-1 font-semibold text-slate-900">
-              {thread.lessonTitle}
-            </dd>
-          </div>
+          {thread.lessonTitle && (
+            <div className="sm:col-span-2">
+              <dt className="font-black text-slate-500">Lesson</dt>
+              <dd className="mt-1 font-semibold text-slate-900">
+                {thread.lessonTitle}
+              </dd>
+            </div>
+          )}
         </dl>
       </section>
 
@@ -120,7 +117,11 @@ export default async function MentorMessageThreadPage({
                 }`}
               >
                 <p className="text-[11px] font-black uppercase tracking-wide opacity-75">
-                  {senderLabel(entry.sender_role, thread.studentName)}
+                  {entry.senderName} · {entry.sender_role === "admin"
+                    ? "Admin"
+                    : entry.sender_role === "mentor"
+                      ? "Mentor"
+                      : "Peserta"}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">
                   {entry.message}
@@ -146,29 +147,31 @@ export default async function MentorMessageThreadPage({
             action={replyLessonMessageAsMentorAction.bind(null, thread.id)}
             className="mt-5"
           >
-            <label
-              htmlFor="message"
-              className="mb-2 block text-sm font-black text-slate-700"
-            >
-              Jawaban Mentor
-            </label>
-            <textarea
-              id="message"
-              name="message"
-              required
-              maxLength={2000}
-              rows={6}
-              placeholder="Tuliskan jawaban yang jelas dan sesuai konteks materi..."
-              className="w-full resize-y rounded-2xl border border-slate-200 px-4 py-3 text-sm leading-6 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-            />
-            <div className="mt-4 flex justify-end">
-              <button
-                type="submit"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-black text-white hover:bg-blue-700"
+            <PendingFormControls pendingMessage="Jawaban sedang dikirim. Mohon tunggu.">
+              <label
+                htmlFor="message"
+                className="mb-2 block text-sm font-black text-slate-700"
               >
-                Kirim Jawaban
-              </button>
-            </div>
+                Jawaban Mentor
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                required
+                maxLength={2000}
+                rows={6}
+                placeholder="Tuliskan jawaban yang jelas dan sesuai konteks materi..."
+                className="w-full resize-y rounded-2xl border border-slate-200 px-4 py-3 text-sm leading-6 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+              <div className="mt-4 flex justify-end">
+                <PendingSubmitButton
+                  pendingLabel="Mengirim..."
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-black text-white hover:bg-blue-700"
+                >
+                  Kirim Jawaban
+                </PendingSubmitButton>
+              </div>
+            </PendingFormControls>
           </form>
         )}
       </section>

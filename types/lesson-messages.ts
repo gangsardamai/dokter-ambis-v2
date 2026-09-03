@@ -6,12 +6,16 @@ import type {
 export type LessonMessageEntry =
   Database["public"]["Tables"]["lesson_message_entries"]["Row"];
 
+export type LessonMessageDisplayEntry = LessonMessageEntry & {
+  senderName: string;
+};
+
 export interface StudentLessonMessageThread {
   id: string;
   lessonId: string;
   status: LessonMessageThreadStatus;
   lastMessageAt: string;
-  messages: LessonMessageEntry[];
+  messages: LessonMessageDisplayEntry[];
 }
 
 export interface AdminLessonMessageListItem {
@@ -25,13 +29,15 @@ export interface AdminLessonMessageListItem {
   courseTitle: string;
   courseUniversity: string;
   programTitle: string;
-  lessonId: string;
-  lessonTitle: string;
+  lessonId: string | null;
+  lessonTitle: string | null;
   latestMessage: string;
   latestSenderRole: "student" | "mentor" | "admin";
+  latestSenderName: string;
+  unreadCount: number;
 }
 
 export interface AdminLessonMessageThreadDetail
   extends AdminLessonMessageListItem {
-  messages: LessonMessageEntry[];
+  messages: LessonMessageDisplayEntry[];
 }

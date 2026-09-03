@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import {
   dashboardMenus,
@@ -63,6 +64,14 @@ export default function Sidebar({
   const pathname = usePathname();
   const menu = dashboardMenus[role];
   const homeHref = homeHrefByRole[role];
+  const [pendingNavigation, setPendingNavigation] = useState<{
+    href: string;
+    sourcePath: string;
+  } | null>(null);
+  const pendingHref =
+    pendingNavigation?.sourcePath === pathname
+      ? pendingNavigation.href
+      : null;
 
   return (
     <aside className="flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden bg-gradient-to-b from-[#1769cf] via-[#033b63] to-[#061827] text-white shadow-2xl lg:w-72 lg:shadow-none">
@@ -71,7 +80,13 @@ export default function Sidebar({
 
         <Link
           href={homeHref}
-          onClick={onNavigate}
+          onClick={() => {
+            if (pathname !== homeHref) {
+              setPendingNavigation({ href: homeHref, sourcePath: pathname });
+            }
+            onNavigate?.();
+          }}
+          aria-busy={pendingHref === homeHref || undefined}
           className="relative flex min-w-0 items-center gap-3"
           aria-label={`DokterAmbis — ${consoleLabelByRole[role]}`}
         >
@@ -119,15 +134,25 @@ export default function Sidebar({
                     ? "/dashboard/admin/messages"
                     : role === "mentor"
                       ? "/dashboard/mentor/messages"
-                      : null;
+                      : "/dashboard/student/messages";
                 const showMessageBadge =
                   item.href === messageHref && messageUnreadCount > 0;
+                const pending = pendingHref === item.href;
 
                 return (
                   <Link
                     key={`${section.title}-${item.title}`}
                     href={item.href}
-                    onClick={onNavigate}
+                    onClick={() => {
+                      if (pathname !== item.href) {
+                        setPendingNavigation({
+                          href: item.href,
+                          sourcePath: pathname,
+                        });
+                      }
+                      onNavigate?.();
+                    }}
+                    aria-busy={pending || undefined}
                     aria-current={active ? "page" : undefined}
                     className={`group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                       active
@@ -136,7 +161,23 @@ export default function Sidebar({
                     }`}
                   >
                     <span>{item.title}</span>
-                    {showMessageBadge ? (
+                    {pending ? (
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 shrink-0 animate-spin"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <circle cx="12" cy="12" r="9" className="opacity-25" />
+                        <path
+                          d="M21 12a9 9 0 0 0-9-9"
+                          className="opacity-90"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    ) : showMessageBadge ? (
                       <span
                         className={`inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-black ${
                           active

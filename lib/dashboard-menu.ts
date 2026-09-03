@@ -129,6 +129,10 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
           href: "/dashboard/student/course",
         },
         {
+          title: "Kotak Pesan",
+          href: "/dashboard/student/messages",
+        },
+        {
           title: "Profil",
           href: "/dashboard/student/profile",
         },

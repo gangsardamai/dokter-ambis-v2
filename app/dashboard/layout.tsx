@@ -37,16 +37,11 @@ export default async function DashboardRootLayout({
 
   let messageUnreadCount = 0;
 
-  if (profile.role === "admin" || profile.role === "mentor") {
-    try {
-      messageUnreadCount =
-        profile.role === "admin"
-          ? await lessonMessageService.countOpenThreads()
-          : await lessonMessageService.countOpenThreadsForMentor(profile.id);
-    } catch {
-      // Migration pesan mungkin belum diterapkan pada environment ini.
-      messageUnreadCount = 0;
-    }
+  try {
+    messageUnreadCount = await lessonMessageService.countUnreadMessages();
+  } catch {
+    // Migration pesan mungkin belum diterapkan pada environment ini.
+    messageUnreadCount = 0;
   }
 
   return (

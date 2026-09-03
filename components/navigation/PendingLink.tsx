@@ -14,11 +14,13 @@ interface PendingLinkProps
   extends Omit<NextLinkProps, "children" | "onNavigate"> {
   children: ReactNode;
   pendingLabel?: string;
+  contentClassName?: string;
 }
 
 export default function PendingLink({
   children,
   pendingLabel = "Memuat...",
+  contentClassName,
   className,
   ...props
 }: PendingLinkProps) {
@@ -44,7 +46,7 @@ export default function PendingLink({
       }`}
     >
       <span
-        className="inline-flex items-center justify-center gap-2"
+        className={contentClassName ?? "inline-flex items-center justify-center gap-2"}
         aria-live="polite"
       >
         {pending && (

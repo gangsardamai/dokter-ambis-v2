@@ -10,6 +10,7 @@ import {
   sendLessonMessageAction,
   type LessonMessageActionResult,
 } from "@/app/actions/lesson-message.actions";
+import ThreadReadTracker from "@/components/messages/ThreadReadTracker";
 import type { StudentLessonMessageThread } from "@/types/lesson-messages";
 
 interface LessonMessageThreadProps {
@@ -58,6 +59,12 @@ export default function LessonMessageThread({
 
   return (
     <section className="mt-4 rounded-2xl border border-blue-100 bg-white p-4 sm:p-5">
+      {thread && (
+        <ThreadReadTracker
+          threadId={thread.id}
+          readThrough={thread.lastMessageAt}
+        />
+      )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-slate-900">
@@ -102,11 +109,10 @@ export default function LessonMessageThread({
                 }`}
               >
                 <p className="text-[11px] font-black uppercase tracking-wide opacity-75">
-                  {entry.sender_role === "admin"
-                    ? "Admin Dokter Ambis"
-                    : entry.sender_role === "mentor"
-                      ? "Mentor Dokter Ambis"
-                      : "Anda"}
+                  {entry.sender_role === "student" ? "Anda" : entry.senderName}
+                  {entry.sender_role !== "student" && (
+                    <> · {entry.sender_role === "mentor" ? "Mentor" : "Admin"}</>
+                  )}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap break-words leading-6">
                   {entry.message}
@@ -146,6 +152,23 @@ export default function LessonMessageThread({
             onClick={submitMessage}
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            {pending && (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="mr-2 h-4 w-4 animate-spin"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <circle cx="12" cy="12" r="9" className="opacity-25" />
+                <path
+                  d="M21 12a9 9 0 0 0-9-9"
+                  className="opacity-90"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
             {pending ? "Mengirim..." : "Kirim Pesan"}
           </button>
         </div>

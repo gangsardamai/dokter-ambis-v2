@@ -190,15 +190,17 @@ export default async function MentorMessagesPage({
                     >
                       {statusLabel(thread.status)}
                     </span>
+                    {thread.unreadCount > 0 && (
+                      <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-400 px-2 py-1 text-[11px] font-black text-amber-950">
+                        {thread.unreadCount > 99 ? "99+" : thread.unreadCount}
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">
-                    Universitas peserta: {thread.studentUniversity ?? "Belum diisi"}
-                  </p>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-blue-700">
-                    <span>{thread.courseUniversity}</span>
-                    <span>{thread.programTitle}</span>
                     <span>{thread.courseTitle}</span>
-                    <span>{thread.lessonTitle}</span>
+                    {thread.lessonTitle && (
+                      <span>Lesson: {thread.lessonTitle}</span>
+                    )}
                   </div>
                   <p className="mt-4 line-clamp-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
                     {thread.latestMessage}
@@ -207,7 +209,7 @@ export default async function MentorMessagesPage({
                 <div className="shrink-0 text-xs font-semibold text-slate-400 lg:text-right">
                   <p>{formatDate(thread.lastMessageAt)}</p>
                   <p className="mt-1">
-                    Pesan terakhir: {thread.latestSenderRole === "student"
+                    Pesan terakhir: {thread.latestSenderName} · {thread.latestSenderRole === "student"
                       ? "Peserta"
                       : thread.latestSenderRole === "mentor"
                         ? "Mentor"
