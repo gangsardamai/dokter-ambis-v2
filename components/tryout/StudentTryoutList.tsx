@@ -31,11 +31,18 @@ export default function StudentTryoutList({
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
-      {tryouts.map((tryout) => (
-        <article
-          key={tryout.id}
-          className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5"
-        >
+      {tryouts.map((tryout) => {
+        const latestAttempt = tryout.completedAttempts.at(-1);
+        const canOpenCompletedAttempt = Boolean(
+          latestAttempt && (tryout.resultReleased || tryout.reviewReleased),
+        );
+        const canOpen = tryout.isAvailable || canOpenCompletedAttempt;
+
+        return (
+          <article
+            key={tryout.id}
+            className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5"
+          >
           <div className="bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-5 text-white sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
@@ -119,17 +126,23 @@ export default function StudentTryoutList({
                   : `/dashboard/student/tryout/${tryout.id}`
               }
               className={`mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-2.5 text-sm font-black transition ${
-                tryout.isAvailable
+                canOpen
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "pointer-events-none bg-slate-100 text-slate-400"
               }`}
-              aria-disabled={!tryout.isAvailable}
+              aria-disabled={!canOpen}
             >
-              {tryout.activeAttemptId ? "Lanjutkan Try Out" : "Lihat Try Out"}
+              {tryout.activeAttemptId
+                ? "Lanjutkan Try Out"
+                : tryout.attemptsUsed >= tryout.max_attempts &&
+                    canOpenCompletedAttempt
+                  ? "Lihat Hasil & Pembahasan"
+                  : "Lihat Try Out"}
             </Link>
           </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }

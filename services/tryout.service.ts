@@ -184,18 +184,32 @@ export class TryoutService {
       );
       const summary = summaryByTryout.get(tryout.id);
       const activeAttemptId = summary?.active_attempt_id ?? null;
+      const attemptsUsed = summary?.attempts_used ?? 0;
+      const completedAttempts = (summary?.completed_attempts ?? []).map(
+        (attempt) => ({
+          attemptId: attempt.attempt_id,
+          attemptNumber: attempt.attempt_number,
+          score: attempt.score,
+          status: attempt.status,
+          submittedAt: attempt.submitted_at,
+        }),
+      );
 
       return {
         ...tryout,
-        attemptsUsed: summary?.attempts_used ?? 0,
+        attemptsUsed,
         bestScore: summary?.best_score ?? null,
         passed: summary?.passed ?? false,
         resultReleased: summary?.result_released ?? false,
+        reviewReleased: summary?.review_released ?? false,
         activeAttemptId,
+        completedAttempts,
         isAvailable: availability.available || Boolean(activeAttemptId),
         availabilityLabel: activeAttemptId
           ? "Sedang dikerjakan"
-          : availability.label,
+          : attemptsUsed >= tryout.max_attempts
+            ? "Selesai"
+            : availability.label,
       };
     });
   }

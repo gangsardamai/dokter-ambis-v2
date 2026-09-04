@@ -73,15 +73,39 @@ export async function GET(request: Request, context: Context) {
     }
 
     const payload = data as unknown as TryoutAttemptPayload;
-    if (payload.tryout_id !== tryoutId) {
+    if (payload.status === "in_progress" && payload.tryout_id !== tryoutId) {
       return NextResponse.json(
         { message: "Attempt tidak sesuai Try Out." },
         { status: 403 },
       );
     }
-    filePath =
-      payload.questions?.find((item) => item.id === questionId)?.image_path ??
-      null;
+    if (payload.status === "in_progress") {
+      filePath =
+        payload.questions?.find((item) => item.id === questionId)?.image_path ??
+        null;
+    } else {
+      const { data: reviewData, error: reviewError } = await supabase.rpc(
+        "get_tryout_review",
+        { target_attempt_id: attemptId },
+      );
+      if (reviewError || !reviewData) {
+        return NextResponse.json(
+          { message: reviewError?.message ?? "Gambar tidak dapat diakses." },
+          { status: 403 },
+        );
+      }
+
+      const review = reviewData as unknown as TryoutReviewPayload;
+      if (!review.released || review.tryout_id !== tryoutId) {
+        return NextResponse.json(
+          { message: "Pembahasan belum dapat diakses." },
+          { status: 403 },
+        );
+      }
+      filePath =
+        review.questions?.find((item) => item.id === questionId)?.image_path ??
+        null;
+    }
   } else if (attemptId && kind === "explanation") {
     const { data, error } = await supabase.rpc("get_tryout_review", {
       target_attempt_id: attemptId,

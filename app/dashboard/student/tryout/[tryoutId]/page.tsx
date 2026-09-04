@@ -23,6 +23,10 @@ function formatDate(value: string | null): string {
   }).format(new Date(value));
 }
 
+function formatAttemptStatus(status: "submitted" | "expired"): string {
+  return status === "expired" ? "Dikirim otomatis" : "Selesai";
+}
+
 export default async function StudentTryoutDetailPage({
   params,
   searchParams,
@@ -47,6 +51,7 @@ export default async function StudentTryoutDetailPage({
     0,
   );
   const startAction = startTryoutAction.bind(null, tryoutId);
+  const latestAttempt = tryout.completedAttempts.at(-1);
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-7 p-4 sm:p-6 lg:p-8">
@@ -149,6 +154,60 @@ export default async function StudentTryoutDetailPage({
         </section>
       )}
 
+      {tryout.completedAttempts.length > 0 &&
+        (tryout.resultReleased || tryout.reviewReleased) && (
+          <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="text-xl font-black text-slate-950">
+              Riwayat Percobaan
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Pilih percobaan untuk melihat soal, jawaban Anda, kunci jawaban,
+              dan pembahasan.
+            </p>
+            <div className="mt-5 space-y-3">
+              {tryout.completedAttempts.map((attempt) => (
+                <article
+                  key={attempt.attemptId}
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-black text-slate-900">
+                      Percobaan {attempt.attemptNumber}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      {formatAttemptStatus(attempt.status)}
+                      {attempt.score !== null
+                        ? ` · Nilai ${Math.round(attempt.score)}`
+                        : ""}
+                      {attempt.submittedAt
+                        ? ` · ${formatDate(attempt.submittedAt)}`
+                        : ""}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {tryout.resultReleased && (
+                      <Link
+                        href={`/dashboard/student/tryout/result/${attempt.attemptId}`}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-50"
+                      >
+                        Lihat Hasil
+                      </Link>
+                    )}
+                    {tryout.reviewReleased && (
+                      <Link
+                        href={`/dashboard/student/tryout/review/${attempt.attemptId}`}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white transition hover:bg-blue-700"
+                      >
+                        Lihat Pembahasan
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
         {tryout.activeAttemptId ? (
           <Link
@@ -166,6 +225,19 @@ export default async function StudentTryoutDetailPage({
               Mulai Try Out Sekarang
             </button>
           </form>
+        ) : attemptsRemaining === 0 &&
+          latestAttempt &&
+          (tryout.resultReleased || tryout.reviewReleased) ? (
+          <Link
+            href={
+              tryout.resultReleased
+                ? `/dashboard/student/tryout/result/${latestAttempt.attemptId}`
+                : `/dashboard/student/tryout/review/${latestAttempt.attemptId}`
+            }
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-base font-black text-white transition hover:bg-blue-700"
+          >
+            Lihat Hasil & Pembahasan
+          </Link>
         ) : (
           <button
             type="button"

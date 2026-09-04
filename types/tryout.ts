@@ -73,7 +73,25 @@ export interface StudentTryoutSummary {
   best_score: number | null;
   passed: boolean;
   result_released: boolean;
+  review_released: boolean;
   active_attempt_id: string | null;
+  completed_attempts: StudentTryoutAttemptSummary[];
+}
+
+export interface StudentTryoutAttemptSummary {
+  attempt_id: string;
+  attempt_number: number;
+  score: number | null;
+  status: "submitted" | "expired";
+  submitted_at: string | null;
+}
+
+export interface StudentTryoutCompletedAttempt {
+  attemptId: string;
+  attemptNumber: number;
+  score: number | null;
+  status: "submitted" | "expired";
+  submittedAt: string | null;
 }
 
 export interface StudentTryoutListItem extends Tryout {
@@ -81,7 +99,9 @@ export interface StudentTryoutListItem extends Tryout {
   bestScore: number | null;
   passed: boolean;
   resultReleased: boolean;
+  reviewReleased: boolean;
   activeAttemptId: string | null;
+  completedAttempts: StudentTryoutCompletedAttempt[];
   isAvailable: boolean;
   availabilityLabel: string;
 }
