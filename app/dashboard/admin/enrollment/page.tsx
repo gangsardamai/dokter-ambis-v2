@@ -4,12 +4,14 @@ import type { ReactNode } from "react";
 import type { Database } from "@/supabase/types/database.extended.types";
 import { PageHeader } from "@/components/admin";
 import { BulkApprovalButtons } from "@/components/admin/enrollment/BulkApprovalButtons";
-import { enrollmentService } from "@/services";
+import { enrollmentListRepository } from "@/repositories/enrollment-list.repository";
+import { courseService, programService } from "@/services";
 
 type EnrollmentStatus = Database["public"]["Enums"]["enrollment_status"];
 type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 type PaymentTiming = Database["public"]["Enums"]["payment_timing"];
 type SearchParams = Record<string, string | string[] | undefined>;
+type EnrollmentSort = "date_desc" | "date_asc" | "name_asc" | "name_desc";
 
 interface EnrollmentPageProps {
   searchParams: Promise<SearchParams>;
@@ -24,9 +26,41 @@ const enrollmentStatuses: EnrollmentStatus[] = [
 ];
 const paymentStatuses: PaymentStatus[] = ["pending", "approved", "rejected"];
 const paymentTimings: PaymentTiming[] = ["upfront", "deferred"];
+const enrollmentSorts: EnrollmentSort[] = [
+  "date_desc",
+  "date_asc",
+  "name_asc",
+  "name_desc",
+];
 
 function getStringParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
+}
+
+function getPageParam(value: string | string[] | undefined): number {
+  const page = Number.parseInt(getStringParam(value), 10);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function buildPageHref(params: SearchParams, page: number): string {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "page" || value === undefined) continue;
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item) query.append(key, item);
+      }
+    } else if (value) {
+      query.set(key, value);
+    }
+  }
+
+  if (page > 1) query.set("page", String(page));
+
+  const queryString = query.toString();
+  return `/dashboard/admin/enrollment${queryString ? `?${queryString}` : ""}`;
 }
 
 function formatCurrency(value: number): string {
@@ -109,15 +143,18 @@ export default async function EnrollmentPage({
   searchParams,
 }: EnrollmentPageProps) {
   const params = await searchParams;
-  const enrollments = await enrollmentService.getEnrollments();
 
-  const searchQuery = getStringParam(params.q).trim().toLowerCase();
+  const searchQuery = getStringParam(params.q).trim();
   const enrollmentStatusValue = getStringParam(params.enrollmentStatus);
   const paymentStatusValue = getStringParam(params.paymentStatus);
   const paymentTimingValue = getStringParam(params.paymentTiming);
   const selectedCourseId = getStringParam(params.courseId);
   const selectedProgramId = getStringParam(params.programId);
-  const selectedSort = getStringParam(params.sort) || "date_desc";
+  const sortValue = getStringParam(params.sort);
+  const selectedSort = enrollmentSorts.includes(sortValue as EnrollmentSort)
+    ? (sortValue as EnrollmentSort)
+    : "date_desc";
+  const selectedPage = getPageParam(params.page);
 
   const selectedEnrollmentStatus = enrollmentStatuses.includes(
     enrollmentStatusValue as EnrollmentStatus,
@@ -135,68 +172,42 @@ export default async function EnrollmentPage({
     ? (paymentTimingValue as PaymentTiming)
     : "all";
 
-  const courseOptions = Array.from(
-    new Map(
-      enrollments
-        .filter((item) => item.courses)
-        .map((item) => [item.courses!.id, item.courses!.title]),
-    ),
-  ).sort((a, b) => a[1].localeCompare(b[1], "id"));
-  const programOptions = Array.from(
-    new Map(
-      enrollments
-        .filter((item) => item.courses?.programs)
-        .map((item) => [
-          item.courses!.programs!.id,
-          item.courses!.programs!.title,
-        ]),
-    ),
-  ).sort((a, b) => a[1].localeCompare(b[1], "id"));
+  const [enrollmentResult, courses, programs] = await Promise.all([
+    enrollmentListRepository.getList({
+      q: searchQuery || undefined,
+      enrollmentStatus:
+        selectedEnrollmentStatus === "all"
+          ? undefined
+          : selectedEnrollmentStatus,
+      paymentStatus:
+        selectedPaymentStatus === "all"
+          ? undefined
+          : (selectedPaymentStatus as PaymentStatus | "none"),
+      paymentTiming:
+        selectedPaymentTiming === "all" ? undefined : selectedPaymentTiming,
+      courseId: selectedCourseId || undefined,
+      programId: selectedProgramId || undefined,
+      sort: selectedSort,
+      page: selectedPage,
+    }),
+    courseService.getCourses(),
+    programService.getPrograms(),
+  ]);
 
-  const filteredEnrollments = enrollments
-    .filter((enrollment) => {
-      const profile = enrollment.profiles;
-      const course = enrollment.courses;
-      const payment = enrollment.payments;
-      const searchableText = [
-        profile?.full_name,
-        profile?.phone,
-        course?.title,
-        course?.slug,
-        course?.organizations?.title,
-        course?.programs?.title,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+  const enrollments = enrollmentResult.data;
+  const totalEnrollments = enrollmentResult.total;
+  const currentPage = enrollmentResult.page;
+  const perPage = enrollmentResult.perPage;
+  const totalPages = Math.max(1, Math.ceil(totalEnrollments / perPage));
+  const firstShown = totalEnrollments === 0 ? 0 : (currentPage - 1) * perPage + 1;
+  const lastShown = Math.min(currentPage * perPage, totalEnrollments);
 
-      return (
-        (!searchQuery || searchableText.includes(searchQuery)) &&
-        (selectedEnrollmentStatus === "all" ||
-          enrollment.status === selectedEnrollmentStatus) &&
-        (selectedPaymentStatus === "all" ||
-          (selectedPaymentStatus === "none" && !payment) ||
-          (selectedPaymentStatus !== "none" &&
-            payment?.status === selectedPaymentStatus)) &&
-        (selectedPaymentTiming === "all" ||
-          enrollment.payment_timing === selectedPaymentTiming) &&
-        (!selectedCourseId || course?.id === selectedCourseId) &&
-        (!selectedProgramId || course?.programs?.id === selectedProgramId)
-      );
-    })
-    .sort((a, b) => {
-      if (selectedSort === "name_asc" || selectedSort === "name_desc") {
-        const result = (a.profiles?.full_name ?? "").localeCompare(
-          b.profiles?.full_name ?? "",
-          "id",
-        );
-        return selectedSort === "name_desc" ? -result : result;
-      }
-
-      const result =
-        new Date(b.enrolled_at).getTime() - new Date(a.enrolled_at).getTime();
-      return selectedSort === "date_asc" ? -result : result;
-    });
+  const courseOptions = courses
+    .map((course) => [course.id, course.title] as const)
+    .sort((a, b) => a[1].localeCompare(b[1], "id"));
+  const programOptions = programs
+    .map((program) => [program.id, program.title] as const)
+    .sort((a, b) => a[1].localeCompare(b[1], "id"));
 
   const hasActiveFilter =
     Boolean(searchQuery) ||
@@ -332,19 +343,19 @@ export default async function EnrollmentPage({
             </Link>
           )}
           <p className="text-sm text-slate-500 sm:ml-auto">
-            Menampilkan <strong>{filteredEnrollments.length}</strong> dari{" "}
-            <strong>{enrollments.length}</strong> enrollment
+            Menampilkan <strong>{firstShown}–{lastShown}</strong> dari{" "}
+            <strong>{totalEnrollments}</strong> enrollment
           </p>
         </div>
       </form>
 
-      {filteredEnrollments.length === 0 ? (
+      {enrollments.length === 0 ? (
         <div className="rounded-3xl border border-blue-100 bg-white p-8 text-center shadow-sm">
           <p className="font-bold text-slate-950">Tidak ada enrollment yang ditemukan.</p>
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {filteredEnrollments.map((enrollment) => {
+          {enrollments.map((enrollment) => {
             const profile = enrollment.profiles;
             const course = enrollment.courses;
             const payment = enrollment.payments;
@@ -423,6 +434,44 @@ export default async function EnrollmentPage({
             );
           })}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <nav
+          aria-label="Pagination enrollment"
+          className="flex flex-col items-center justify-between gap-3 rounded-3xl border border-blue-100 bg-white p-4 shadow-sm sm:flex-row"
+        >
+          <p className="text-sm font-semibold text-slate-600">
+            Halaman <strong>{currentPage}</strong> dari <strong>{totalPages}</strong>
+          </p>
+          <div className="flex items-center gap-2">
+            {currentPage > 1 ? (
+              <Link
+                href={buildPageHref(params, currentPage - 1)}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+              >
+                Sebelumnya
+              </Link>
+            ) : (
+              <span className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl border border-slate-100 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-300">
+                Sebelumnya
+              </span>
+            )}
+
+            {currentPage < totalPages ? (
+              <Link
+                href={buildPageHref(params, currentPage + 1)}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-sm font-bold text-white"
+              >
+                Berikutnya
+              </Link>
+            ) : (
+              <span className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-300">
+                Berikutnya
+              </span>
+            )}
+          </div>
+        </nav>
       )}
     </main>
   );
