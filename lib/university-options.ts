@@ -33,9 +33,74 @@ export const UNIVERSITY_OPTIONS = [
   "Universitas YARSI",
 ] as const;
 
+function normalizeUniversityName(value: string): string {
+  return value
+    .replace(/\s*\([^)]{1,20}\)\s*$/, "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " dan ")
+    .replace(/\b(?:university|univ)\b/g, "universitas")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(
+      /^(?:fk|fakultas kedokteran(?: dan ilmu kesehatan)?)\s+/,
+      "",
+    )
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+export function shouldIncludeOrganizationAsUniversity(
+  organizationName: string,
+): boolean {
+  const normalized = normalizeUniversityName(organizationName);
+
+  if (!normalized || normalized.includes("ukmppd")) {
+    return false;
+  }
+
+  if (
+    normalized.includes("nasional") &&
+    !normalized.startsWith("universitas nasional")
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function mergeUniversityOptions(
+  organizationNames: readonly string[],
+): string[] {
+  const options: string[] = [];
+  const seen = new Set<string>();
+
+  const addOption = (rawName: string) => {
+    const name = rawName.trim();
+    const comparisonKey = normalizeUniversityName(name);
+
+    if (!name || !comparisonKey || seen.has(comparisonKey)) {
+      return;
+    }
+
+    seen.add(comparisonKey);
+    options.push(name);
+  };
+
+  UNIVERSITY_OPTIONS.forEach(addOption);
+  organizationNames
+    .filter(shouldIncludeOrganizationAsUniversity)
+    .forEach(addOption);
+
+  return options.sort((left, right) =>
+    left.localeCompare(right, "id-ID", { sensitivity: "base" }),
+  );
+}
+
 export function resolveUniversityOrigin(
   selectedUniversity: string,
   otherUniversity: string,
+  allowedUniversities: readonly string[] = UNIVERSITY_OPTIONS,
 ): string | null {
   if (selectedUniversity === OTHER_UNIVERSITY_VALUE) {
     const customUniversity = otherUniversity.trim();
@@ -46,9 +111,10 @@ export function resolveUniversityOrigin(
       : null;
   }
 
-  return UNIVERSITY_OPTIONS.includes(
-    selectedUniversity as (typeof UNIVERSITY_OPTIONS)[number],
-  )
-    ? selectedUniversity
-    : null;
+  const selectedKey = normalizeUniversityName(selectedUniversity);
+  const matchedUniversity = allowedUniversities.find(
+    (university) => normalizeUniversityName(university) === selectedKey,
+  );
+
+  return matchedUniversity ?? null;
 }
