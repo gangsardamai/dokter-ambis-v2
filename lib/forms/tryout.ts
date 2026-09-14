@@ -95,7 +95,7 @@ export function parseTryoutForm(
     closeAt,
     resultReleaseMode,
     reviewReleaseMode,
-    shuffleQuestions: formData.get("shuffleQuestions") === "on",
+    shuffleQuestions: false,
     shuffleOptions: formData.get("shuffleOptions") === "on",
     publicationStatus,
   };
