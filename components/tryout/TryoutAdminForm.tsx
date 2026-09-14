@@ -209,15 +209,9 @@ export default function TryoutAdminForm({
       </div>
 
       <div className="grid gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-2">
-        <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-slate-700">
-          <input
-            name="shuffleQuestions"
-            type="checkbox"
-            defaultChecked={tryout?.shuffle_questions ?? true}
-            className="h-4 w-4 rounded border-slate-300 text-blue-600"
-          />
-          Acak urutan soal
-        </label>
+        <div className="rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold text-slate-700">
+          Urutan soal mengikuti nomor soal/file sumber dan tidak diacak.
+        </div>
         <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-slate-700">
           <input
             name="shuffleOptions"
