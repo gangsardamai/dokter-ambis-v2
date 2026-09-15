@@ -13,6 +13,26 @@ export interface LessonMessageActionResult {
   message: string;
 }
 
+type MessageProfileRole = "student" | "mentor" | "admin";
+
+async function getMessageNotificationCount(
+  profileId: string,
+  role: MessageProfileRole,
+): Promise<number> {
+  const threads =
+    role === "student"
+      ? await lessonMessageService.getStudentInbox(profileId)
+      : role === "mentor"
+        ? await lessonMessageService.getMentorInbox(profileId)
+        : await lessonMessageService.getAdminInbox(profileId);
+
+  return threads.filter(
+    (thread) =>
+      thread.status === "open" &&
+      thread.latestSenderRole === "student",
+  ).length;
+}
+
 export async function sendLessonMessageAction(
   courseId: string,
   lessonId: string,
@@ -39,6 +59,7 @@ export async function sendLessonMessageAction(
     revalidatePath("/dashboard/student/messages");
     revalidatePath("/dashboard/admin/messages");
     revalidatePath("/dashboard/mentor/messages");
+    revalidatePath("/dashboard", "layout");
 
     return {
       success: true,
@@ -87,6 +108,7 @@ export async function createStudentCourseQuestionAction(
   revalidatePath("/dashboard/student/messages");
   revalidatePath("/dashboard/admin/messages");
   revalidatePath("/dashboard/mentor/messages");
+  revalidatePath("/dashboard", "layout");
   redirect(`/dashboard/student/messages/${threadId}`);
 }
 
@@ -110,6 +132,7 @@ export async function replyStudentMessageAction(
     revalidatePath(`/dashboard/student/messages/${threadId}`);
     revalidatePath("/dashboard/admin/messages");
     revalidatePath("/dashboard/mentor/messages");
+    revalidatePath("/dashboard", "layout");
     return { success: true, message: "Pesan berhasil dikirim." };
   } catch (error) {
     return {
@@ -128,22 +151,26 @@ export async function markLessonMessageThreadReadAction(
   if (!profile) return 0;
 
   try {
-    const count = await lessonMessageService.markThreadRead(
+    await lessonMessageService.markThreadRead(
       profile.id,
       threadId,
       readThrough,
     );
     revalidatePath("/dashboard", "layout");
-    return count;
+    return getMessageNotificationCount(profile.id, profile.role);
   } catch {
-    return lessonMessageService.countUnreadMessages().catch(() => 0);
+    return getMessageNotificationCount(profile.id, profile.role).catch(
+      () => 0,
+    );
   }
 }
 
 export async function getLessonMessageUnreadCountAction(): Promise<number> {
   const profile = await profileService.getCurrentProfile();
   if (!profile) return 0;
-  return lessonMessageService.countUnreadMessages().catch(() => 0);
+  return getMessageNotificationCount(profile.id, profile.role).catch(
+    () => 0,
+  );
 }
 
 export async function replyLessonMessageAction(
@@ -168,8 +195,8 @@ export async function replyLessonMessageAction(
   revalidatePath(`/dashboard/mentor/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
   revalidatePath("/dashboard/student/messages");
+  revalidatePath("/dashboard", "layout");
 }
-
 
 export async function replyLessonMessageAsMentorAction(
   threadId: string,
@@ -193,6 +220,7 @@ export async function replyLessonMessageAsMentorAction(
   revalidatePath(`/dashboard/admin/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
   revalidatePath("/dashboard/student/messages");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function closeLessonMessageThreadAction(
@@ -214,6 +242,7 @@ export async function closeLessonMessageThreadAction(
   revalidatePath(`/dashboard/mentor/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
   revalidatePath("/dashboard/student/messages");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function reopenLessonMessageThreadAction(
@@ -235,4 +264,5 @@ export async function reopenLessonMessageThreadAction(
   revalidatePath(`/dashboard/mentor/messages/${threadId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
   revalidatePath("/dashboard/student/messages");
+  revalidatePath("/dashboard", "layout");
 }
