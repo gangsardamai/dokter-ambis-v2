@@ -16,6 +16,26 @@ interface DashboardRootLayoutProps {
   children: ReactNode;
 }
 
+type MessageProfileRole = "student" | "mentor" | "admin";
+
+async function getMessageNotificationCount(
+  profileId: string,
+  role: MessageProfileRole,
+): Promise<number> {
+  const threads =
+    role === "student"
+      ? await lessonMessageService.getStudentInbox(profileId)
+      : role === "mentor"
+        ? await lessonMessageService.getMentorInbox(profileId)
+        : await lessonMessageService.getAdminInbox(profileId);
+
+  return threads.filter(
+    (thread) =>
+      thread.status === "open" &&
+      thread.latestSenderRole === "student",
+  ).length;
+}
+
 export default async function DashboardRootLayout({
   children,
 }: DashboardRootLayoutProps) {
@@ -38,9 +58,12 @@ export default async function DashboardRootLayout({
   let messageUnreadCount = 0;
 
   try {
-    messageUnreadCount = await lessonMessageService.countUnreadMessages();
+    messageUnreadCount = await getMessageNotificationCount(
+      profile.id,
+      profile.role,
+    );
   } catch {
-    // Migration pesan mungkin belum diterapkan pada environment ini.
+    // Fitur pesan mungkin belum tersedia pada environment ini.
     messageUnreadCount = 0;
   }
 
