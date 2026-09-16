@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/admin";
+import { PendingSubmitButton } from "@/components/forms/PendingForm";
 import TryoutAdminForm from "@/components/tryout/TryoutAdminForm";
 import {
   mentorCourseAccessService,
@@ -98,18 +99,18 @@ export default async function EditMentorTryoutPage({
       <section className="rounded-3xl border border-red-100 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="font-black text-red-700">Hapus Try Out</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          Try Out hanya dapat dihapus sebelum peserta mulai mengerjakan.
+          Seluruh soal, attempt, jawaban, dan hasil peserta pada Try Out ini akan ikut terhapus.
         </p>
         <form
           action={deleteMentorTryoutAction.bind(null, tryoutId)}
           className="mt-4"
         >
-          <button
-            type="submit"
-            className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-black text-red-700 hover:bg-red-100"
+          <PendingSubmitButton
+            pendingLabel="Menghapus..."
+            className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:cursor-wait disabled:opacity-80"
           >
             Hapus Try Out
-          </button>
+          </PendingSubmitButton>
         </form>
       </section>
     </main>
