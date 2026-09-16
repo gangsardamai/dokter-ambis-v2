@@ -1,3 +1,4 @@
+import { PendingSubmitButton } from "@/components/forms/PendingForm";
 import type { Tryout } from "@/types/tryout";
 
 interface CourseOption {
@@ -224,12 +225,12 @@ export default function TryoutAdminForm({
       </div>
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-[#033b63] px-6 py-2.5 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+        <PendingSubmitButton
+          pendingLabel="Menyimpan..."
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-[#033b63] px-6 py-2.5 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-wait disabled:hover:translate-y-0"
         >
           {submitLabel}
-        </button>
+        </PendingSubmitButton>
       </div>
     </form>
   );
