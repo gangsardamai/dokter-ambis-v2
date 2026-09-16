@@ -11,7 +11,53 @@ export type DeviceSessionInsert =
 export type DeviceSessionUpdate =
   Database["public"]["Tables"]["device_sessions"]["Update"];
 
+type DeviceType =
+  Database["public"]["Enums"]["device_type"];
+
+interface RegisterOrRefreshStudentDeviceData {
+  deviceIdentifier: string;
+  deviceName: string;
+  deviceType: DeviceType;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+}
+
 export class DeviceRepository extends BaseRepository {
+  async registerOrRefreshStudentDevice(
+    data: RegisterOrRefreshStudentDeviceData,
+  ): Promise<void> {
+    const supabase =
+      await this.db();
+
+    /*
+     * Registration, stale-device cleanup, and the 2-device limit are
+     * intentionally handled in one database transaction. The cast is
+     * temporary compatibility for generated types that may lag migrations.
+     */
+    const { error } = await supabase.rpc(
+      "register_or_refresh_student_device" as never,
+      {
+        p_device_identifier:
+          data.deviceIdentifier,
+        p_device_name:
+          data.deviceName,
+        p_device_type:
+          data.deviceType,
+        p_user_agent:
+          data.userAgent ?? null,
+        p_ip_address:
+          data.ipAddress ?? null,
+      } as never,
+    );
+
+    if (error) {
+      throw new Error(
+        error.message ||
+          "Perangkat tidak dapat didaftarkan.",
+      );
+    }
+  }
+
   async getActiveByProfile(
     profileId: string,
   ): Promise<DeviceSession[]> {
