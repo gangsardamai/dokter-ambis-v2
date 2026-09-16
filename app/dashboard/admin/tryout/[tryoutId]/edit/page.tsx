@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin";
+import { PendingSubmitButton } from "@/components/forms/PendingForm";
 import TryoutAdminForm from "@/components/tryout/TryoutAdminForm";
 import { courseService, tryoutService } from "@/services";
 
@@ -97,12 +98,12 @@ export default async function EditTryoutPage({
           Seluruh soal, attempt, jawaban, dan hasil peserta pada Try Out ini akan ikut terhapus.
         </p>
         <form action={deleteAction} className="mt-4">
-          <button
-            type="submit"
-            className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-black text-red-700 transition hover:bg-red-100"
+          <PendingSubmitButton
+            pendingLabel="Menghapus..."
+            className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:cursor-wait disabled:opacity-80"
           >
             Hapus Try Out
-          </button>
+          </PendingSubmitButton>
         </form>
       </section>
     </main>
