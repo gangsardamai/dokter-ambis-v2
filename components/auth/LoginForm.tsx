@@ -59,10 +59,21 @@ function createDeviceIdentifier(
   }
 }
 
+function isIPadOS(): boolean {
+  return (
+    /iPad/i.test(navigator.userAgent) ||
+    (
+      /Macintosh/i.test(navigator.userAgent) &&
+      navigator.maxTouchPoints > 1
+    )
+  );
+}
+
 function detectDeviceType(): DeviceType {
   const userAgent = navigator.userAgent.toLowerCase();
 
   if (
+    isIPadOS() ||
     /ipad|tablet/.test(userAgent) ||
     (/android/.test(userAgent) && !/mobile/.test(userAgent))
   ) {
@@ -110,9 +121,10 @@ function detectBrowser(): string {
 function detectOperatingSystem(): string {
   const userAgent = navigator.userAgent;
 
+  if (isIPadOS()) return "iPadOS";
   if (/Windows/i.test(userAgent)) return "Windows";
   if (/Android/i.test(userAgent)) return "Android";
-  if (/iPhone|iPad|iPod/i.test(userAgent)) return "iOS";
+  if (/iPhone|iPod/i.test(userAgent)) return "iOS";
   if (/Macintosh|Mac OS/i.test(userAgent)) return "macOS";
   if (/Linux/i.test(userAgent)) return "Linux";
 
