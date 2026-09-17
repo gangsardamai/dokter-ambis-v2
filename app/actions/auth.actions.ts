@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import {
   cookies,
   headers,
@@ -157,7 +158,9 @@ export async function loginAction(
       "deviceIdentifier",
     );
     const deviceIdentifier =
-      savedDeviceIdentifier || submittedDeviceIdentifier;
+      savedDeviceIdentifier ||
+      submittedDeviceIdentifier ||
+      randomUUID();
     const deviceName =
       getFormString(formData, "deviceName") ||
       "Perangkat peserta";
