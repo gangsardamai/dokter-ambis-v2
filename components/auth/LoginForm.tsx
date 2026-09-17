@@ -3,6 +3,7 @@
 import {
   useEffect,
   useRef,
+  useState,
 } from "react";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -138,7 +139,7 @@ export default function LoginForm({
   const deviceIdentifierRef = useRef<HTMLInputElement>(null);
   const deviceNameRef = useRef<HTMLInputElement>(null);
   const deviceTypeRef = useRef<HTMLInputElement>(null);
-  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (deviceIdentifierRef.current) {
@@ -154,14 +155,14 @@ export default function LoginForm({
     if (deviceTypeRef.current) {
       deviceTypeRef.current.value = detectDeviceType();
     }
-
-    if (submitButtonRef.current) {
-      submitButtonRef.current.disabled = false;
-    }
   }, [initialDeviceIdentifier]);
 
   return (
-    <form action={loginAction} className="space-y-5">
+    <form
+      action={loginAction}
+      className="space-y-5"
+      onSubmit={() => setIsSubmitting(true)}
+    >
       <input
         ref={deviceIdentifierRef}
         type="hidden"
@@ -216,12 +217,12 @@ export default function LoginForm({
       </div>
 
       <button
-        ref={submitButtonRef}
         type="submit"
-        disabled
+        disabled={isSubmitting}
+        aria-busy={isSubmitting}
         className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Masuk
+        {isSubmitting ? "Memproses..." : "Masuk"}
       </button>
     </form>
   );
