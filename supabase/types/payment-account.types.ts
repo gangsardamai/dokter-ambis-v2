@@ -50,14 +50,17 @@ export type PaymentAccountTables = {
     Row: GeneratedCourses["Row"] & {
       payment_account_id: string;
       payment_policy: PaymentPolicy;
+      mentor_rating_enabled: boolean;
     };
     Insert: GeneratedCourses["Insert"] & {
       payment_account_id?: string;
       payment_policy?: PaymentPolicy;
+      mentor_rating_enabled?: boolean;
     };
     Update: GeneratedCourses["Update"] & {
       payment_account_id?: string;
       payment_policy?: PaymentPolicy;
+      mentor_rating_enabled?: boolean;
     };
     Relationships: GeneratedCourses["Relationships"];
   };
