@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 
 interface MentorOption {
   id: string;
@@ -12,6 +13,21 @@ interface MentorOption {
 interface MentorAssignmentFormProps {
   action: (formData: FormData) => void | Promise<void>;
   mentors: MentorOption[];
+}
+
+function SaveButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      aria-busy={pending}
+      className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+    >
+      {pending ? "Menyimpan..." : "Simpan Penugasan"}
+    </button>
+  );
 }
 
 export default function MentorAssignmentForm({
@@ -118,13 +134,7 @@ export default function MentorAssignmentForm({
         </>
       )}
 
-      <button
-        type="submit"
-        disabled={mentors.length === 0}
-        className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-[#064a78] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-900/10 transition hover:from-blue-700 hover:to-[#053b67] focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-      >
-        Simpan Penugasan
-      </button>
+      <SaveButton disabled={mentors.length === 0} />
     </form>
   );
 }

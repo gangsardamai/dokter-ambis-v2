@@ -42,6 +42,10 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
           title: "Mahasiswa",
           href: "/dashboard/admin/student",
         },
+        {
+          title: "Mentor",
+          href: "/dashboard/admin/mentor",
+        },
       ],
     },
     {
@@ -99,6 +103,10 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
         {
           title: "Course Ditugaskan",
           href: "/dashboard/mentor",
+        },
+        {
+          title: "Penilaian",
+          href: "/dashboard/mentor/ratings",
         },
         {
           title: "Try Out",

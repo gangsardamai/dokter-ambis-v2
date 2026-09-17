@@ -29,14 +29,20 @@ export default async function MentorDashboardPage() {
   const { data: assignments, error: assignmentError } = mentorDetail
     ? await supabase
         .from("course_mentors")
-        .select("course_id")
+        .select("course_id, is_active")
         .eq("mentor_id", mentorDetail.id)
     : { data: [], error: null };
 
   if (assignmentError) throw assignmentError;
 
+  const assignmentRows = (assignments ?? []) as unknown as Array<{
+    course_id: string;
+    is_active: boolean;
+  }>;
   const assignedCourseIds = new Set(
-    (assignments ?? []).map((assignment) => assignment.course_id),
+    assignmentRows
+      .filter((assignment) => assignment.is_active)
+      .map((assignment) => assignment.course_id),
   );
 
   const [allCourses, organizations, programs] = await Promise.all([

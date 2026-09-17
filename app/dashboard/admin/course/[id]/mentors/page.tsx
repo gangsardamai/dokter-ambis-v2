@@ -34,7 +34,7 @@ export default async function CourseMentorsPage({
       .order("created_at"),
     supabase
       .from("course_mentors")
-      .select("mentor_id")
+      .select("mentor_id, is_active")
       .eq("course_id", id),
   ]);
 
@@ -73,10 +73,14 @@ export default async function CourseMentorsPage({
       profile,
     ]),
   );
+  const assignmentRows = (assignmentsResult.data ?? []) as unknown as Array<{
+    mentor_id: string;
+    is_active: boolean;
+  }>;
   const assignedMentorIds = new Set(
-    (assignmentsResult.data ?? []).map(
-      (assignment) => assignment.mentor_id,
-    ),
+    assignmentRows
+      .filter((assignment) => assignment.is_active)
+      .map((assignment) => assignment.mentor_id),
   );
   const mentors = mentorDetails.flatMap((mentor) => {
     const profile = profilesById.get(mentor.profile_id);
@@ -114,7 +118,7 @@ export default async function CourseMentorsPage({
           {courseResult.data.title}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          Mentor yang dipilih dapat mengelola Folder, Lesson, File, Video, dan Quiz pada Course ini.
+          Mentor yang dipilih dapat mengelola Folder, Lesson, File, Video, dan Quiz pada Course ini. Mentor yang dilepas tetap tersimpan sebagai riwayat penugasan dan penilaian.
         </p>
       </div>
 

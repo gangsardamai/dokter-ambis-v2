@@ -2,10 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
+import MentorRatingSection, {
+  type MentorRatingItem,
+} from "@/components/mentor/MentorRatingSection";
 import StudentCourseInsights, {
   CourseProgressSummaryCards,
 } from "@/components/student/course/StudentCourseStatistics";
 import StudentTryoutList from "@/components/tryout/StudentTryoutList";
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
+import { createClient } from "@/lib/supabase/server";
 import {
   courseCommunityLinkService,
   courseExplorerService,
@@ -18,6 +23,11 @@ import {
 
 interface StudentMyCoursePageProps {
   params: Promise<{ courseId: string }>;
+}
+
+interface MentorRatingContext {
+  enabled: boolean;
+  mentors: MentorRatingItem[];
 }
 
 function getPaymentStatusLabel(status: string | null): string {
@@ -58,18 +68,25 @@ export default async function StudentMyCoursePage({
     );
   }
 
+  const supabase = await createClient();
   const [
     content,
     progressSummary,
     lessonMessages,
     tryouts,
     whatsappGroupUrl,
+    mentorRatingContext,
   ] = await Promise.all([
     courseExplorerService.getCourseContent(courseId),
     studentCourseProgressService.getCourseProgress(profile.id, courseId),
     lessonMessageService.getStudentCourseThreads(profile.id, courseId),
     tryoutService.getStudentTryouts(profile.id, courseId),
     courseCommunityLinkService.getWhatsAppGroupUrl(courseId),
+    callDynamicRpc<MentorRatingContext>(
+      supabase,
+      "get_course_mentor_rating_context",
+      { target_course_id: courseId },
+    ),
   ]);
 
   const course = enrollment.courses;
@@ -264,6 +281,15 @@ export default async function StudentMyCoursePage({
 
         <StudentTryoutList tryouts={tryouts} />
       </section>
+
+      {mentorRatingContext.enabled && (
+        <MentorRatingSection
+          courseId={courseId}
+          mentors={mentorRatingContext.mentors}
+          title="Nilai Mentor Course"
+          description="Pilih bintang 1–5 untuk setiap mentor. Saran bersifat opsional dan penilaian dapat diperbarui selama akses course masih aktif."
+        />
+      )}
     </main>
   );
 }
