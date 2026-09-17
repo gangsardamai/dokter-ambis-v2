@@ -73,6 +73,33 @@ function getInitials(name: string): string {
     .join("") || "M";
 }
 
+function matchesRatingFilter(
+  mentor: MentorDirectoryItem,
+  ratingFilter: string,
+): boolean {
+  if (!ratingFilter) return true;
+
+  const rating = Number(mentor.averageRating) || 0;
+  const hasRating = mentor.ratingCount > 0;
+
+  switch (ratingFilter) {
+    case "unrated":
+      return !hasRating;
+    case "4.5plus":
+      return hasRating && rating >= 4.5;
+    case "4to449":
+      return hasRating && rating >= 4 && rating < 4.5;
+    case "3to399":
+      return hasRating && rating >= 3 && rating < 4;
+    case "2to299":
+      return hasRating && rating >= 2 && rating < 3;
+    case "below2":
+      return hasRating && rating < 2;
+    default:
+      return true;
+  }
+}
+
 export default async function AdminMentorPage({
   searchParams,
 }: {
@@ -83,6 +110,7 @@ export default async function AdminMentorPage({
   const organizationId = getParam(params.organization);
   const programId = getParam(params.program);
   const courseId = getParam(params.course);
+  const ratingFilter = getParam(params.rating);
   const supabase = await createClient();
   const directory = await callDynamicRpc<MentorDirectory>(
     supabase,
@@ -102,8 +130,15 @@ export default async function AdminMentorPage({
       !programId || activeCourses.some((course) => course.programId === programId);
     const matchesCourse =
       !courseId || activeCourses.some((course) => course.id === courseId);
+    const matchesRating = matchesRatingFilter(mentor, ratingFilter);
 
-    return matchesSearch && matchesOrganization && matchesProgram && matchesCourse;
+    return (
+      matchesSearch &&
+      matchesOrganization &&
+      matchesProgram &&
+      matchesCourse &&
+      matchesRating
+    );
   });
 
   const visiblePrograms = organizationId
@@ -113,7 +148,9 @@ export default async function AdminMentorPage({
     (!organizationId || course.organizationId === organizationId) &&
     (!programId || course.programId === programId),
   );
-  const hasFilters = Boolean(query || organizationId || programId || courseId);
+  const hasFilters = Boolean(
+    query || organizationId || programId || courseId || ratingFilter,
+  );
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-7 p-4 sm:p-6 lg:p-8">
@@ -136,7 +173,7 @@ export default async function AdminMentorPage({
       </section>
 
       <form method="GET" className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <label className="text-sm font-bold text-slate-700">
             Cari mentor
             <input
@@ -176,6 +213,18 @@ export default async function AdminMentorPage({
                   {course.organizationShortName} · {course.title}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="text-sm font-bold text-slate-700">
+            Rating
+            <select name="rating" defaultValue={ratingFilter} className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-200 px-3 py-2 font-normal outline-none focus:border-blue-500">
+              <option value="">Semua rating</option>
+              <option value="4.5plus">★ 4,5–5,0</option>
+              <option value="4to449">★ 4,0–4,49</option>
+              <option value="3to399">★ 3,0–3,99</option>
+              <option value="2to299">★ 2,0–2,99</option>
+              <option value="below2">★ di bawah 2,0</option>
+              <option value="unrated">Belum dinilai</option>
             </select>
           </label>
         </div>
