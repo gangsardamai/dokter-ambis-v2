@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/admin";
+import { setMentorRatingEnabledAction } from "@/app/actions/mentor-rating.actions";
 import { deleteCourseFormAction } from "@/app/dashboard/admin/course/actions";
+import PendingSubmitButton from "@/components/mentor/PendingSubmitButton";
 import CourseStatusBadge from "./CourseStatusBadge";
 import type { CourseDetails } from "@/repositories/course.repository";
 
@@ -25,6 +27,9 @@ export default function CourseTable({ courses }: CourseTableProps) {
             <div className="flex flex-wrap gap-2">
               {course.organization?.is_general ? <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-extrabold text-cyan-700">Umum / Nasional</span> : null}
               <CourseStatusBadge status={course.status} />
+              <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${course.mentor_rating_enabled ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"}`}>
+                Penilaian mentor {course.mentor_rating_enabled ? "aktif" : "nonaktif"}
+              </span>
             </div>
           </div>
 
@@ -37,7 +42,19 @@ export default function CourseTable({ courses }: CourseTableProps) {
 
           <div className="mt-5 flex flex-wrap gap-2">
             <Link href={`/dashboard/admin/course/${course.id}/explorer`} className="inline-flex min-h-10 items-center rounded-xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100">Explorer</Link>
-            <Link href={`/dashboard/admin/course/${course.id}/mentors`} className="inline-flex min-h-10 items-center rounded-xl bg-violet-50 px-4 py-2 text-sm font-bold text-violet-700 hover:bg-violet-100">Atur Mentor</Link>
+            <form action={setMentorRatingEnabledAction}>
+              <input type="hidden" name="courseId" value={course.id} />
+              <input type="hidden" name="enabled" value={course.mentor_rating_enabled ? "false" : "true"} />
+              <PendingSubmitButton
+                className={`inline-flex min-h-10 items-center rounded-xl px-4 py-2 text-sm font-bold ${
+                  course.mentor_rating_enabled
+                    ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    : "bg-violet-50 text-violet-700 hover:bg-violet-100"
+                }`}
+                label={course.mentor_rating_enabled ? "Nonaktifkan Penilaian Mentor" : "Aktifkan Penilaian Mentor"}
+                pendingLabel="Menyimpan..."
+              />
+            </form>
             <Link href={`/dashboard/admin/course/${course.id}/edit`} className="inline-flex min-h-10 items-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-[#1769cf] hover:bg-blue-100">Edit</Link>
             <form action={deleteCourseFormAction}>
               <input type="hidden" name="id" value={course.id} />
