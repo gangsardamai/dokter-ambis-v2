@@ -4,11 +4,10 @@ import { notFound } from "next/navigation";
 import {
   FormCard,
   PageTitle,
-  PrimaryButton,
-  TextInput,
 } from "@/components/admin";
 import CourseForm from "@/components/admin/course/CourseForm";
 import CourseRegistrationLinkCard from "@/components/admin/course/CourseRegistrationLinkCard";
+import CourseWhatsAppGroupForm from "@/components/admin/course/CourseWhatsAppGroupForm";
 import { mapCourseForm } from "@/lib/forms/course";
 import {
   courseCommunityLinkService,
@@ -118,34 +117,10 @@ export default async function EditCoursePage({
       </FormCard>
 
       <FormCard>
-        <form action={saveWhatsAppGroupAction} className="space-y-5">
-          <div>
-            <h2 className="text-xl font-black text-slate-950">
-              Grup WhatsApp Peserta
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Masukkan satu link undangan grup untuk course ini. Kosongkan
-              kolom lalu simpan untuk menghapus tombol dari halaman peserta.
-            </p>
-          </div>
-
-          <TextInput
-            label="Link Grup WhatsApp"
-            name="whatsapp_group_url"
-            defaultValue={communityLink?.whatsapp_group_url ?? ""}
-            placeholder="https://chat.whatsapp.com/..."
-          />
-
-          <p className="text-xs leading-5 text-slate-500">
-            Hanya link dengan domain chat.whatsapp.com yang dapat disimpan.
-            Siapa pun yang memperoleh link tersebut dapat membukanya dan
-            bergabung sesuai pengaturan grup di WhatsApp.
-          </p>
-
-          <PrimaryButton type="submit">
-            Simpan Link WhatsApp
-          </PrimaryButton>
-        </form>
+        <CourseWhatsAppGroupForm
+          defaultValue={communityLink?.whatsapp_group_url ?? ""}
+          action={saveWhatsAppGroupAction}
+        />
       </FormCard>
     </main>
   );
