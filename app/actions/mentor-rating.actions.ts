@@ -63,6 +63,27 @@ export async function setMentorRatingEnabledAction(
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
 }
 
+export async function setCourseRatingMentorsAction(
+  formData: FormData,
+): Promise<void> {
+  const courseId = getRequiredString(formData, "courseId");
+  const mentorIds = formData
+    .getAll("mentorId")
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const supabase = await createClient();
+
+  await callDynamicRpc<void>(supabase, "admin_set_course_rating_mentors", {
+    target_course_id: courseId,
+    target_mentor_ids: mentorIds,
+  });
+
+  revalidatePath("/dashboard/admin/course");
+  revalidatePath(`/dashboard/admin/course/${courseId}`);
+  revalidatePath(`/dashboard/student/my-course/${courseId}`);
+}
+
 export async function setMentorAssignmentAction(
   formData: FormData,
 ): Promise<void> {
