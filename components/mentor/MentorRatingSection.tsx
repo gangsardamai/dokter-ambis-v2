@@ -1,9 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useFormStatus } from "react-dom";
-
-import { saveMentorReviewAction } from "@/app/actions/mentor-rating.actions";
+import { FormEvent, useState } from "react";
 
 export interface MentorRatingItem {
   mentorId: string;
@@ -20,44 +17,74 @@ interface MentorRatingSectionProps {
   description?: string;
 }
 
-function SubmitButton({ disabled = false }: { disabled?: boolean }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending || disabled}
-      aria-busy={pending}
-      className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      {pending ? "Mengirim..." : "Kirim Penilaian"}
-    </button>
-  );
-}
-
 function MentorReviewForm({
   courseId,
   mentor,
+  onSaved,
 }: {
   courseId: string;
   mentor: MentorRatingItem;
+  onSaved: () => void;
 }) {
   const [rating, setRating] = useState(mentor.rating ?? 0);
+  const [savedRating, setSavedRating] = useState(mentor.rating);
+  const [suggestion, setSuggestion] = useState(mentor.suggestion ?? "");
+  const [savedSuggestion, setSavedSuggestion] = useState(mentor.suggestion ?? "");
+  const [pending, setPending] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (rating < 1 || rating > 5 || pending) return;
+
+    setPending(true);
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/mentor-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          mentorId: mentor.mentorId,
+          rating,
+          suggestion,
+        }),
+      });
+
+      const result = (await response.json()) as {
+        message?: string;
+        rating?: number;
+        suggestion?: string | null;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.message || "Penilaian gagal disimpan.");
+      }
+
+      setSavedRating(result.rating ?? rating);
+      setSavedSuggestion(result.suggestion ?? "");
+      setSuccessMessage(result.message || "Penilaian berhasil disimpan.");
+      onSaved();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Penilaian gagal disimpan.",
+      );
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
-    <form
-      action={saveMentorReviewAction}
-      className="rounded-2xl border border-slate-200 p-4"
-    >
-      <input type="hidden" name="courseId" value={courseId} />
-      <input type="hidden" name="mentorId" value={mentor.mentorId} />
-      <input type="hidden" name="rating" value={rating || ""} />
-
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
         <div className="min-w-0 xl:w-64">
           <p className="font-extrabold text-slate-950">{mentor.fullName}</p>
           <p className="mt-1 text-xs font-semibold text-slate-400">
-            {mentor.rating ? `Penilaian tersimpan: ${mentor.rating}/5` : "Belum dinilai"}
+            {savedRating ? `Penilaian tersimpan: ${savedRating}/5` : "Belum dinilai"}
           </p>
         </div>
 
@@ -66,7 +93,11 @@ function MentorReviewForm({
             <button
               key={value}
               type="button"
-              onClick={() => setRating(value)}
+              onClick={() => {
+                setRating(value);
+                setSuccessMessage("");
+                setErrorMessage("");
+              }}
               aria-label={`${value} bintang`}
               aria-pressed={rating === value}
               className={`text-2xl leading-none transition hover:scale-110 ${
@@ -84,13 +115,17 @@ function MentorReviewForm({
         <details className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50">
           <summary className="cursor-pointer list-none px-4 py-2.5 text-sm font-black text-blue-700">
             Tulis saran
-            {mentor.suggestion ? " · sudah terisi" : ""}
+            {savedSuggestion ? " · sudah terisi" : ""}
           </summary>
           <div className="border-t border-slate-200 p-3">
             <textarea
-              name="suggestion"
               maxLength={500}
-              defaultValue={mentor.suggestion ?? ""}
+              value={suggestion}
+              onChange={(event) => {
+                setSuggestion(event.target.value);
+                setSuccessMessage("");
+                setErrorMessage("");
+              }}
               rows={3}
               placeholder="Saran untuk mentor (opsional, maks. 500 karakter)"
               className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -98,13 +133,26 @@ function MentorReviewForm({
           </div>
         </details>
 
-        <SubmitButton disabled={rating === 0} />
+        <button
+          type="submit"
+          disabled={pending || rating === 0}
+          aria-busy={pending}
+          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pending ? "Mengirim..." : "Kirim Penilaian"}
+        </button>
       </div>
 
       {rating === 0 && (
         <p className="mt-2 text-xs font-semibold text-amber-600">
           Pilih bintang 1–5 sebelum mengirim penilaian.
         </p>
+      )}
+      {successMessage && (
+        <p className="mt-2 text-xs font-bold text-emerald-600">{successMessage}</p>
+      )}
+      {errorMessage && (
+        <p className="mt-2 text-xs font-bold text-red-600">{errorMessage}</p>
       )}
     </form>
   );
@@ -116,6 +164,10 @@ export default function MentorRatingSection({
   title = "Penilaian Mentor",
   description = "Berikan bintang 1–5 dan saran opsional untuk mentor pada course ini.",
 }: MentorRatingSectionProps) {
+  const [ratedMentorIds, setRatedMentorIds] = useState(
+    () => new Set(mentors.filter((mentor) => mentor.rating !== null).map((mentor) => mentor.mentorId)),
+  );
+
   if (mentors.length === 0) {
     return (
       <section className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
@@ -126,8 +178,6 @@ export default function MentorRatingSection({
       </section>
     );
   }
-
-  const ratedCount = mentors.filter((mentor) => mentor.rating !== null).length;
 
   return (
     <details className="group overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm">
@@ -141,7 +191,7 @@ export default function MentorRatingSection({
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
           <p className="mt-3 text-xs font-bold text-blue-700">
-            {mentors.length} mentor · {ratedCount} sudah dinilai
+            {mentors.length} mentor · {ratedMentorIds.size} sudah dinilai
           </p>
         </div>
 
@@ -174,6 +224,13 @@ export default function MentorRatingSection({
               key={mentor.mentorId}
               courseId={courseId}
               mentor={mentor}
+              onSaved={() =>
+                setRatedMentorIds((current) => {
+                  const next = new Set(current);
+                  next.add(mentor.mentorId);
+                  return next;
+                })
+              }
             />
           ))}
         </div>
