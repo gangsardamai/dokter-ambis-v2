@@ -58,6 +58,7 @@ export async function setMentorRatingEnabledAction(
     target_enabled: enabled,
   });
 
+  revalidatePath("/dashboard/admin/course");
   revalidatePath(`/dashboard/admin/course/${courseId}`);
   revalidatePath(`/dashboard/student/my-course/${courseId}`);
 }
