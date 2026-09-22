@@ -50,7 +50,7 @@ export default function AnnouncementCarousel({
       </span>
 
       <div className="flex-1 pr-12 pt-0.5 sm:pr-14 sm:pt-1">
-        <h2 className="text-[10px] font-extrabold leading-snug tracking-[-0.03em] text-[#061827] sm:text-xl">
+        <h2 className="text-[12.5px] font-extrabold leading-snug tracking-[-0.03em] text-[#061827] sm:text-xl">
           {announcement.title}
         </h2>
         <div className="mt-2.5 max-h-[7.5rem] overflow-hidden sm:mt-3 sm:max-h-[9rem]">
