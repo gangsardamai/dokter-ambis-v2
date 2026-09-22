@@ -71,7 +71,7 @@ export default function AnnouncementCarousel({
         <h2 className="text-xl font-extrabold tracking-[-0.03em] text-[#061827]">
           {announcement.title}
         </h2>
-        <p className="mt-2 max-h-[4.8rem] overflow-hidden whitespace-pre-wrap text-sm leading-6 text-slate-600">
+        <p className="mt-2 max-h-[9rem] overflow-hidden whitespace-pre-wrap text-sm leading-6 text-slate-600">
           {announcement.content}
         </p>
       </div>
