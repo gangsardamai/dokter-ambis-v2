@@ -10,7 +10,7 @@ import {
   organizationService,
 } from "@/services";
 
-import { updateAnnouncementAction } from "../../../actions";
+import { updateAnnouncementAction } from "../../actions";
 
 interface EditAnnouncementPageProps {
   params: Promise<{
