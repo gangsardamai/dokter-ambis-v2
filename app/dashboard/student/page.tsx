@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 
+import AnnouncementCarousel from "@/components/announcements/AnnouncementCarousel";
 import {
   CourseDirectory,
   type DashboardCourseItem,
 } from "@/components/dashboard";
 import {
+  announcementService,
   courseService,
   enrollmentService,
   profileService,
@@ -37,9 +39,14 @@ export default async function StudentDashboardPage({
   if (!profile) redirect("/login");
 
   const query = await searchParams;
-  const [activeEnrollments, profileEnrollments] = await Promise.all([
+  const [
+    activeEnrollments,
+    profileEnrollments,
+    announcements,
+  ] = await Promise.all([
     enrollmentService.getActiveCourseEnrollments(profile.id),
     enrollmentService.getEnrollmentsByProfile(profile.id),
+    announcementService.getStudentDashboardAnnouncements(),
   ]);
 
   const activeCourses: DashboardCourseItem[] = activeEnrollments.flatMap(
@@ -108,21 +115,25 @@ export default async function StudentDashboardPage({
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
 
-        <div className="relative">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-100">
-            Course Dimiliki
-          </p>
-          <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">
-            Halo, {profile.full_name}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100 sm:text-base">
-            Akses course aktif dan pantau pendaftaran Bayar di Akhir yang masih menunggu persetujuan Admin.
-          </p>
+        <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.9fr)] lg:items-stretch">
+          <div className="flex flex-col justify-center">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-100">
+              Course Dimiliki
+            </p>
+            <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">
+              Halo, {profile.full_name}
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100 sm:text-base">
+              Akses course aktif dan pantau pendaftaran Bayar di Akhir yang masih menunggu persetujuan Admin.
+            </p>
 
-          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-            <span className="text-2xl font-black">{activeCourses.length}</span>
-            <span className="text-sm font-bold text-blue-100">course aktif</span>
+            <div className="mt-6 inline-flex w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <span className="text-2xl font-black">{activeCourses.length}</span>
+              <span className="text-sm font-bold text-blue-100">course aktif</span>
+            </div>
           </div>
+
+          <AnnouncementCarousel announcements={announcements} />
         </div>
       </section>
 
