@@ -16,6 +16,7 @@ interface CoursePinButtonProps {
     pinned: boolean,
   ) => void;
   className?: string;
+  variant?: "gradient" | "light";
 }
 
 export default function CoursePinButton({
@@ -23,6 +24,7 @@ export default function CoursePinButton({
   initialPinned,
   onPinnedChange,
   className = "",
+  variant = "gradient",
 }: CoursePinButtonProps) {
   const router = useRouter();
   const [pinned, setPinned] = useState(initialPinned);
@@ -73,7 +75,9 @@ export default function CoursePinButton({
       className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition disabled:cursor-not-allowed disabled:opacity-70 ${
         pinned
           ? "border-amber-200 bg-amber-50 text-amber-600"
-          : "border-white/25 bg-white/10 text-white hover:bg-white/20"
+          : variant === "light"
+            ? "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            : "border-white/25 bg-white/10 text-white hover:bg-white/20"
       } ${className}`}
     >
       {isPending ? (
