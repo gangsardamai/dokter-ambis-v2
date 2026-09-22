@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import FormCard from "@/components/admin/card/FormCard";
 import PrimaryButton from "@/components/admin/button/PrimaryButton";
-import TextAreaInput from "@/components/admin/form/TextAreaInput";
+import AnnouncementContentInput from "@/components/admin/announcement/AnnouncementContentInput";
 import TextInput from "@/components/admin/form/TextInput";
 
 import type { AnnouncementWithTargets } from "@/repositories/announcement.repository";
@@ -86,9 +86,7 @@ export default function AnnouncementForm({
           defaultValue={defaultValues?.title ?? ""}
         />
 
-        <TextAreaInput
-          label="Isi Pengumuman"
-          name="content"
+        <AnnouncementContentInput
           defaultValue={defaultValues?.content ?? ""}
         />
 
