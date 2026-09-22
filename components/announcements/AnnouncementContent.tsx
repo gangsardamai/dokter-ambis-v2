@@ -109,7 +109,7 @@ export default function AnnouncementContent({
 }: AnnouncementContentProps) {
   const blocks = parseAnnouncementContent(content);
   const textClass = compact
-    ? "text-[10px] leading-4 text-slate-600 sm:text-sm sm:leading-6"
+    ? "text-[12.5px] leading-5 text-slate-600 sm:text-sm sm:leading-6"
     : "text-sm leading-7 text-slate-700 sm:text-base";
 
   const rendered: ReactNode[] = blocks.map((block, index) => {
