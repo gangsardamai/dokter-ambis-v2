@@ -7,6 +7,7 @@ import CoursePinButton from "@/components/dashboard/CoursePinButton";
 
 export interface DashboardCourseItem {
   id: string;
+  courseId?: string;
   title: string;
   description?: string | null;
   organizationTitle: string;
@@ -96,8 +97,8 @@ export default function CourseDirectory({
         return matchesQuery && matchesOrganization && matchesProgram;
       })
       .sort((a, b) => {
-        const aRank = pinRank.get(a.id);
-        const bRank = pinRank.get(b.id);
+        const aRank = pinRank.get(a.courseId ?? a.id);
+        const bRank = pinRank.get(b.courseId ?? b.id);
 
         if (aRank !== undefined && bRank !== undefined) {
           return aRank - bRank;
@@ -245,8 +246,10 @@ export default function CourseDirectory({
                   </span>
                   <div className="flex items-center gap-2">
                     <CoursePinButton
-                      courseId={course.id}
-                      initialPinned={pinOrder.includes(course.id)}
+                      courseId={course.courseId ?? course.id}
+                      initialPinned={pinOrder.includes(
+                        course.courseId ?? course.id,
+                      )}
                       onPinnedChange={handlePinnedChange}
                     />
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15 text-base font-black ring-1 ring-white/20 backdrop-blur-sm sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg">
