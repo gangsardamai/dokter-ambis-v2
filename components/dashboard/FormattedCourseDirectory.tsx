@@ -11,6 +11,7 @@ interface FormattedCourseDirectoryProps {
   emptyTitle: string;
   emptyDescription: string;
   showFilters?: boolean;
+  pinnedCourseIds?: string[];
 }
 
 export default function FormattedCourseDirectory({
