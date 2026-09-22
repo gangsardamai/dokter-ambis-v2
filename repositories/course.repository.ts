@@ -197,6 +197,19 @@ export class CourseRepository extends BaseRepository {
     return (data ?? []) as CourseDetails[];
   }
 
+  async getDetailsByIds(ids: string[]): Promise<CourseDetails[]> {
+    if (ids.length === 0) return [];
+
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("courses")
+      .select(COURSE_DETAIL_SELECT)
+      .in("id", ids);
+
+    if (error) this.handleError(error);
+    return (data ?? []) as CourseDetails[];
+  }
+
   async getAvailableCourseDetailById(id: string): Promise<CourseDetails | null> {
     const supabase = await this.db();
     const { data, error } = await supabase.from("courses").select(COURSE_DETAIL_SELECT).eq("id", id).eq("status", "active").maybeSingle();
