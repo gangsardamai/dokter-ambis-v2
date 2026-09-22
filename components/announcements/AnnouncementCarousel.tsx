@@ -9,15 +9,6 @@ interface AnnouncementCarouselProps {
   announcements: Announcement[];
 }
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "Asia/Jakarta",
-  }).format(new Date(value));
-}
-
 export default function AnnouncementCarousel({
   announcements,
 }: AnnouncementCarouselProps) {
@@ -51,27 +42,16 @@ export default function AnnouncementCarousel({
   const announcement = announcements[safeIndex];
 
   return (
-    <aside className="flex min-h-56 flex-col rounded-[1.6rem] border border-white/30 bg-white p-5 text-slate-900 shadow-lg shadow-blue-950/10">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1769cf]">
-            Pengumuman
-          </p>
-          <p className="mt-1 text-xs font-semibold text-slate-400">
-            {formatDate(announcement.starts_at)}
-          </p>
-        </div>
+    <aside className="relative flex min-h-56 flex-col rounded-[1.6rem] border border-white/30 bg-white p-5 text-slate-900 shadow-lg shadow-blue-950/10">
+      <span className="absolute right-5 top-5 rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#1769cf]">
+        {safeIndex + 1} / {announcements.length}
+      </span>
 
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-[#1769cf]">
-          {safeIndex + 1} / {announcements.length}
-        </span>
-      </div>
-
-      <div className="mt-4 flex-1">
+      <div className="flex-1 pr-14 pt-1">
         <h2 className="text-xl font-extrabold tracking-[-0.03em] text-[#061827]">
           {announcement.title}
         </h2>
-        <p className="mt-2 max-h-[9rem] overflow-hidden whitespace-pre-wrap text-sm leading-6 text-slate-600">
+        <p className="mt-3 max-h-[9rem] overflow-hidden whitespace-pre-wrap text-sm leading-6 text-slate-600">
           {announcement.content}
         </p>
       </div>
@@ -88,7 +68,7 @@ export default function AnnouncementCarousel({
               )
             }
             disabled={announcements.length === 1}
-            className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-black text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-slate-300 bg-slate-100 text-lg font-black text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-white disabled:text-slate-300"
             aria-label="Pengumuman sebelumnya"
           >
             ←
@@ -103,7 +83,7 @@ export default function AnnouncementCarousel({
               )
             }
             disabled={announcements.length === 1}
-            className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-black text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-slate-300 bg-slate-100 text-lg font-black text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-white disabled:text-slate-300"
             aria-label="Pengumuman berikutnya"
           >
             →
@@ -112,7 +92,7 @@ export default function AnnouncementCarousel({
 
         <Link
           href={`/dashboard/student/announcements#announcement-${announcement.id}`}
-          className="text-sm font-extrabold text-[#1769cf]"
+          className="text-sm font-extrabold text-[#1769cf] transition hover:text-[#0b5ba5]"
         >
           Lihat detail
         </Link>
