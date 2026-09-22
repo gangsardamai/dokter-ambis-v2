@@ -96,16 +96,16 @@ export default function CourseDirectory({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-3xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+    <div className="space-y-4 sm:space-y-6">
+      <section className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm sm:rounded-3xl sm:p-5">
         <div className={`grid gap-3 ${showFilters ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_auto]" : ""}`}>
           <label className="min-w-0">
             <span className="sr-only">Cari course</span>
-            <div className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-blue-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
+            <div className="flex min-h-10 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-blue-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 sm:min-h-12 sm:gap-3 sm:rounded-2xl sm:px-4">
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
-                className="h-5 w-5 shrink-0 text-slate-400"
+                className="h-4 w-4 shrink-0 text-slate-400 sm:h-5 sm:w-5"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -118,7 +118,7 @@ export default function CourseDirectory({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="min-w-0 flex-1 bg-transparent py-3 text-sm font-semibold text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400"
+                className="min-w-0 flex-1 bg-transparent py-2 text-xs font-semibold text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400 sm:py-3 sm:text-sm"
               />
             </div>
           </label>
@@ -167,7 +167,7 @@ export default function CourseDirectory({
           )}
         </div>
 
-        <p className="mt-3 text-xs font-bold text-slate-500" aria-live="polite">
+        <p className="mt-2 text-[11px] font-bold text-slate-500 sm:mt-3 sm:text-xs" aria-live="polite">
           {filteredCourses.length} dari {courses.length} course ditampilkan
         </p>
       </section>
@@ -195,34 +195,34 @@ export default function CourseDirectory({
           </p>
         </section>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredCourses.map((course) => (
             <article
               key={course.id}
-              className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10"
+              className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10 sm:rounded-3xl"
             >
-              <div className="relative overflow-hidden bg-gradient-to-br from-[#1769cf] via-[#0b5ba5] to-[#033b63] p-5 text-white">
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#1769cf] via-[#0b5ba5] to-[#033b63] p-4 text-white sm:p-5">
                 <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-cyan-300/20 blur-2xl" />
                 <div className="absolute -bottom-16 left-8 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
 
                 <div className="relative flex items-start justify-between gap-3">
-                  <span className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-blue-50 backdrop-blur-sm">
+                  <span className="rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-blue-50 backdrop-blur-sm sm:px-3 sm:text-[11px]">
                     {course.statusLabel}
                   </span>
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-lg font-black ring-1 ring-white/20 backdrop-blur-sm">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15 text-base font-black ring-1 ring-white/20 backdrop-blur-sm sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg">
                     {course.title.slice(0, 1).toUpperCase()}
                   </span>
                 </div>
 
-                <h2 className="relative mt-6 break-words text-xl font-black tracking-[-0.03em]">
+                <h2 className="relative mt-4 break-words text-base font-black tracking-[-0.03em] sm:mt-6 sm:text-xl">
                   {course.title}
                 </h2>
               </div>
 
-              <div className="flex flex-1 flex-col p-5 sm:p-6">
-                <div className="space-y-3 text-sm">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
+              <div className="flex flex-1 flex-col p-4 sm:p-6">
+                <div className="space-y-2 text-xs sm:space-y-3 sm:text-sm">
+                  <div className="rounded-xl bg-slate-50 p-3 sm:rounded-2xl sm:p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 sm:text-[11px]">
                       Universitas
                     </p>
                     <p className="mt-1 break-words font-black text-slate-900">
@@ -235,8 +235,8 @@ export default function CourseDirectory({
                     )}
                   </div>
 
-                  <div className="rounded-2xl bg-blue-50/70 p-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-400">
+                  <div className="rounded-xl bg-blue-50/70 p-3 sm:rounded-2xl sm:p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-400 sm:text-[11px]">
                       Program
                     </p>
                     <p className="mt-1 break-words font-black text-blue-900">
@@ -251,9 +251,9 @@ export default function CourseDirectory({
                   </p>
                 )}
 
-                <div className="mt-auto pt-5">
+                <div className="mt-auto pt-3 sm:pt-5">
                   {(course.metaLabel || course.priceLabel) && (
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4 text-sm">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs sm:mb-4 sm:pt-4 sm:text-sm">
                       <span className="font-semibold text-slate-500">
                         {course.metaLabel}
                       </span>
@@ -266,7 +266,7 @@ export default function CourseDirectory({
                   <PendingLink
                     href={course.href}
                     pendingLabel="Memuat..."
-                    className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-950/10 transition group-hover:shadow-blue-950/20 hover:from-blue-700 hover:to-[#032f50] focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-blue-950/10 transition group-hover:shadow-blue-950/20 hover:from-blue-700 hover:to-[#032f50] focus:outline-none focus:ring-2 focus:ring-blue-300 sm:min-h-12 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
                   >
                     {course.actionLabel}
                   </PendingLink>

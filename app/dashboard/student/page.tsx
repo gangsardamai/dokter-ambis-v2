@@ -110,7 +110,7 @@ export default async function StudentDashboardPage({
   ];
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:space-y-8 sm:p-6 lg:p-8">
       <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1769cf] via-[#0b5ba5] to-[#033b63] p-5 text-white shadow-xl shadow-blue-950/10 sm:p-6 lg:p-8">
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
@@ -148,12 +148,12 @@ export default async function StudentDashboardPage({
         </div>
       )}
 
-      <section className="space-y-4">
+      <section className="space-y-3 sm:space-y-4">
         <div>
-          <h2 className="text-2xl font-black tracking-[-0.03em] text-slate-950">
+          <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950 sm:text-2xl">
             Daftar Course Saya
           </h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
             Cari berdasarkan judul course, universitas, atau program.
           </p>
         </div>
