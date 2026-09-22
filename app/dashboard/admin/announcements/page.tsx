@@ -21,6 +21,7 @@ interface AnnouncementAdminPageProps {
     organization?: string | string[];
     course?: string | string[];
     status?: string | string[];
+    feedback?: string | string[];
   }>;
 }
 
@@ -76,6 +77,7 @@ export default async function AnnouncementAdminPage({
   const organizationFilter = first(query.organization);
   const courseFilter = first(query.course);
   const statusFilter = first(query.status);
+  const feedback = first(query.feedback);
 
   const [announcements, organizations, courses] =
     await Promise.all([
@@ -148,12 +150,32 @@ export default async function AnnouncementAdminPage({
         actions={(
           <PrimaryButton
             href="/dashboard/admin/announcements/create"
+            loadingLabel="Membuka..."
             className="w-full sm:w-auto"
           >
             Buat Pengumuman
           </PrimaryButton>
         )}
       />
+
+      {(feedback === "created" || feedback === "updated") && (
+        <div
+          role="status"
+          className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800 shadow-sm"
+        >
+          <span
+            aria-hidden="true"
+            className="grid h-6 w-6 place-items-center rounded-full bg-emerald-600 text-xs text-white"
+          >
+            ✓
+          </span>
+          <span>
+            {feedback === "created"
+              ? "Pengumuman berhasil disimpan."
+              : "Perubahan pengumuman berhasil disimpan."}
+          </span>
+        </div>
+      )}
 
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
