@@ -2,6 +2,7 @@ import type { Database as ApplicationDatabase } from "./database.app.types";
 import type { AdminStudentManagementFunctions } from "./admin-student-management.types";
 import type { AnnouncementTables } from "./announcement.types";
 import type { CourseCommunityLinkTables } from "./course-community-link.types";
+import type { CoursePinTables } from "./course-pin.types";
 import type { MentorFeatureFunctions } from "./mentor-feature.types";
 import type { TryoutFollowupFunctions } from "./tryout.followup.types";
 import type {
@@ -24,6 +25,7 @@ export type Database = Omit<ApplicationDatabase, "public"> & {
       TryoutTables &
       PaymentAccountTables &
       CourseCommunityLinkTables &
+      CoursePinTables &
       AnnouncementTables;
     Functions: ApplicationDatabase["public"]["Functions"] &
       TryoutFunctions &
