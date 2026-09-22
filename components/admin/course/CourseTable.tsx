@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/admin";
+import CoursePinButton from "@/components/dashboard/CoursePinButton";
 import {
   setCourseRatingMentorsAction,
   setMentorRatingEnabledAction,
@@ -14,6 +15,8 @@ import type { CourseDetails } from "@/repositories/course.repository";
 
 interface CourseTableProps {
   courses: CourseDetails[];
+  pinnedCourses?: CourseDetails[];
+  pinnedCourseIds?: string[];
 }
 
 interface MentorDirectoryAssignment {
@@ -46,8 +49,18 @@ function formatRupiah(value: number | null) {
   }).format(value ?? 0);
 }
 
-export default async function CourseTable({ courses }: CourseTableProps) {
-  if (courses.length === 0) {
+export default async function CourseTable({
+  courses,
+  pinnedCourses = [],
+  pinnedCourseIds = [],
+}: CourseTableProps) {
+  const pinnedIdSet = new Set(pinnedCourseIds);
+  const orderedCourses = [
+    ...pinnedCourses,
+    ...courses.filter((course) => !pinnedIdSet.has(course.id)),
+  ];
+
+  if (orderedCourses.length === 0) {
     return (
       <EmptyState
         title="Course tidak ditemukan"
@@ -61,7 +74,7 @@ export default async function CourseTable({ courses }: CourseTableProps) {
     supabase,
     "admin_get_mentor_directory",
   );
-  const visibleCourseIds = new Set(courses.map((course) => course.id));
+  const visibleCourseIds = new Set(orderedCourses.map((course) => course.id));
   const ratingMentorsByCourse = new Map<string, CourseRatingMentor[]>();
 
   directory.mentors.forEach((mentor) => {
@@ -84,7 +97,7 @@ export default async function CourseTable({ courses }: CourseTableProps) {
 
   return (
     <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {courses.map((course) => {
+      {orderedCourses.map((course) => {
         const assignedMentors = ratingMentorsByCourse.get(course.id) ?? [];
         const selectedMentorCount = assignedMentors.filter(
           (mentor) => mentor.showInRating,
@@ -96,9 +109,16 @@ export default async function CourseTable({ courses }: CourseTableProps) {
             className="min-w-0 rounded-3xl border border-blue-100/80 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10"
           >
             <div className="min-w-0 space-y-3">
-              <h2 className="break-words text-lg font-extrabold tracking-[-0.03em] text-[#061827]">
-                {course.title}
-              </h2>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="min-w-0 flex-1 break-words text-lg font-extrabold tracking-[-0.03em] text-[#061827]">
+                  {course.title}
+                </h2>
+                <CoursePinButton
+                  courseId={course.id}
+                  initialPinned={pinnedIdSet.has(course.id)}
+                  variant="light"
+                />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {course.organization?.is_general ? (
                   <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-extrabold text-cyan-700">

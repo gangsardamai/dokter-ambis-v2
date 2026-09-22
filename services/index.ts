@@ -27,3 +27,4 @@ export * from "./mentor-course-access.service";
 export * from "./admin-student.service";
 
 export * from "./announcement.service";
+export * from "./course-pin.service";

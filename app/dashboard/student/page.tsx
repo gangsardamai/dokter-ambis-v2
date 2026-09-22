@@ -7,6 +7,7 @@ import {
 } from "@/components/dashboard";
 import {
   announcementService,
+  coursePinService,
   courseService,
   enrollmentService,
   profileService,
@@ -43,10 +44,12 @@ export default async function StudentDashboardPage({
     activeEnrollments,
     profileEnrollments,
     announcements,
+    pinnedCourseIds,
   ] = await Promise.all([
     enrollmentService.getActiveCourseEnrollments(profile.id),
     enrollmentService.getEnrollmentsByProfile(profile.id),
     announcementService.getStudentDashboardAnnouncements(),
+    coursePinService.getPinnedCourseIds(profile.id),
   ]);
 
   const activeCourses: DashboardCourseItem[] = activeEnrollments.flatMap(
@@ -86,6 +89,7 @@ export default async function StudentDashboardPage({
 
         return {
           id: enrollment.id,
+          courseId: course.id,
           title: course.title,
           description: null,
           organizationTitle:
@@ -163,6 +167,7 @@ export default async function StudentDashboardPage({
           searchPlaceholder="Cari judul course, universitas, atau program..."
           emptyTitle="Course tidak ditemukan"
           emptyDescription="Belum ada course aktif atau pendaftaran yang sedang diproses."
+          pinnedCourseIds={pinnedCourseIds}
         />
       </section>
     </main>

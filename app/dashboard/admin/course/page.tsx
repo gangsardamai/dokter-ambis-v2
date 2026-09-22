@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { PageHeader, PrimaryButton } from "@/components/admin";
 import CourseTable from "@/components/admin/course/CourseTable";
-import { courseService, organizationService, programService } from "@/services";
+import { coursePinService, courseService, organizationService, profileService, programService } from "@/services";
 import type { CoursePriceFilter, CourseSort } from "@/repositories/course.repository";
 import type { Database } from "@/supabase/types/database.types";
 
@@ -38,6 +39,9 @@ function hrefWith(params: URLSearchParams, updates: Record<string, string | null
 }
 
 export default async function CoursePage({ searchParams }: CoursePageProps) {
+  const profile = await profileService.getCurrentProfile();
+  if (!profile) redirect("/login");
+
   const rawParams = await searchParams;
   const q = (valueOf(rawParams, "q") ?? "").trim();
   const requestedOrganization = valueOf(rawParams, "organization") ?? "";
@@ -47,9 +51,10 @@ export default async function CoursePage({ searchParams }: CoursePageProps) {
   const sort = allowedValue(valueOf(rawParams, "sort"), COURSE_SORTS) ?? "newest";
   const page = positiveInteger(valueOf(rawParams, "page"));
 
-  const [organizations, programs] = await Promise.all([
+  const [organizations, programs, pinnedCourseIds] = await Promise.all([
     organizationService.getOrganizations(),
     programService.getPrograms(),
+    coursePinService.getPinnedCourseIds(profile.id),
   ]);
 
   const organization = organizations.some((item) => item.id === requestedOrganization)
@@ -60,16 +65,63 @@ export default async function CoursePage({ searchParams }: CoursePageProps) {
     ? selectedProgram.id
     : "";
 
-  const result = await courseService.getCourseList({
-    q,
-    organizationId: organization || undefined,
-    programId: program || undefined,
-    status,
-    price,
-    sort,
-    page,
-    perPage: 14,
-  });
+  const [result, pinnedCourseDetails] = await Promise.all([
+    courseService.getCourseList({
+      q,
+      organizationId: organization || undefined,
+      programId: program || undefined,
+      status,
+      price,
+      sort,
+      page,
+      perPage: 14,
+    }),
+    courseService.getCourseDetailsByIds(pinnedCourseIds),
+  ]);
+
+  const normalizedQuery = q.toLocaleLowerCase("id-ID");
+  const pinRank = new Map(
+    pinnedCourseIds.map((courseId, index) => [courseId, index]),
+  );
+  const pinnedCourses = pinnedCourseDetails
+    .filter((course) => {
+      const matchesQuery =
+        !normalizedQuery ||
+        [
+          course.title,
+          course.slug,
+          course.organization?.title ?? "",
+          course.organization?.short_name ?? "",
+          course.program?.title ?? "",
+          course.program?.slug ?? "",
+        ]
+          .join(" ")
+          .toLocaleLowerCase("id-ID")
+          .includes(normalizedQuery);
+      const matchesOrganization =
+        !organization || course.organization_id === organization;
+      const matchesProgram =
+        !program || course.program_id === program;
+      const matchesStatus =
+        !status || course.status === status;
+      const matchesPrice =
+        price === "all" ||
+        (price === "free" && course.is_free) ||
+        (price === "paid" && !course.is_free && (course.price ?? 0) > 0);
+
+      return (
+        matchesQuery &&
+        matchesOrganization &&
+        matchesProgram &&
+        matchesStatus &&
+        matchesPrice
+      );
+    })
+    .sort(
+      (a, b) =>
+        (pinRank.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (pinRank.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+    );
 
   const currentParams = new URLSearchParams();
   if (q) currentParams.set("q", q);
@@ -130,7 +182,11 @@ export default async function CoursePage({ searchParams }: CoursePageProps) {
         </div>
       </div>
 
-      <CourseTable courses={result.data} />
+      <CourseTable
+        courses={result.data}
+        pinnedCourses={pinnedCourses}
+        pinnedCourseIds={pinnedCourseIds}
+      />
     </main>
   );
 }

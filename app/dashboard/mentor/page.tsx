@@ -6,6 +6,7 @@ import {
 } from "@/components/dashboard";
 import { createClient } from "@/lib/supabase/server";
 import {
+  coursePinService,
   courseService,
   organizationService,
   profileService,
@@ -45,11 +46,13 @@ export default async function MentorDashboardPage() {
       .map((assignment) => assignment.course_id),
   );
 
-  const [allCourses, organizations, programs] = await Promise.all([
-    courseService.getCourses(),
-    organizationService.getOrganizations(),
-    programService.getPrograms(),
-  ]);
+  const [allCourses, organizations, programs, pinnedCourseIds] =
+    await Promise.all([
+      courseService.getCourses(),
+      organizationService.getOrganizations(),
+      programService.getPrograms(),
+      coursePinService.getPinnedCourseIds(profile.id),
+    ]);
 
   const organizationsById = new Map(
     organizations.map((organization) => [organization.id, organization]),
@@ -113,6 +116,7 @@ export default async function MentorDashboardPage() {
         emptyTitle="Belum ada course ditugaskan"
         emptyDescription="Course akan muncul setelah admin menugaskan Anda sebagai mentor pada course tersebut."
         showFilters
+        pinnedCourseIds={pinnedCourseIds}
       />
     </main>
   );

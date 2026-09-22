@@ -30,3 +30,4 @@ export * from "./mentor-course-access.repository";
 export * from "./admin-student.repository";
 
 export * from "./announcement.repository";
+export * from "./course-pin.repository";

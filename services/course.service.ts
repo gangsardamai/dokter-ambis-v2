@@ -24,6 +24,10 @@ export class CourseService {
     return await courseRepository.getAvailableCourseDetails();
   }
 
+  async getCourseDetailsByIds(ids: string[]) {
+    return await courseRepository.getDetailsByIds(ids);
+  }
+
   async getAvailableCourseDetailById(id: string) {
     return await courseRepository.getAvailableCourseDetailById(id);
   }

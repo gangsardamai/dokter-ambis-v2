@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 
 import PendingLink from "@/components/navigation/PendingLink";
+import CoursePinButton from "@/components/dashboard/CoursePinButton";
 
 export interface DashboardCourseItem {
   id: string;
+  courseId?: string;
   title: string;
   description?: string | null;
   organizationTitle: string;
@@ -24,6 +26,7 @@ interface CourseDirectoryProps {
   emptyTitle: string;
   emptyDescription: string;
   showFilters?: boolean;
+  pinnedCourseIds?: string[];
 }
 
 function normalize(value: string) {
@@ -36,10 +39,12 @@ export default function CourseDirectory({
   emptyTitle,
   emptyDescription,
   showFilters = false,
+  pinnedCourseIds = [],
 }: CourseDirectoryProps) {
   const [query, setQuery] = useState("");
   const [organization, setOrganization] = useState("");
   const [program, setProgram] = useState("");
+  const [pinOrder, setPinOrder] = useState(pinnedCourseIds);
 
   const organizations = useMemo(
     () =>
@@ -67,32 +72,62 @@ export default function CourseDirectory({
 
   const filteredCourses = useMemo(() => {
     const normalizedQuery = normalize(query);
+    const pinRank = new Map(
+      pinOrder.map((courseId, index) => [courseId, index]),
+    );
 
-    return courses.filter((course) => {
-      const matchesQuery =
-        !normalizedQuery ||
-        normalize(
-          [
-            course.title,
-            course.organizationTitle,
-            course.organizationShortName ?? "",
-            course.programTitle,
-          ].join(" "),
-        ).includes(normalizedQuery);
-      const matchesOrganization =
-        !organization ||
-        course.organizationTitle === organization;
-      const matchesProgram =
-        !program || course.programTitle === program;
+    return courses
+      .filter((course) => {
+        const matchesQuery =
+          !normalizedQuery ||
+          normalize(
+            [
+              course.title,
+              course.organizationTitle,
+              course.organizationShortName ?? "",
+              course.programTitle,
+            ].join(" "),
+          ).includes(normalizedQuery);
+        const matchesOrganization =
+          !organization ||
+          course.organizationTitle === organization;
+        const matchesProgram =
+          !program || course.programTitle === program;
 
-      return matchesQuery && matchesOrganization && matchesProgram;
-    });
-  }, [courses, organization, program, query]);
+        return matchesQuery && matchesOrganization && matchesProgram;
+      })
+      .sort((a, b) => {
+        const aRank = pinRank.get(a.courseId ?? a.id);
+        const bRank = pinRank.get(b.courseId ?? b.id);
+
+        if (aRank !== undefined && bRank !== undefined) {
+          return aRank - bRank;
+        }
+        if (aRank !== undefined) return -1;
+        if (bRank !== undefined) return 1;
+        return 0;
+      });
+  }, [courses, organization, pinOrder, program, query]);
 
   function resetFilters() {
     setQuery("");
     setOrganization("");
     setProgram("");
+  }
+
+  function handlePinnedChange(
+    courseId: string,
+    pinned: boolean,
+  ) {
+    setPinOrder((current) => {
+      const withoutCourse = current.filter(
+        (id) => id !== courseId,
+      );
+
+      return pinned
+        ? [courseId, ...withoutCourse]
+        : withoutCourse;
+    });
   }
 
   return (
@@ -209,9 +244,18 @@ export default function CourseDirectory({
                   <span className="rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-blue-50 backdrop-blur-sm sm:px-3 sm:text-[11px]">
                     {course.statusLabel}
                   </span>
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15 text-base font-black ring-1 ring-white/20 backdrop-blur-sm sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg">
-                    {course.title.slice(0, 1).toUpperCase()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <CoursePinButton
+                      courseId={course.courseId ?? course.id}
+                      initialPinned={pinOrder.includes(
+                        course.courseId ?? course.id,
+                      )}
+                      onPinnedChange={handlePinnedChange}
+                    />
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15 text-base font-black ring-1 ring-white/20 backdrop-blur-sm sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg">
+                      {course.title.slice(0, 1).toUpperCase()}
+                    </span>
+                  </div>
                 </div>
 
                 <h2 className="relative mt-4 break-words text-base font-black tracking-[-0.03em] sm:mt-6 sm:text-xl">
