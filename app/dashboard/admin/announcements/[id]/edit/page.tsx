@@ -42,7 +42,7 @@ export default async function EditAnnouncementPage({
       throw new Error(result.message);
     }
 
-    redirect("/dashboard/admin/announcements");
+    redirect("/dashboard/admin/announcements?feedback=updated");
   }
 
   return (

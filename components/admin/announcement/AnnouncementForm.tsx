@@ -277,6 +277,7 @@ export default function AnnouncementForm({
 
         <PrimaryButton
           type="submit"
+          loadingLabel="Menyimpan..."
           className="w-full sm:w-auto"
         >
           {submitLabel}

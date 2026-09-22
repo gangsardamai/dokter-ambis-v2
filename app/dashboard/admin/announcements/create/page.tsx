@@ -25,7 +25,7 @@ export default async function CreateAnnouncementPage() {
       throw new Error(result.message);
     }
 
-    redirect("/dashboard/admin/announcements");
+    redirect("/dashboard/admin/announcements?feedback=created");
   }
 
   return (
