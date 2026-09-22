@@ -25,3 +25,5 @@ export * from "./lesson-message.service";
 export * from "./payment-account.service";
 export * from "./mentor-course-access.service";
 export * from "./admin-student.service";
+
+export * from "./announcement.service";
