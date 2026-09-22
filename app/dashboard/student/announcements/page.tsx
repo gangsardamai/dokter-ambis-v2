@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import AnnouncementContent from "@/components/announcements/AnnouncementContent";
+
 import { announcementService } from "@/services";
 
 function formatDate(value: string | null): string {
@@ -69,8 +71,8 @@ export default async function StudentAnnouncementsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700 sm:text-base">
-                  {announcement.content}
+                <div className="mt-4">
+                  <AnnouncementContent content={announcement.content} />
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-500">
