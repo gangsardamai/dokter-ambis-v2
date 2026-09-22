@@ -41,7 +41,7 @@ function toJakartaInput(value: string | Date): string {
     hourCycle: "h23",
   }).formatToParts(date);
 
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
+  const get = (type: string) =>
     parts.find((part) => part.type === type)?.value ?? "";
 
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
@@ -89,7 +89,6 @@ export default function AnnouncementForm({
         <TextAreaInput
           label="Isi Pengumuman"
           name="content"
-          required
           defaultValue={defaultValues?.content ?? ""}
         />
 
