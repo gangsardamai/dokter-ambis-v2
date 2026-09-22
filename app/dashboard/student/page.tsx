@@ -89,6 +89,7 @@ export default async function StudentDashboardPage({
 
         return {
           id: enrollment.id,
+          courseId: course.id,
           title: course.title,
           description: null,
           organizationTitle:
