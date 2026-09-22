@@ -111,11 +111,11 @@ export default async function StudentDashboardPage({
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1769cf] via-[#0b5ba5] to-[#033b63] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
+      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1769cf] via-[#0b5ba5] to-[#033b63] p-5 text-white shadow-xl shadow-blue-950/10 sm:p-6 lg:p-8">
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
 
-        <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.9fr)] lg:items-stretch">
+        <div className="relative grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.9fr)] lg:items-stretch lg:gap-6">
           <div className="flex flex-col justify-center">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-100">
               Course Dimiliki
@@ -123,13 +123,13 @@ export default async function StudentDashboardPage({
             <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">
               Halo, {profile.full_name}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100 sm:text-base">
+            <p className="mt-3 hidden max-w-2xl text-sm leading-7 text-blue-100 md:block md:text-base">
               Akses course aktif dan pantau pendaftaran Bayar di Akhir yang masih menunggu persetujuan Admin.
             </p>
 
-            <div className="mt-6 inline-flex w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-              <span className="text-2xl font-black">{activeCourses.length}</span>
-              <span className="text-sm font-bold text-blue-100">course aktif</span>
+            <div className="mt-4 inline-flex w-fit items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 backdrop-blur-sm md:mt-6 md:gap-3 md:px-4 md:py-3">
+              <span className="text-xl font-black md:text-2xl">{activeCourses.length}</span>
+              <span className="text-xs font-bold text-blue-100 md:text-sm">course aktif</span>
             </div>
           </div>
 
