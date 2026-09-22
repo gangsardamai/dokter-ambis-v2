@@ -182,8 +182,6 @@ export default function VideoForm({
       return;
     }
 
-    setDuration(DEFAULT_VIDEO_DURATION_MINUTES);
-
     if (
       !normalizedProvider ||
       !normalizedProviderVideoId
