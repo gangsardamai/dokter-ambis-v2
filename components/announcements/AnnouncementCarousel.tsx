@@ -53,7 +53,7 @@ export default function AnnouncementCarousel({
         <h2 className="text-[12.5px] font-extrabold leading-snug tracking-[-0.03em] text-[#061827] sm:text-xl">
           {announcement.title}
         </h2>
-        <div className="mt-2.5 max-h-[7.5rem] overflow-hidden sm:mt-3 sm:max-h-[9rem]">
+        <div className="mt-2.5 max-h-[10rem] overflow-hidden sm:mt-3 sm:max-h-[9rem]">
           <AnnouncementContent
             content={announcement.content}
             compact

@@ -127,7 +127,7 @@ export default async function StudentDashboardPage({
               Akses course aktif dan pantau pendaftaran Bayar di Akhir yang masih menunggu persetujuan Admin.
             </p>
 
-            <div className="mt-4 inline-flex w-fit items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 backdrop-blur-sm md:mt-6 md:gap-3 md:px-4 md:py-3">
+            <div className="mt-6 hidden w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm md:inline-flex">
               <span className="text-xl font-black md:text-2xl">{activeCourses.length}</span>
               <span className="text-xs font-bold text-blue-100 md:text-sm">course aktif</span>
             </div>
