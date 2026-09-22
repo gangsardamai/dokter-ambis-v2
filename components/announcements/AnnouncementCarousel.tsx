@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import AnnouncementContent from "@/components/announcements/AnnouncementContent";
+
 import type { Announcement } from "@/repositories/announcement.repository";
 
 interface AnnouncementCarouselProps {
@@ -51,9 +53,12 @@ export default function AnnouncementCarousel({
         <h2 className="text-xl font-extrabold tracking-[-0.03em] text-[#061827]">
           {announcement.title}
         </h2>
-        <p className="mt-3 max-h-[9rem] overflow-hidden whitespace-pre-wrap text-sm leading-6 text-slate-600">
-          {announcement.content}
-        </p>
+        <div className="mt-3 max-h-[9rem] overflow-hidden">
+          <AnnouncementContent
+            content={announcement.content}
+            compact
+          />
+        </div>
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-3">
