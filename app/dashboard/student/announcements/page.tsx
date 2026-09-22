@@ -16,7 +16,6 @@ export default async function StudentAnnouncementsPage() {
   const announcements =
     await announcementService.getStudentAnnouncementArchive();
 
-  const now = Date.now();
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-8 p-4 sm:p-6 lg:p-8">
@@ -53,10 +52,6 @@ export default async function StudentAnnouncementsPage() {
       ) : (
         <section className="space-y-4">
           {announcements.map((announcement) => {
-            const expired =
-              Boolean(announcement.ends_at) &&
-              new Date(announcement.ends_at!).getTime() < now;
-
             return (
               <article
                 id={`announcement-${announcement.id}`}
@@ -66,18 +61,12 @@ export default async function StudentAnnouncementsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.14em] text-[#1769cf]">
-                      {expired ? "Arsip Pengumuman" : "Pengumuman Aktif"}
+                      Pengumuman
                     </p>
                     <h2 className="mt-2 text-xl font-extrabold tracking-[-0.03em] text-[#061827] sm:text-2xl">
                       {announcement.title}
                     </h2>
                   </div>
-
-                  {expired && (
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
-                      Masa tayang selesai
-                    </span>
-                  )}
                 </div>
 
                 <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700 sm:text-base">
