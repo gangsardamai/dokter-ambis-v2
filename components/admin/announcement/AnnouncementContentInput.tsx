@@ -10,8 +10,8 @@ interface AnnouncementContentInputProps {
   defaultValue?: string;
 }
 
-const bulletPattern = /^(\\s*)[-*•–—]\\s+(.*)$/;
-const numberedPattern = /^(\\s*)(\\d+)[.)]\\s+(.*)$/;
+const bulletPattern = /^(\s*)[-*•–—]\s+(.*)$/;
+const numberedPattern = /^(\s*)(\d+)[.)]\s+(.*)$/;
 
 export default function AnnouncementContentInput({
   defaultValue = "",
@@ -44,8 +44,8 @@ export default function AnnouncementContentInput({
 
     const textarea = event.currentTarget;
     const cursor = textarea.selectionStart;
-    const lineStart = value.lastIndexOf("\\n", cursor - 1) + 1;
-    const lineEndIndex = value.indexOf("\\n", cursor);
+    const lineStart = value.lastIndexOf("\n", cursor - 1) + 1;
+    const lineEndIndex = value.indexOf("\n", cursor);
     const lineEnd =
       lineEndIndex === -1 ? value.length : lineEndIndex;
     const currentLine = value.slice(lineStart, lineEnd);
@@ -79,7 +79,7 @@ export default function AnnouncementContentInput({
       ? `${indent}- `
       : `${indent}${Number(numberedMatch?.[2] ?? 0) + 1}. `;
 
-    const insertion = `\\n${nextMarker}`;
+    const insertion = `\n${nextMarker}`;
     const nextValue =
       value.slice(0, cursor) +
       insertion +
@@ -97,8 +97,8 @@ export default function AnnouncementContentInput({
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const firstLineStart = value.lastIndexOf("\\n", start - 1) + 1;
-    const nextLineBreak = value.indexOf("\\n", end);
+    const firstLineStart = value.lastIndexOf("\n", start - 1) + 1;
+    const nextLineBreak = value.indexOf("\n", end);
     const lastLineEnd =
       nextLineBreak === -1 ? value.length : nextLineBreak;
 
@@ -106,15 +106,15 @@ export default function AnnouncementContentInput({
     let number = 1;
 
     const formatted = selectedBlock
-      .split("\\n")
+      .split("\n")
       .map((line) => {
         if (!line.trim()) return line;
 
         const cleaned = line
-          .replace(/^(\\s*)[-*•–—]\\s+/, "$1")
-          .replace(/^(\\s*)\\d+[.)]\\s+/, "$1");
+          .replace(/^(\s*)[-*•–—]\s+/, "$1")
+          .replace(/^(\s*)\d+[.)]\s+/, "$1");
 
-        const indent = cleaned.match(/^\\s*/)?.[0] ?? "";
+        const indent = cleaned.match(/^\s*/)?.[0] ?? "";
         const text = cleaned.slice(indent.length);
 
         if (type === "bullet") {
@@ -125,7 +125,7 @@ export default function AnnouncementContentInput({
         number += 1;
         return formattedLine;
       })
-      .join("\\n");
+      .join("\n");
 
     const nextValue =
       value.slice(0, firstLineStart) +
@@ -179,7 +179,7 @@ export default function AnnouncementContentInput({
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={"Contoh:\\n- Maksimal 2 device\\n- 1 browser dihitung 1 device\\n\\n1. Login ke akun\\n2. Gunakan device yang terdaftar"}
+        placeholder={"Contoh:\n- Maksimal 2 device\n- 1 browser dihitung 1 device\n\n1. Login ke akun\n2. Gunakan device yang terdaftar"}
         className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm leading-6 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
       />
 
