@@ -28,3 +28,5 @@ export * from "./lesson-message.repository";
 export * from "./payment-account.repository";
 export * from "./mentor-course-access.repository";
 export * from "./admin-student.repository";
+
+export * from "./announcement.repository";
