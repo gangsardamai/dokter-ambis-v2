@@ -100,6 +100,7 @@ export default async function StudentMyCoursePage({
     <main className="mx-auto w-full max-w-6xl space-y-7 overflow-x-hidden p-4 sm:p-6 lg:p-8">
       <Link
         href="/dashboard/student"
+        prefetch={false}
         className="inline-flex min-h-10 items-center rounded-xl bg-white px-4 py-2 text-sm font-black text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
       >
         ← Kembali ke dashboard
@@ -138,6 +139,7 @@ export default async function StudentMyCoursePage({
             {payment?.status === "pending" && (
               <Link
                 href={`/dashboard/student/payment/${enrollment.id}`}
+                prefetch={false}
                 className="text-sm font-black text-blue-700 hover:underline"
               >
                 Lihat status pembayaran
@@ -148,6 +150,7 @@ export default async function StudentMyCoursePage({
           {canPayNow && (
             <Link
               href={`/dashboard/student/payment/${enrollment.id}`}
+              prefetch={false}
               className="inline-flex min-h-9 w-full shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md lg:ml-auto lg:w-auto"
             >
               Bayar Sekarang
