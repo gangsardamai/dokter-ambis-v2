@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/admin";
 import {
+  leaderAccessService,
   lessonMessageService,
-  profileService,
 } from "@/services";
 import type { LessonMessageThreadStatus } from "@/supabase/types/database.app.types";
 
@@ -49,8 +49,12 @@ function formatDate(value: string): string {
 export default async function AdminMessagesPage({
   searchParams,
 }: AdminMessagesPageProps) {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_messages",
+    );
+  } catch {
     redirect("/dashboard");
   }
 
@@ -215,7 +219,9 @@ export default async function AdminMessagesPage({
                       ? "Peserta"
                       : thread.latestSenderRole === "mentor"
                         ? "Mentor"
-                        : "Admin"}
+                        : thread.latestSenderRole === "leader"
+                          ? "Leader"
+                          : "Admin"}
                   </p>
                 </div>
               </div>

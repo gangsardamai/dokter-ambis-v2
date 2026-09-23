@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import {
   authService,
+  leaderAccessService,
   lessonMessageService,
   profileService,
 } from "@/services";
@@ -159,17 +160,23 @@ export async function replyLessonMessageAction(
   threadId: string,
   formData: FormData,
 ): Promise<void> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
-    throw new Error("Hanya Admin yang dapat menjawab pesan.");
-  }
+  const profile = await leaderAccessService.requireStaffPermission(
+    "manage_messages",
+  );
 
   const message = String(formData.get("message") ?? "");
-  const courseId = await lessonMessageService.replyAsAdmin({
-    adminProfileId: profile.id,
-    threadId,
-    message,
-  });
+  const courseId =
+    profile.role === "admin"
+      ? await lessonMessageService.replyAsAdmin({
+          adminProfileId: profile.id,
+          threadId,
+          message,
+        })
+      : await lessonMessageService.replyAsLeader({
+          leaderProfileId: profile.id,
+          threadId,
+          message,
+        });
 
   revalidatePath("/dashboard/admin/messages");
   revalidatePath(`/dashboard/admin/messages/${threadId}`);
@@ -208,10 +215,7 @@ export async function replyLessonMessageAsMentorAction(
 export async function closeLessonMessageThreadAction(
   threadId: string,
 ): Promise<void> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
-    throw new Error("Hanya Admin yang dapat menutup pesan.");
-  }
+  await leaderAccessService.requireStaffPermission("manage_messages");
 
   const courseId = await lessonMessageService.setThreadStatus(
     threadId,
@@ -230,10 +234,7 @@ export async function closeLessonMessageThreadAction(
 export async function reopenLessonMessageThreadAction(
   threadId: string,
 ): Promise<void> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
-    throw new Error("Hanya Admin yang dapat membuka kembali pesan.");
-  }
+  await leaderAccessService.requireStaffPermission("manage_messages");
 
   const courseId = await lessonMessageService.setThreadStatus(
     threadId,

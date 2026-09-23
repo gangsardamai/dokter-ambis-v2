@@ -26,8 +26,11 @@ function normalizeMessage(message: string): string {
   return normalized;
 }
 
-function fallbackSenderName(role: "student" | "mentor" | "admin"): string {
+function fallbackSenderName(
+  role: "student" | "mentor" | "leader" | "admin",
+): string {
   if (role === "admin") return "Admin Dokter Ambis";
+  if (role === "leader") return "Leader Dokter Ambis";
   if (role === "mentor") return "Mentor Dokter Ambis";
   return "Peserta";
 }
@@ -380,6 +383,27 @@ export class LessonMessageService {
       thread_id: thread.id,
       sender_profile_id: input.adminProfileId,
       sender_role: "admin",
+      message,
+    });
+    return thread.course_id;
+  }
+
+  async replyAsLeader(input: {
+    leaderProfileId: string;
+    threadId: string;
+    message: string;
+  }): Promise<string> {
+    const message = normalizeMessage(input.message);
+    const thread = await lessonMessageRepository.getThreadById(input.threadId);
+    if (!thread) throw new Error("Percakapan tidak ditemukan.");
+    if (thread.status === "closed") {
+      throw new Error("Thread sudah ditutup.");
+    }
+
+    await lessonMessageRepository.createEntry({
+      thread_id: thread.id,
+      sender_profile_id: input.leaderProfileId,
+      sender_role: "leader",
       message,
     });
     return thread.course_id;
