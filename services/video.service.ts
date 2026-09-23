@@ -32,6 +32,14 @@ export class VideoService {
     );
   }
 
+  async getVideosByLessons(
+    lessonIds: string[]
+  ) {
+    return await videoRepository.getByLessons(
+      lessonIds
+    );
+  }
+
   async getVideosByCourse(
     courseId: string
   ) {
