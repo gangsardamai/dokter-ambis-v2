@@ -1,11 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import type { Database } from "@/supabase/types/database.extended.types";
-import { PageHeader } from "@/components/admin";
+import { PageHeader, PrimaryButton } from "@/components/admin";
 import { BulkApprovalButtons } from "@/components/admin/enrollment/BulkApprovalButtons";
 import { enrollmentListRepository } from "@/repositories/enrollment-list.repository";
-import { courseService, programService } from "@/services";
+import {
+  courseService,
+  leaderAccessService,
+  programService,
+} from "@/services";
 
 type EnrollmentStatus = Database["public"]["Enums"]["enrollment_status"];
 type PaymentStatus = Database["public"]["Enums"]["payment_status"];
@@ -142,6 +147,15 @@ function StatusPill({
 export default async function EnrollmentPage({
   searchParams,
 }: EnrollmentPageProps) {
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_enrollment",
+    );
+  } catch {
+    redirect("/dashboard");
+  }
+
   const params = await searchParams;
 
   const searchQuery = getStringParam(params.q).trim();
@@ -225,8 +239,23 @@ export default async function EnrollmentPage({
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
       <PageHeader
         title="Enrollment"
-        description="Kelola pendaftaran mahasiswa, kategori pembayaran, dan verifikasi payment."
-        actions={<BulkApprovalButtons />}
+        description={
+          profile.role === "admin"
+            ? "Kelola pendaftaran mahasiswa, kategori pembayaran, dan verifikasi payment."
+            : "Kelola enrollment peserta pada Universitas, Program, dan Course yang menjadi scope Anda."
+        }
+        actions={
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <PrimaryButton
+              href="/dashboard/admin/enrollment/create"
+              loadingLabel="Membuka..."
+              className="w-full sm:w-auto"
+            >
+              Tambah Enrollment
+            </PrimaryButton>
+            {profile.role === "admin" && <BulkApprovalButtons />}
+          </div>
+        }
       />
 
       <form

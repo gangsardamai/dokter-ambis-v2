@@ -60,6 +60,11 @@ export class LeaderAccessService {
     return { leaders, scopes, permissions };
   }
 
+  async findStudentForEnrollmentByPhone(phone: string) {
+    await this.requireStaffPermission("manage_enrollment");
+    return leaderAccessRepository.findStudentByPhone(phone);
+  }
+
   async promoteStudentByPhone(phone: string) {
     await this.requireAdmin();
 
