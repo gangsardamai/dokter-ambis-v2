@@ -40,7 +40,7 @@ export default function DashboardLayout({
   const [currentMessageUnreadCount, setCurrentMessageUnreadCount] = useState(
     messageUnreadCount,
   );
-  const lastUnreadRefreshAt = useRef(Date.now());
+  const lastUnreadRefreshAt = useRef(0);
 
   useEffect(() => {
     function updateUnreadCount(event: Event) {
@@ -63,6 +63,7 @@ export default function DashboardLayout({
   useEffect(() => {
     let active = true;
     const minimumRefreshIntervalMs = 5 * 60 * 1000;
+    lastUnreadRefreshAt.current = Date.now();
     async function refreshUnreadCount(force = false) {
       const now = Date.now();
 
