@@ -47,7 +47,10 @@ export default async function MentorDashboardPage() {
     coursePinService.getPinnedCourseIds(profile.id),
   ]);
 
-  const courses: DashboardCourseItem[] = assignedCourses.map((course) => ({
+  const courses: DashboardCourseItem[] = assignedCourses
+    .slice()
+    .sort((a, b) => a.title.localeCompare(b.title, "id-ID"))
+    .map((course) => ({
     id: course.id,
     title: course.title,
     description: course.description,
