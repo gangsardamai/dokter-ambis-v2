@@ -111,6 +111,7 @@ export default async function AdminDashboardPage() {
             <Link
               key={action.href}
               href={action.href}
+              prefetch={false}
               className="group rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10"
             >
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#1769cf] transition group-hover:bg-gradient-to-br group-hover:from-[#1769cf] group-hover:to-[#033b63] group-hover:text-white">
