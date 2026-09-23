@@ -39,8 +39,12 @@ export class AuthService {
     return await authRepository.getSession();
   }
 
+  async getCurrentUserId(): Promise<string | null> {
+    return authRepository.getAuthenticatedUserId();
+  }
+
   async isAuthenticated(): Promise<boolean> {
-    const userId = await authRepository.getAuthenticatedUserId();
+    const userId = await this.getCurrentUserId();
     return userId !== null;
   }
 }

@@ -79,31 +79,35 @@ export default async function StudentDashboardPage({
       enrollment.payment_timing === "deferred" &&
       enrollment.status === "pending_approval",
   );
-  const pendingCourses = await Promise.all(
-    pendingDeferredEnrollments.map(
-      async (enrollment): Promise<DashboardCourseItem | null> => {
-        const course = await courseService.getAvailableCourseDetailById(
-          enrollment.course_id,
-        );
-        if (!course) return null;
+  const pendingCourseDetails = await courseService.getCourseDetailsByIds(
+    pendingDeferredEnrollments.map((enrollment) => enrollment.course_id),
+  );
+  const pendingCoursesById = new Map(
+    pendingCourseDetails
+      .filter((course) => course.status === "active")
+      .map((course) => [course.id, course]),
+  );
+  const pendingCourses = pendingDeferredEnrollments.map(
+    (enrollment): DashboardCourseItem | null => {
+      const course = pendingCoursesById.get(enrollment.course_id);
+      if (!course) return null;
 
-        return {
-          id: enrollment.id,
-          courseId: course.id,
-          title: course.title,
-          description: null,
-          organizationTitle:
-            course.organization?.title ?? "Universitas belum tersedia",
-          organizationShortName: course.organization?.short_name ?? null,
-          programTitle: course.program?.title ?? "Program belum tersedia",
-          statusLabel: "Menunggu Persetujuan",
-          metaLabel: "Diajukan",
-          priceLabel: `${formatDate(enrollment.enrolled_at)} WIB`,
-          href: `/dashboard/student/enrollment/${enrollment.id}/submitted`,
-          actionLabel: "Lihat Status",
-        };
-      },
-    ),
+      return {
+        id: enrollment.id,
+        courseId: course.id,
+        title: course.title,
+        description: null,
+        organizationTitle:
+          course.organization?.title ?? "Universitas belum tersedia",
+        organizationShortName: course.organization?.short_name ?? null,
+        programTitle: course.program?.title ?? "Program belum tersedia",
+        statusLabel: "Menunggu Persetujuan",
+        metaLabel: "Diajukan",
+        priceLabel: `${formatDate(enrollment.enrolled_at)} WIB`,
+        href: `/dashboard/student/enrollment/${enrollment.id}/submitted`,
+        actionLabel: "Lihat Status",
+      };
+    },
   );
 
   const courses: DashboardCourseItem[] = [

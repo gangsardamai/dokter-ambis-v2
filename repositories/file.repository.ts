@@ -51,6 +51,24 @@ export class LessonFileRepository extends BaseRepository {
     return data ?? [];
   }
 
+  async getByLessons(
+    lessonIds: string[],
+  ): Promise<LessonFile[]> {
+    if (lessonIds.length === 0) return [];
+
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("lesson_files")
+      .select("*")
+      .in("lesson_id", lessonIds)
+      .order("file_order");
+
+    if (error) this.handleError(error);
+
+    return data ?? [];
+  }
+
   async getByCourse(
     courseId: string
   ): Promise<LessonFile[]> {

@@ -159,6 +159,7 @@ export default async function AdminMessagesPage({
           {(query || selectedStatus !== "all") && (
             <Link
               href="/dashboard/admin/messages"
+              prefetch={false}
               className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-black text-slate-600 hover:bg-slate-50"
             >
               Reset
@@ -177,6 +178,7 @@ export default async function AdminMessagesPage({
             <Link
               key={thread.id}
               href={`/dashboard/admin/messages/${thread.id}`}
+              prefetch={false}
               className="block rounded-3xl border border-blue-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md sm:p-6"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

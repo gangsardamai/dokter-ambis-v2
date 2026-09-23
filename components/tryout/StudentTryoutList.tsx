@@ -120,6 +120,7 @@ export default function StudentTryoutList({
             </div>
 
             <Link
+              prefetch={false}
               href={
                 tryout.activeAttemptId
                   ? `/dashboard/student/tryout/attempt/${tryout.activeAttemptId}`

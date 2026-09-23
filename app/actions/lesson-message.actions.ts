@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  authService,
   lessonMessageService,
   profileService,
 } from "@/services";
@@ -11,26 +12,6 @@ import {
 export interface LessonMessageActionResult {
   success: boolean;
   message: string;
-}
-
-type MessageProfileRole = "student" | "mentor" | "admin";
-
-async function getMessageNotificationCount(
-  profileId: string,
-  role: MessageProfileRole,
-): Promise<number> {
-  const threads =
-    role === "student"
-      ? await lessonMessageService.getStudentInbox(profileId)
-      : role === "mentor"
-        ? await lessonMessageService.getMentorInbox(profileId)
-        : await lessonMessageService.getAdminInbox(profileId);
-
-  return threads.filter(
-    (thread) =>
-      thread.status === "open" &&
-      thread.latestSenderRole === "student",
-  ).length;
 }
 
 export async function sendLessonMessageAction(
@@ -147,28 +128,29 @@ export async function markLessonMessageThreadReadAction(
   threadId: string,
   readThrough: string,
 ): Promise<number> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile) return 0;
+  const profileId = await authService.getCurrentUserId();
+  if (!profileId) return 0;
 
   try {
-    await lessonMessageService.markThreadRead(
-      profile.id,
+    const unreadCount = await lessonMessageService.markThreadRead(
+      profileId,
       threadId,
       readThrough,
     );
     revalidatePath("/dashboard", "layout");
-    return getMessageNotificationCount(profile.id, profile.role);
+    return unreadCount;
   } catch {
-    return getMessageNotificationCount(profile.id, profile.role).catch(
+    return lessonMessageService.countUnreadMessages().catch(
       () => 0,
     );
   }
 }
 
 export async function getLessonMessageUnreadCountAction(): Promise<number> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile) return 0;
-  return getMessageNotificationCount(profile.id, profile.role).catch(
+  const profileId = await authService.getCurrentUserId();
+  if (!profileId) return 0;
+
+  return lessonMessageService.countUnreadMessages().catch(
     () => 0,
   );
 }
