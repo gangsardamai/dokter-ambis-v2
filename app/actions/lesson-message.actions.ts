@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  authService,
   lessonMessageService,
   profileService,
 } from "@/services";
@@ -127,12 +128,12 @@ export async function markLessonMessageThreadReadAction(
   threadId: string,
   readThrough: string,
 ): Promise<number> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile) return 0;
+  const profileId = await authService.getCurrentUserId();
+  if (!profileId) return 0;
 
   try {
     const unreadCount = await lessonMessageService.markThreadRead(
-      profile.id,
+      profileId,
       threadId,
       readThrough,
     );
@@ -146,8 +147,9 @@ export async function markLessonMessageThreadReadAction(
 }
 
 export async function getLessonMessageUnreadCountAction(): Promise<number> {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile) return 0;
+  const profileId = await authService.getCurrentUserId();
+  if (!profileId) return 0;
+
   return lessonMessageService.countUnreadMessages().catch(
     () => 0,
   );
