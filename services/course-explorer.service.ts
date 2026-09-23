@@ -78,15 +78,19 @@ export class CourseExplorerService {
     const [
       folders,
       lessons,
+    ] = await Promise.all([
+      folderService.getFoldersByCourse(courseId),
+      lessonService.getLessonsByCourse(courseId),
+    ]);
+    const lessonIds = lessons.map((lesson) => lesson.id);
+    const [
       files,
       videos,
       quizzes,
     ] = await Promise.all([
-      folderService.getFoldersByCourse(courseId),
-      lessonService.getLessonsByCourse(courseId),
-      lessonFileService.getFilesByCourse(courseId),
-      videoService.getVideosByCourse(courseId),
-      quizService.getQuizzesByCourse(courseId),
+      lessonFileService.getFilesByLessons(lessonIds),
+      videoService.getVideosByLessons(lessonIds),
+      quizService.getQuizzesByLessons(lessonIds),
     ]);
 
     const filesByLesson =
