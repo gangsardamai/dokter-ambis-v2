@@ -26,6 +26,8 @@ type CourseUpdate =
 export async function createCourseAction(
   data: CourseInsert
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation = validateCourse({
     title: data.title,
@@ -57,6 +59,8 @@ export async function updateCourseAction(
   id: string,
   data: CourseUpdate
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation = validateCourse({
     title: data.title ?? "",

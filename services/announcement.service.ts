@@ -48,8 +48,6 @@ export class AnnouncementService {
     input: AnnouncementWriteInput,
   ): Promise<AnnouncementWithTargets> {
     const normalized = this.validateInput(input);
-    const displayOrder =
-      await announcementRepository.getNextDisplayOrder();
 
     const data: AnnouncementInsert = {
       created_by: createdBy,
@@ -60,7 +58,6 @@ export class AnnouncementService {
       starts_at: normalized.startsAt,
       ends_at: normalized.endsAt,
       show_on_dashboard: normalized.showOnDashboard,
-      display_order: displayOrder,
     };
 
     return announcementRepository.create(
@@ -74,11 +71,6 @@ export class AnnouncementService {
     id: string,
     input: AnnouncementWriteInput,
   ): Promise<AnnouncementWithTargets> {
-    const existing = await announcementRepository.getByIdAdmin(id);
-    if (!existing) {
-      throw new Error("Pengumuman tidak ditemukan.");
-    }
-
     const normalized = this.validateInput(input);
     const data: AnnouncementUpdate = {
       title: normalized.title,

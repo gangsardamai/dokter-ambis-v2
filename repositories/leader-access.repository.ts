@@ -12,6 +12,25 @@ type ProfileStatus = Database["public"]["Enums"]["profile_status"];
 export type LeaderScopeType = "organization" | "program" | "course";
 
 export class LeaderAccessRepository extends BaseRepository {
+  async getAuditEvents(page: number) {
+    const supabase = await this.db();
+    const start = (page - 1) * 50;
+    const { data, error } = await supabase.from("leader_audit_events")
+      .select("id, actor_id, entity_type, entity_id, action, changes, created_at")
+      .order("created_at", { ascending: false }).order("id", { ascending: false })
+      .range(start, start + 50);
+    if (error) this.handleError(error);
+    return { events: (data ?? []).slice(0, 50), hasMore: (data?.length ?? 0) > 50 };
+  }
+
+  async getScopes(leaderId: string) {
+    const supabase = await this.db();
+    const { data, error } = await supabase.from("leader_scopes")
+      .select("organization_id, program_id, course_id").eq("leader_id", leaderId);
+    if (error) this.handleError(error);
+    return data ?? [];
+  }
+
   async getEnabledPermissions(leaderId: string): Promise<LeaderPermission[]> {
     const supabase = await this.db();
     const { data, error } = await supabase

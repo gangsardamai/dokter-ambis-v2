@@ -6,6 +6,7 @@ import CourseForm
 from "@/components/admin/course/CourseForm";
 
 import {
+  leaderAccessService,
   organizationService,
   paymentAccountService,
   programService,
@@ -21,14 +22,12 @@ import {
 
 export default async function CreateCoursePage() {
 
-  const organizations =
-    await organizationService.getOrganizations();
-
-  const programs =
-    await programService.getPrograms();
-
-  const paymentAccounts =
-    await paymentAccountService.getActiveAccounts();
+  const [allOrganizations, allPrograms, paymentAccounts] = await Promise.all([
+    organizationService.getOrganizations(), programService.getPrograms(), paymentAccountService.getActiveAccounts(),
+  ]);
+  const programs = await leaderAccessService.getAssignablePrograms(allPrograms);
+  const organizationIds = new Set(programs.map(program => program.organization_id));
+  const organizations = allOrganizations.filter(item => organizationIds.has(item.id));
 
   async function createAction(
     formData: FormData

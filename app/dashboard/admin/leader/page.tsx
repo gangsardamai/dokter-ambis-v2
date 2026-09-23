@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   LEADER_PERMISSIONS,
   LEADER_PERMISSION_LABELS,
@@ -68,6 +69,8 @@ export default async function LeaderManagementPage({ searchParams }: PageProps) 
           Universitas, Program, dan Course yang menjadi scope kerja masing-masing.
         </p>
       </div>
+
+      <Link href="/dashboard/admin/leader/audit" prefetch={false} className="inline-flex rounded-xl border border-blue-200 px-4 py-2 text-sm font-bold text-blue-700">Riwayat aktivitas Leader →</Link>
 
       {feedbackLabels[feedback] && (
         <div

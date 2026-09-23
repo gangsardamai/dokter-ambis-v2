@@ -1,3 +1,4 @@
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import type { Database } from "@/supabase/types/database.extended.types";
 
 import { BaseRepository } from "./base.repository";
@@ -133,109 +134,20 @@ export class AnnouncementRepository extends BaseRepository {
     return (data?.display_order ?? 0) + 10;
   }
 
-  async create(
-    data: AnnouncementInsert,
-    organizationIds: string[],
-    courseIds: string[],
-  ): Promise<AnnouncementWithTargets> {
-    const supabase = await this.db();
-    const { data: created, error } = await supabase
-      .from("announcements")
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) this.handleError(error);
-
-    try {
-      await this.replaceTargets(
-        created.id,
-        data.all_students === true ? [] : organizationIds,
-        data.all_students === true ? [] : courseIds,
-      );
-    } catch (targetError) {
-      await supabase.from("announcements").delete().eq("id", created.id);
-      throw targetError;
-    }
-
-    const result = await this.getByIdAdmin(created.id);
-    return this.requireData(result, "Pengumuman gagal dibuat.");
+  async create(data: AnnouncementInsert, organizationIds: string[], courseIds: string[]): Promise<AnnouncementWithTargets> {
+    return this.save(null, data, organizationIds, courseIds);
   }
 
-  async update(
-    id: string,
-    data: AnnouncementUpdate,
-    organizationIds: string[],
-    courseIds: string[],
-  ): Promise<AnnouncementWithTargets> {
-    const supabase = await this.db();
-    const { error } = await supabase
-      .from("announcements")
-      .update(data)
-      .eq("id", id);
-
-    if (error) this.handleError(error);
-
-    await this.replaceTargets(
-      id,
-      data.all_students === true ? [] : organizationIds,
-      data.all_students === true ? [] : courseIds,
-    );
-
-    const result = await this.getByIdAdmin(id);
-    return this.requireData(result, "Pengumuman tidak ditemukan.");
+  async update(id: string, data: AnnouncementUpdate, organizationIds: string[], courseIds: string[]): Promise<AnnouncementWithTargets> {
+    return this.save(id, data, organizationIds, courseIds);
   }
 
-  private async replaceTargets(
-    announcementId: string,
-    organizationIds: string[],
-    courseIds: string[],
-  ): Promise<void> {
+  private async save(id: string | null, data: AnnouncementUpdate, organizationIds: string[], courseIds: string[]): Promise<AnnouncementWithTargets> {
     const supabase = await this.db();
-
-    const [deleteOrganizations, deleteCourses] = await Promise.all([
-      supabase
-        .from("announcement_organizations")
-        .delete()
-        .eq("announcement_id", announcementId),
-      supabase
-        .from("announcement_courses")
-        .delete()
-        .eq("announcement_id", announcementId),
-    ]);
-
-    if (deleteOrganizations.error) {
-      this.handleError(deleteOrganizations.error);
-    }
-    if (deleteCourses.error) {
-      this.handleError(deleteCourses.error);
-    }
-
-    if (organizationIds.length > 0) {
-      const { error } = await supabase
-        .from("announcement_organizations")
-        .insert(
-          organizationIds.map((organizationId) => ({
-            announcement_id: announcementId,
-            organization_id: organizationId,
-          })),
-        );
-
-      if (error) this.handleError(error);
-    }
-
-    if (courseIds.length > 0) {
-      const { error } = await supabase
-        .from("announcement_courses")
-        .insert(
-          courseIds.map((courseId) => ({
-            announcement_id: announcementId,
-            course_id: courseId,
-          })),
-        );
-
-      if (error) this.handleError(error);
-    }
+    const saved = await callDynamicRpc<Announcement>(supabase, "staff_save_announcement", {
+      target_id: id, payload: data, organization_ids: organizationIds, course_ids: courseIds,
+    });
+    return { ...saved, organizationIds: saved.all_students ? [] : organizationIds, courseIds: saved.all_students ? [] : courseIds };
   }
 
   async moveDashboard(

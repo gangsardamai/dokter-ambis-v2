@@ -1,3 +1,4 @@
+import { getRoleDashboard } from "@/lib/auth/role-dashboard";
 import { redirect } from "next/navigation";
 
 import { authService, profileService } from "@/services";
@@ -9,12 +10,5 @@ export default async function DashboardPage() {
   const profile = await profileService.getCurrentProfile();
   if (!profile || profile.status !== "active") redirect("/login");
 
-  if (profile.role === "admin" || profile.role === "leader") {
-    redirect("/dashboard/admin");
-  }
-
-  if (profile.role === "mentor") redirect("/dashboard/mentor");
-  if (profile.role === "student") redirect("/dashboard/student");
-
-  redirect("/login");
+  redirect(getRoleDashboard(profile.role));
 }

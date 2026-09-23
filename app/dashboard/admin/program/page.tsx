@@ -5,7 +5,7 @@ import {
 
 import ProgramTable from "@/components/admin/program/ProgramTable";
 
-import { profileService, programService } from "@/services";
+import { leaderAccessService, profileService, programService } from "@/services";
 
 import { deleteProgramAction } from "./actions";
 
@@ -25,6 +25,8 @@ export default async function ProgramPage() {
     );
   }
 
+  const manageable = await leaderAccessService.getAssignablePrograms(programs);
+
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
       <PageHeader
@@ -41,7 +43,7 @@ export default async function ProgramPage() {
       />
 
       <ProgramTable
-        programs={programs}
+        programs={manageable}
         onDelete={profile?.role === "admin" ? handleDelete : undefined}
       />
     </main>

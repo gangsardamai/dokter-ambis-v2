@@ -24,6 +24,8 @@ type OrganizationUpdate =
 export async function createOrganizationAction(
   data: OrganizationInsert
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation =
     validateOrganization({
@@ -62,6 +64,8 @@ export async function updateOrganizationAction(
   id: string,
   data: OrganizationUpdate
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation =
     validateOrganization({
@@ -130,6 +134,8 @@ export async function deleteOrganizationAction(
 export async function activateOrganizationAction(
   id: string
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   await organizationService.activateOrganization(
     id
@@ -148,6 +154,8 @@ export async function activateOrganizationAction(
 export async function deactivateOrganizationAction(
   id: string
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   await organizationService.deactivateOrganization(
     id

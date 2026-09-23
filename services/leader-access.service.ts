@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   leaderAccessRepository,
   type LeaderScopeType,
@@ -8,9 +9,35 @@ import {
 } from "@/lib/leader-access";
 import { profileService } from "./profile.service";
 
+const permissionsForRequest = cache((id: string) => leaderAccessRepository.getEnabledPermissions(id));
+const scopesForRequest = cache((id: string) => leaderAccessRepository.getScopes(id));
+
 export class LeaderAccessService {
+  async getScopes(id: string) { return scopesForRequest(id); }
+
+  async getAssignableOrganizations<T extends { id: string }>(items: T[]) {
+    const profile = await profileService.getCurrentProfile();
+    if (profile?.role === "admin") return items;
+    if (profile?.role !== "leader") return [];
+    const scopes = await scopesForRequest(profile.id);
+    return items.filter(item => scopes.some(scope => scope.organization_id === item.id));
+  }
+
+  async getAssignablePrograms<T extends { id: string; organization_id: string }>(items: T[]) {
+    const profile = await profileService.getCurrentProfile();
+    if (profile?.role === "admin") return items;
+    if (profile?.role !== "leader") return [];
+    const scopes = await scopesForRequest(profile.id);
+    return items.filter(item => scopes.some(scope => scope.organization_id === item.organization_id || scope.program_id === item.id));
+  }
+
+  async getAuditEvents(page: number) {
+    await this.requireAdmin();
+    return leaderAccessRepository.getAuditEvents(page);
+  }
+
   async getEnabledPermissions(leaderId: string) {
-    return leaderAccessRepository.getEnabledPermissions(leaderId);
+    return permissionsForRequest(leaderId);
   }
 
   async requireStaffPermission(permission: LeaderPermission) {
@@ -26,7 +53,7 @@ export class LeaderAccessService {
 
     if (
       profile.role === "leader" &&
-      await leaderAccessRepository.hasPermission(profile.id, permission)
+      (await permissionsForRequest(profile.id)).includes(permission)
     ) {
       return profile;
     }

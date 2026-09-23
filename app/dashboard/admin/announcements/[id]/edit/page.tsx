@@ -50,6 +50,8 @@ export default async function EditAnnouncementPage({
     redirect("/dashboard/admin/announcements");
   }
 
+  const targetOrganizations = await leaderAccessService.getAssignableOrganizations(organizations);
+
   async function update(formData: FormData) {
     "use server";
 
@@ -77,7 +79,7 @@ export default async function EditAnnouncementPage({
       />
 
       <AnnouncementForm
-        organizations={organizations.map((organization) => ({
+        organizations={targetOrganizations.map((organization) => ({
           id: organization.id,
           title: organization.title,
           shortName: organization.short_name,

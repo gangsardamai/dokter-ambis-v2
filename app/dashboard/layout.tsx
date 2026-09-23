@@ -31,7 +31,9 @@ export default async function DashboardRootLayout({
 
   let messageUnreadCount = 0;
   try {
-    messageUnreadCount = await lessonMessageService.countUnreadMessages();
+    if (profile.role !== "leader" || leaderPermissions.includes("manage_messages")) {
+      messageUnreadCount = await lessonMessageService.countUnreadMessages();
+    }
   } catch {
     messageUnreadCount = 0;
   }

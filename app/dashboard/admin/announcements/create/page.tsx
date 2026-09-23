@@ -27,6 +27,8 @@ export default async function CreateAnnouncementPage() {
     courseService.getAvailableCourseDetails(),
   ]);
 
+  const targetOrganizations = await leaderAccessService.getAssignableOrganizations(organizations);
+
   async function create(formData: FormData) {
     "use server";
 
@@ -54,7 +56,7 @@ export default async function CreateAnnouncementPage() {
       />
 
       <AnnouncementForm
-        organizations={organizations.map((organization) => ({
+        organizations={targetOrganizations.map((organization) => ({
           id: organization.id,
           title: organization.title,
           shortName: organization.short_name,

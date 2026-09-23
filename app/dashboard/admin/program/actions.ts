@@ -28,6 +28,8 @@ type ProgramUpdate =
 export async function createProgramAction(
   data: ProgramInsert
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation =
     validateProgram({
@@ -66,6 +68,8 @@ export async function updateProgramAction(
   id: string,
   data: ProgramUpdate
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation =
     validateProgram({
@@ -104,6 +108,8 @@ export async function updateProgramAction(
 export async function activateProgramAction(
   id: string
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   await programService.activateProgram(
     id
@@ -126,6 +132,8 @@ export async function activateProgramAction(
 export async function deactivateProgramAction(
   id: string
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   await programService.deactivateProgram(
     id

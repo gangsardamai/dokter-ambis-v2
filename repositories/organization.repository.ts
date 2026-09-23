@@ -1,3 +1,4 @@
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import { BaseRepository } from "./base.repository";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -168,25 +169,11 @@ export class OrganizationRepository extends BaseRepository {
      CREATE
   ======================================== */
 
-  async create(
-    organization: OrganizationInsert
-  ): Promise<Organization> {
+  async create(organization: OrganizationInsert): Promise<Organization> {
     const supabase = await this.db();
-
-    const {
-      data,
-      error,
-    } = await supabase
-      .from("organizations")
-      .insert(organization)
-      .select()
-      .single();
-
-    if (error) {
-      this.handleError(error);
-    }
-
-    return data!;
+    return callDynamicRpc<Organization>(supabase, "staff_create_master_record", {
+      target_type: "organization", payload: organization,
+    });
   }
 
   /* ========================================

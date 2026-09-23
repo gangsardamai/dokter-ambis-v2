@@ -52,10 +52,10 @@ export default async function AdminDashboardPage() {
     activeEnrollmentCount,
     pendingEnrollmentCount,
   ] = await Promise.all([
-    organizationService.countUniversities(),
-    courseService.countCourses(),
-    enrollmentService.countEnrollmentsByStatus("active"),
-    enrollmentService.countEnrollmentsByStatus("pending_approval"),
+    isAdmin || permissionSet.has("manage_master_data") ? organizationService.countUniversities() : Promise.resolve(0),
+    isAdmin || permissionSet.has("manage_master_data") ? courseService.countCourses() : Promise.resolve(0),
+    isAdmin || permissionSet.has("manage_enrollment") ? enrollmentService.countEnrollmentsByStatus("active") : Promise.resolve(0),
+    isAdmin || permissionSet.has("manage_enrollment") ? enrollmentService.countEnrollmentsByStatus("pending_approval") : Promise.resolve(0),
   ]);
 
   const adminOnlyStats = isAdmin

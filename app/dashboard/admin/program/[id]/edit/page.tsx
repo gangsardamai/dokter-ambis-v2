@@ -8,6 +8,7 @@ import ProgramForm
 from "@/components/admin/program/ProgramForm";
 
 import {
+  leaderAccessService,
   organizationService,
   programService,
 } from "@/services";
@@ -41,14 +42,15 @@ export default async function EditProgramPage({
       id
     );
 
-  if (!program) {
+  if (!program || !(await leaderAccessService.getAssignablePrograms([program])).length) {
 
     notFound();
 
   }
 
-  const organizations =
-    await organizationService.getOrganizations();
+  const allOrganizations = await organizationService.getOrganizations();
+  const assignedOrganizations = await leaderAccessService.getAssignableOrganizations(allOrganizations);
+  const organizations = allOrganizations.filter(item => item.id === program.organization_id || assignedOrganizations.some(assigned => assigned.id === item.id));
 
   async function updateAction(
     formData: FormData
