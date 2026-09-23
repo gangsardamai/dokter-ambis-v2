@@ -11,8 +11,6 @@ export * from "./program.service";
 export * from "./auth.service";
 export * from "./profile.service";
 export * from "./promotion.service";
-export * from "./organization.service";
-export * from "./program.service";
 export * from "./folder.service";
 export * from "./enrollment.service";
 export * from "./payment.service";
@@ -21,10 +19,9 @@ export * from "./device.service";
 export * from "./course-explorer.service";
 export * from "./student-course-progress.service";
 export * from "./lesson-message.service";
-
 export * from "./payment-account.service";
 export * from "./mentor-course-access.service";
 export * from "./admin-student.service";
-
 export * from "./announcement.service";
 export * from "./course-pin.service";
+export * from "./leader-access.service";

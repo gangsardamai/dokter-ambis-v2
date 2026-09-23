@@ -5,8 +5,8 @@ import {
   DashboardHeader,
   DashboardLayout,
 } from "@/components/dashboard";
-
 import {
+  leaderAccessService,
   lessonMessageService,
   profileService,
 } from "@/services";
@@ -20,26 +20,26 @@ export default async function DashboardRootLayout({
 }: DashboardRootLayoutProps) {
   const profile = await profileService.getCurrentProfile();
 
-  if (!profile) {
+  if (!profile || profile.status !== "active") {
     redirect("/login");
   }
 
-  if (profile.status !== "active") {
-    redirect("/login");
-  }
+  const leaderPermissions =
+    profile.role === "leader"
+      ? await leaderAccessService.getEnabledPermissions(profile.id)
+      : [];
 
   let messageUnreadCount = 0;
-
   try {
     messageUnreadCount = await lessonMessageService.countUnreadMessages();
   } catch {
-    // Fitur pesan mungkin belum tersedia pada environment ini.
     messageUnreadCount = 0;
   }
 
   return (
     <DashboardLayout
       role={profile.role}
+      leaderPermissions={leaderPermissions}
       messageUnreadCount={messageUnreadCount}
     >
       <DashboardHeader profile={profile} />
