@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin";
 import { EnrollmentActionButtons } from "@/components/admin/enrollment/EnrollmentActionButtons";
 import {
   enrollmentService,
+  leaderAccessService,
   paymentProofService,
 } from "@/services";
 
@@ -108,6 +109,15 @@ function getPaymentTone(status: string) {
 }
 
 export default async function EnrollmentDetailPage({ params }: PageProps) {
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_enrollment",
+    );
+  } catch {
+    notFound();
+  }
+
   const { id } = await params;
   const enrollment = await enrollmentService.getEnrollmentDetail(id);
 
@@ -117,7 +127,7 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
   let paymentProofUrl: string | null = null;
   let paymentProofError: string | null = null;
 
-  if (payment?.payment_proof_path) {
+  if (profile.role === "admin" && payment?.payment_proof_path) {
     try {
       paymentProofUrl = await paymentProofService.getPaymentProofSignedUrl(
         payment.payment_proof_path,
@@ -242,7 +252,7 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
         </DetailCard>
       </div>
 
-      {payment?.payment_proof_path && (
+      {profile.role === "admin" && payment?.payment_proof_path && (
         <DetailCard title="Bukti Pembayaran">
           {paymentProofError && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
@@ -289,6 +299,7 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
         paymentTiming={enrollment.payment_timing}
         paymentId={payment?.id ?? null}
         paymentStatus={payment?.status ?? null}
+        isAdmin={profile.role === "admin"}
       />
     </main>
   );

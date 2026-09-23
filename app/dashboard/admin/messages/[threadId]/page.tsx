@@ -15,8 +15,8 @@ import {
 import BackButton from "@/components/messages/BackButton";
 import ThreadReadTracker from "@/components/messages/ThreadReadTracker";
 import {
+  leaderAccessService,
   lessonMessageService,
-  profileService,
 } from "@/services";
 
 interface AdminMessageThreadPageProps {
@@ -35,8 +35,12 @@ function formatDate(value: string): string {
 export default async function AdminMessageThreadPage({
   params,
 }: AdminMessageThreadPageProps) {
-  const profile = await profileService.getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_messages",
+    );
+  } catch {
     redirect("/dashboard");
   }
 
@@ -164,7 +168,9 @@ export default async function AdminMessageThreadPage({
                     ? "Admin"
                     : entry.sender_role === "mentor"
                       ? "Mentor"
-                      : "Peserta"}
+                      : entry.sender_role === "leader"
+                        ? "Leader"
+                        : "Peserta"}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">
                   {entry.message}
@@ -193,7 +199,7 @@ export default async function AdminMessageThreadPage({
               htmlFor="message"
               className="mb-2 block text-sm font-black text-slate-700"
             >
-              Jawaban Admin
+              {profile.role === "leader" ? "Jawaban Leader" : "Jawaban Admin"}
             </label>
             <textarea
               id="message"

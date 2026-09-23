@@ -12,12 +12,14 @@ import {
 
 import { getLessonMessageUnreadCountAction } from "@/app/actions/lesson-message.actions";
 import type { ProfileRole } from "@/lib/dashboard-menu";
+import type { LeaderPermission } from "@/lib/leader-access";
 
 import Sidebar from "./Sidebar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
   role: ProfileRole;
+  leaderPermissions?: LeaderPermission[];
   messageUnreadCount?: number;
 }
 
@@ -25,7 +27,8 @@ interface DashboardSidebarContextValue {
   openSidebar: () => void;
 }
 
-const DashboardSidebarContext = createContext<DashboardSidebarContextValue | null>(null);
+const DashboardSidebarContext =
+  createContext<DashboardSidebarContextValue | null>(null);
 
 export function useDashboardSidebar() {
   return useContext(DashboardSidebarContext);
@@ -34,12 +37,12 @@ export function useDashboardSidebar() {
 export default function DashboardLayout({
   children,
   role,
+  leaderPermissions = [],
   messageUnreadCount = 0,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentMessageUnreadCount, setCurrentMessageUnreadCount] = useState(
-    messageUnreadCount,
-  );
+  const [currentMessageUnreadCount, setCurrentMessageUnreadCount] =
+    useState(messageUnreadCount);
   const lastUnreadRefreshAt = useRef(0);
 
   useEffect(() => {
@@ -64,22 +67,17 @@ export default function DashboardLayout({
     let active = true;
     const minimumRefreshIntervalMs = 5 * 60 * 1000;
     lastUnreadRefreshAt.current = Date.now();
+
     async function refreshUnreadCount(force = false) {
       const now = Date.now();
-
       if (
         !force &&
         now - lastUnreadRefreshAt.current < minimumRefreshIntervalMs
-      ) {
-        return;
-      }
+      ) return;
 
       lastUnreadRefreshAt.current = now;
       const count = await getLessonMessageUnreadCountAction();
-
-      if (active) {
-        setCurrentMessageUnreadCount(count);
-      }
+      if (active) setCurrentMessageUnreadCount(count);
     }
 
     function refreshWhenVisible() {
@@ -94,16 +92,12 @@ export default function DashboardLayout({
     return () => {
       active = false;
       window.removeEventListener("focus", refreshWhenVisible);
-      document.removeEventListener(
-        "visibilitychange",
-        refreshWhenVisible,
-      );
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
+
   const sidebarContext = useMemo(
-    () => ({
-      openSidebar: () => setSidebarOpen(true),
-    }),
+    () => ({ openSidebar: () => setSidebarOpen(true) }),
     [],
   );
 
@@ -113,6 +107,7 @@ export default function DashboardLayout({
         <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block">
           <Sidebar
             role={role}
+            leaderPermissions={leaderPermissions}
             messageUnreadCount={currentMessageUnreadCount}
           />
         </div>
@@ -128,6 +123,7 @@ export default function DashboardLayout({
             <div className="relative h-full">
               <Sidebar
                 role={role}
+                leaderPermissions={leaderPermissions}
                 messageUnreadCount={currentMessageUnreadCount}
                 onNavigate={() => setSidebarOpen(false)}
               />

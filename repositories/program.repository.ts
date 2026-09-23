@@ -1,3 +1,4 @@
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import { createClient } from "@/lib/supabase/server";
 
 import type { Database } from "@/supabase/types/database.types";
@@ -150,30 +151,11 @@ export class ProgramRepository {
 
   }
 
-  async create(
-    data: ProgramInsert
-  ): Promise<Program> {
-
-    const supabase =
-      await createClient();
-
-    const {
-      data: result,
-      error,
-    } = await supabase
-      .from("programs")
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) {
-
-      throw error;
-
-    }
-
-    return result;
-
+  async create(data: ProgramInsert): Promise<Program> {
+    const supabase = await createClient();
+    return callDynamicRpc<Program>(supabase, "staff_create_master_record", {
+      target_type: "program", payload: data,
+    });
   }
 
   async update(

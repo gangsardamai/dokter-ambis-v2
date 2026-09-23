@@ -48,5 +48,8 @@ jobs:
           cat typescript.log
           exit 1
 
+      - name: Leader access regression tests
+        run: npm run test:leader
+
       - name: Build
         run: npm run build

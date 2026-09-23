@@ -17,85 +17,63 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
     {
       title: "Dashboard",
       items: [
-        {
-          title: "Ringkasan Admin",
-          href: "/dashboard/admin",
-        },
+        { title: "Ringkasan Admin", href: "/dashboard/admin" },
       ],
     },
     {
       title: "Master Data",
       items: [
-        {
-          title: "Universitas",
-          href: "/dashboard/admin/organization",
-        },
-        {
-          title: "Program",
-          href: "/dashboard/admin/program",
-        },
-        {
-          title: "Course",
-          href: "/dashboard/admin/course",
-        },
-        {
-          title: "Mahasiswa",
-          href: "/dashboard/admin/student",
-        },
-        {
-          title: "Mentor",
-          href: "/dashboard/admin/mentor",
-        },
+        { title: "Universitas", href: "/dashboard/admin/organization" },
+        { title: "Program", href: "/dashboard/admin/program" },
+        { title: "Course", href: "/dashboard/admin/course" },
+        { title: "Mahasiswa", href: "/dashboard/admin/student" },
+        { title: "Mentor", href: "/dashboard/admin/mentor" },
+        { title: "Manajemen Leader", href: "/dashboard/admin/leader" },
       ],
     },
     {
       title: "Operasional",
       items: [
-        {
-          title: "Rekening Pembayaran",
-          href: "/dashboard/admin/payment-account",
-        },
-        {
-          title: "Kotak Pesan",
-          href: "/dashboard/admin/messages",
-        },
-        {
-          title: "Pengumuman",
-          href: "/dashboard/admin/announcements",
-        },
-        {
-          title: "Promotion",
-          href: "/dashboard/admin/promotion",
-        },
-        {
-          title: "Enrollment",
-          href: "/dashboard/admin/enrollment",
-        },
+        { title: "Rekening Pembayaran", href: "/dashboard/admin/payment-account" },
+        { title: "Kotak Pesan", href: "/dashboard/admin/messages" },
+        { title: "Pengumuman", href: "/dashboard/admin/announcements" },
+        { title: "Promotion", href: "/dashboard/admin/promotion" },
+        { title: "Enrollment", href: "/dashboard/admin/enrollment" },
       ],
     },
     {
       title: "Pembelajaran",
       items: [
-        {
-          title: "Lesson",
-          href: "/dashboard/admin/lesson",
-        },
-        {
-          title: "Video",
-          href: "/dashboard/admin/video",
-        },
-        {
-          title: "File",
-          href: "/dashboard/admin/file",
-        },
-        {
-          title: "Live Class",
-          href: "/dashboard/admin/live-class",
-        },
-        {
-          title: "Try Out",
-          href: "/dashboard/admin/tryout",
-        },
+        { title: "Lesson", href: "/dashboard/admin/lesson" },
+        { title: "Video", href: "/dashboard/admin/video" },
+        { title: "File", href: "/dashboard/admin/file" },
+        { title: "Live Class", href: "/dashboard/admin/live-class" },
+        { title: "Try Out", href: "/dashboard/admin/tryout" },
+      ],
+    },
+  ],
+
+  leader: [
+    {
+      title: "Dashboard",
+      items: [
+        { title: "Ringkasan Leader", href: "/dashboard/admin" },
+      ],
+    },
+    {
+      title: "Master Data",
+      items: [
+        { title: "Universitas", href: "/dashboard/admin/organization" },
+        { title: "Program", href: "/dashboard/admin/program" },
+        { title: "Course", href: "/dashboard/admin/course" },
+      ],
+    },
+    {
+      title: "Operasional",
+      items: [
+        { title: "Kotak Pesan", href: "/dashboard/admin/messages" },
+        { title: "Pengumuman", href: "/dashboard/admin/announcements" },
+        { title: "Enrollment", href: "/dashboard/admin/enrollment" },
       ],
     },
   ],
@@ -104,26 +82,11 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
     {
       title: "Mentor",
       items: [
-        {
-          title: "Course Ditugaskan",
-          href: "/dashboard/mentor",
-        },
-        {
-          title: "Penilaian",
-          href: "/dashboard/mentor/ratings",
-        },
-        {
-          title: "Try Out",
-          href: "/dashboard/mentor/tryout",
-        },
-        {
-          title: "Kotak Pesan",
-          href: "/dashboard/mentor/messages",
-        },
-        {
-          title: "Profil",
-          href: "/dashboard/mentor/profile",
-        },
+        { title: "Course Ditugaskan", href: "/dashboard/mentor" },
+        { title: "Penilaian", href: "/dashboard/mentor/ratings" },
+        { title: "Try Out", href: "/dashboard/mentor/tryout" },
+        { title: "Kotak Pesan", href: "/dashboard/mentor/messages" },
+        { title: "Profil", href: "/dashboard/mentor/profile" },
       ],
     },
   ],
@@ -132,26 +95,11 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
     {
       title: "Student",
       items: [
-        {
-          title: "Course Dimiliki",
-          href: "/dashboard/student",
-        },
-        {
-          title: "Cari Course",
-          href: "/dashboard/student/course",
-        },
-        {
-          title: "Kotak Pesan",
-          href: "/dashboard/student/messages",
-        },
-        {
-          title: "Pengumuman",
-          href: "/dashboard/student/announcements",
-        },
-        {
-          title: "Profil",
-          href: "/dashboard/student/profile",
-        },
+        { title: "Course Dimiliki", href: "/dashboard/student" },
+        { title: "Cari Course", href: "/dashboard/student/course" },
+        { title: "Kotak Pesan", href: "/dashboard/student/messages" },
+        { title: "Pengumuman", href: "/dashboard/student/announcements" },
+        { title: "Profil", href: "/dashboard/student/profile" },
       ],
     },
   ],

@@ -9,47 +9,43 @@ import {
   dashboardMenus,
   type ProfileRole,
 } from "@/lib/dashboard-menu";
+import {
+  getLeaderPermissionForHref,
+  type LeaderPermission,
+} from "@/lib/leader-access";
 
 interface SidebarProps {
   role: ProfileRole;
+  leaderPermissions?: LeaderPermission[];
   messageUnreadCount?: number;
   onNavigate?: () => void;
 }
 
 const homeHrefByRole: Record<ProfileRole, string> = {
   admin: "/dashboard/admin",
+  leader: "/dashboard/admin",
   mentor: "/dashboard/mentor",
   student: "/dashboard/student",
 };
 
 const consoleLabelByRole: Record<ProfileRole, string> = {
   admin: "Admin Console",
+  leader: "Leader Console",
   mentor: "Mentor Console",
   student: "Student Console",
 };
 
-function isActivePath(
-  pathname: string,
-  href: string,
-  homeHref: string,
-) {
+function isActivePath(pathname: string, href: string, homeHref: string) {
   if (href === homeHref) {
     if (pathname === href) return true;
-
     if (
       homeHref === "/dashboard/student" &&
       pathname.startsWith("/dashboard/student/my-course/")
-    ) {
-      return true;
-    }
-
+    ) return true;
     if (
       homeHref === "/dashboard/mentor" &&
       pathname.startsWith("/dashboard/mentor/course/")
-    ) {
-      return true;
-    }
-
+    ) return true;
     return false;
   }
 
@@ -58,12 +54,24 @@ function isActivePath(
 
 export default function Sidebar({
   role,
+  leaderPermissions = [],
   messageUnreadCount = 0,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
-  const menu = dashboardMenus[role];
   const homeHref = homeHrefByRole[role];
+  const allowedLeaderPermissions = new Set(leaderPermissions);
+  const menu = dashboardMenus[role]
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        if (role !== "leader") return true;
+        const permission = getLeaderPermissionForHref(item.href);
+        return !permission || allowedLeaderPermissions.has(permission);
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
+
   const [pendingNavigation, setPendingNavigation] = useState<{
     href: string;
     sourcePath: string;
@@ -73,11 +81,17 @@ export default function Sidebar({
       ? pendingNavigation.href
       : null;
 
+  const messageHref =
+    role === "mentor"
+      ? "/dashboard/mentor/messages"
+      : role === "student"
+        ? "/dashboard/student/messages"
+        : "/dashboard/admin/messages";
+
   return (
     <aside className="flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden bg-gradient-to-b from-[#1769cf] via-[#033b63] to-[#061827] text-white shadow-2xl lg:w-72 lg:shadow-none">
       <div className="relative border-b border-white/10 p-5 sm:p-6">
         <div className="absolute -right-10 -top-16 h-36 w-36 rounded-full bg-cyan-300/20 blur-2xl" />
-
         <Link
           href={homeHref}
           prefetch={false}
@@ -101,7 +115,6 @@ export default function Sidebar({
               className="h-[52px] w-[52px] object-contain"
             />
           </span>
-
           <span className="min-w-0">
             <span className="block whitespace-nowrap text-xl font-extrabold leading-none tracking-[-0.04em]">
               Dokter<span className="text-cyan-200">Ambis</span>
@@ -115,27 +128,13 @@ export default function Sidebar({
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
         {menu.map((section) => (
-          <div
-            key={section.title}
-            className="mb-6"
-          >
+          <div key={section.title} className="mb-6">
             <p className="px-3 pb-2 text-[0.68rem] font-bold uppercase tracking-[0.2em] text-blue-100/60">
               {section.title}
             </p>
-
             <div className="flex flex-col gap-1">
               {section.items.map((item) => {
-                const active = isActivePath(
-                  pathname,
-                  item.href,
-                  homeHref,
-                );
-                const messageHref =
-                  role === "admin"
-                    ? "/dashboard/admin/messages"
-                    : role === "mentor"
-                      ? "/dashboard/mentor/messages"
-                      : "/dashboard/student/messages";
+                const active = isActivePath(pathname, item.href, homeHref);
                 const showMessageBadge =
                   item.href === messageHref && messageUnreadCount > 0;
                 const pending = pendingHref === item.href;

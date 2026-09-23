@@ -4,6 +4,7 @@ import { Card } from "@/components/ui";
 
 interface CourseActionCardProps {
   courseId: string;
+  isAdmin?: boolean;
 }
 
 const actionClass =
@@ -11,6 +12,7 @@ const actionClass =
 
 export default function CourseActionCard({
   courseId,
+  isAdmin = true,
 }: CourseActionCardProps) {
   return (
     <Card>
@@ -19,23 +21,28 @@ export default function CourseActionCard({
           Manajemen Blok
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          Kelola identitas Course, mentor, serta struktur materi pembelajaran.
+          {isAdmin
+            ? "Kelola identitas Course, mentor, serta struktur materi pembelajaran."
+            : "Kelola identitas Course yang termasuk dalam scope Anda."}
         </p>
 
         <div className="mt-6 space-y-3">
-          <Link
-            href={`/dashboard/admin/course/${courseId}/explorer`}
-            className={`${actionClass} bg-gradient-to-r from-blue-600 to-[#064a78] text-white shadow-sm hover:from-blue-700 hover:to-[#053b67] focus:ring-blue-300`}
-          >
-            Buka Course Explorer
-          </Link>
-
-          <Link
-            href={`/dashboard/admin/course/${courseId}/mentors`}
-            className={`${actionClass} border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 focus:ring-blue-200`}
-          >
-            Atur Mentor
-          </Link>
+          {isAdmin && (
+            <>
+              <Link
+                href={`/dashboard/admin/course/${courseId}/explorer`}
+                className={`${actionClass} bg-gradient-to-r from-blue-600 to-[#064a78] text-white shadow-sm hover:from-blue-700 hover:to-[#053b67] focus:ring-blue-300`}
+              >
+                Buka Course Explorer
+              </Link>
+              <Link
+                href={`/dashboard/admin/course/${courseId}/mentors`}
+                className={`${actionClass} border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 focus:ring-blue-200`}
+              >
+                Atur Mentor
+              </Link>
+            </>
+          )}
 
           <Link
             href={`/dashboard/admin/course/${courseId}/edit`}

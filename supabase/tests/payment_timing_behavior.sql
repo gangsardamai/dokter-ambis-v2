@@ -23,9 +23,12 @@ insert into auth.users (
     now()
   );
 
+-- Bootstrap the synthetic admin as database owner; restore the guard before behavioral assertions.
+alter table public.profiles disable trigger trg_profiles_guard_privileged_fields;
 update public.profiles
 set role = 'admin'::public.profile_role
 where id = '10000000-0000-0000-0000-000000000002';
+alter table public.profiles enable trigger trg_profiles_guard_privileged_fields;
 
 insert into public.organizations (
   id, slug, title, short_name, status

@@ -7,6 +7,7 @@ import AnnouncementForm from "@/components/admin/announcement/AnnouncementForm";
 import {
   announcementService,
   courseService,
+  leaderAccessService,
   organizationService,
 } from "@/services";
 
@@ -22,6 +23,14 @@ export default async function EditAnnouncementPage({
   params,
 }: EditAnnouncementPageProps) {
   const { id } = await params;
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_announcements",
+    );
+  } catch {
+    redirect("/dashboard");
+  }
 
   const [announcement, organizations, courses] =
     await Promise.all([
@@ -33,6 +42,15 @@ export default async function EditAnnouncementPage({
   if (!announcement) {
     notFound();
   }
+
+  if (
+    profile.role === "leader" &&
+    announcement.created_by !== profile.id
+  ) {
+    redirect("/dashboard/admin/announcements");
+  }
+
+  const targetOrganizations = await leaderAccessService.getAssignableOrganizations(organizations);
 
   async function update(formData: FormData) {
     "use server";
@@ -61,7 +79,7 @@ export default async function EditAnnouncementPage({
       />
 
       <AnnouncementForm
-        organizations={organizations.map((organization) => ({
+        organizations={targetOrganizations.map((organization) => ({
           id: organization.id,
           title: organization.title,
           shortName: organization.short_name,
@@ -72,6 +90,7 @@ export default async function EditAnnouncementPage({
           organizationId: course.organization_id,
         }))}
         defaultValues={announcement}
+        allowAllStudents={profile.role === "admin"}
         submitLabel="Simpan Perubahan"
         action={update}
       />

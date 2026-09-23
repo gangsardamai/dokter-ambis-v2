@@ -11,6 +11,7 @@ import OrganizationForm
 from "@/components/admin/organization/OrganizationForm";
 
 import {
+  leaderAccessService,
   organizationService,
 } from "@/services";
 
@@ -44,7 +45,7 @@ export default async function EditOrganizationPage({
       id
     );
 
-  if (!organization) {
+  if (!organization || !(await leaderAccessService.getAssignableOrganizations([organization])).length) {
 
     notFound();
 

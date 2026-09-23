@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { failure, success } from "@/lib/actions/result";
 import {
   announcementService,
-  profileService,
+  leaderAccessService,
 } from "@/services";
 
 import type { AnnouncementWriteInput } from "@/services/announcement.service";
@@ -60,26 +60,24 @@ function mapAnnouncementForm(
   };
 }
 
-async function requireAdminProfile() {
-  const profile = await profileService.getCurrentProfile();
-
-  if (!profile || profile.role !== "admin") {
-    throw new Error("Akses admin diperlukan.");
-  }
-
-  return profile;
+async function requireAnnouncementManager() {
+  return leaderAccessService.requireStaffPermission(
+    "manage_announcements",
+  );
 }
 
 export async function createAnnouncementAction(
   formData: FormData,
 ): Promise<ActionResult> {
   try {
-    const profile = await requireAdminProfile();
+    const profile = await requireAnnouncementManager();
+    const input = mapAnnouncementForm(formData);
 
-    await announcementService.create(
-      profile.id,
-      mapAnnouncementForm(formData),
-    );
+    if (profile.role === "leader") {
+      input.allStudents = false;
+    }
+
+    await announcementService.create(profile.id, input);
 
     revalidatePath("/dashboard/admin/announcements");
     revalidatePath("/dashboard/student");
@@ -99,12 +97,14 @@ export async function updateAnnouncementAction(
   formData: FormData,
 ): Promise<ActionResult> {
   try {
-    await requireAdminProfile();
+    const profile = await requireAnnouncementManager();
+    const input = mapAnnouncementForm(formData);
 
-    await announcementService.update(
-      id,
-      mapAnnouncementForm(formData),
-    );
+    if (profile.role === "leader") {
+      input.allStudents = false;
+    }
+
+    await announcementService.update(id, input);
 
     revalidatePath("/dashboard/admin/announcements");
     revalidatePath("/dashboard/student");
@@ -124,7 +124,7 @@ export async function moveAnnouncementAction(
   id: string,
   direction: "up" | "down",
 ): Promise<void> {
-  await requireAdminProfile();
+  await leaderAccessService.requireAdmin();
   await announcementService.move(id, direction);
 
   revalidatePath("/dashboard/admin/announcements");
@@ -134,7 +134,7 @@ export async function moveAnnouncementAction(
 export async function deleteAnnouncementAction(
   id: string,
 ): Promise<void> {
-  await requireAdminProfile();
+  await requireAnnouncementManager();
   await announcementService.delete(id);
 
   revalidatePath("/dashboard/admin/announcements");

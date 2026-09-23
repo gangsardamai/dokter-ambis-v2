@@ -32,7 +32,7 @@ export interface AdminLessonMessageListItem {
   lessonId: string | null;
   lessonTitle: string | null;
   latestMessage: string;
-  latestSenderRole: "student" | "mentor" | "admin";
+  latestSenderRole: "student" | "mentor" | "leader" | "admin";
   latestSenderName: string;
   unreadCount: number;
 }

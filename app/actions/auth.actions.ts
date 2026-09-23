@@ -1,5 +1,7 @@
 "use server";
 
+import { getRoleDashboard } from "@/lib/auth/role-dashboard";
+
 import { randomUUID } from "node:crypto";
 import {
   cookies,
@@ -30,18 +32,6 @@ const VALID_DEVICE_TYPES: DeviceType[] = [
   "mobile",
 ];
 
-function getRoleDashboard(role: string): string {
-  switch (role) {
-    case "admin":
-      return "/dashboard/admin";
-    case "mentor":
-      return "/dashboard/mentor";
-    case "student":
-      return "/dashboard/student";
-    default:
-      return "/login";
-  }
-}
 
 function getFormString(
   formData: FormData,

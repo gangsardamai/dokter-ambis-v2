@@ -1,3 +1,4 @@
+import type { LeaderAuditTables } from "./leader-audit.types";
 import type { Database as ApplicationDatabase } from "./database.app.types";
 import type { AdminStudentManagementFunctions } from "./admin-student-management.types";
 import type { AnnouncementTables } from "./announcement.types";
@@ -26,8 +27,15 @@ export type Database = Omit<ApplicationDatabase, "public"> & {
       PaymentAccountTables &
       CourseCommunityLinkTables &
       CoursePinTables &
-      AnnouncementTables;
-    Functions: ApplicationDatabase["public"]["Functions"] &
+      AnnouncementTables & LeaderAuditTables;
+    Functions: Omit<
+      ApplicationDatabase["public"]["Functions"],
+      | keyof TryoutFunctions
+      | keyof TryoutFollowupFunctions
+      | keyof PaymentAccountFunctions
+      | keyof MentorFeatureFunctions
+      | keyof AdminStudentManagementFunctions
+    > &
       TryoutFunctions &
       TryoutFollowupFunctions &
       PaymentAccountFunctions &

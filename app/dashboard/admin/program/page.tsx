@@ -5,12 +5,15 @@ import {
 
 import ProgramTable from "@/components/admin/program/ProgramTable";
 
-import { programService } from "@/services";
+import { leaderAccessService, profileService, programService } from "@/services";
 
 import { deleteProgramAction } from "./actions";
 
 export default async function ProgramPage() {
-  const programs = await programService.getPrograms();
+  const [programs, profile] = await Promise.all([
+    programService.getPrograms(),
+    profileService.getCurrentProfile(),
+  ]);
 
   async function handleDelete(
     id: string,
@@ -21,6 +24,8 @@ export default async function ProgramPage() {
       id,
     );
   }
+
+  const manageable = await leaderAccessService.getAssignablePrograms(programs);
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
@@ -38,8 +43,8 @@ export default async function ProgramPage() {
       />
 
       <ProgramTable
-        programs={programs}
-        onDelete={handleDelete}
+        programs={manageable}
+        onDelete={profile?.role === "admin" ? handleDelete : undefined}
       />
     </main>
   );

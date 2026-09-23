@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import type { Database } from "@/supabase/types/database.extended.types";
 import {
+  courseService,
   enrollmentService,
+  leaderAccessService,
   paymentService,
   profileService,
 } from "@/services";
@@ -148,7 +150,21 @@ export async function rejectPaymentAction(
 
 export async function activateEnrollmentAction(enrollmentId: string) {
   try {
-    await getAdminProfileId();
+    const profile = await leaderAccessService.requireStaffPermission(
+      "manage_enrollment",
+    );
+    const current = await enrollmentService.getEnrollmentById(enrollmentId);
+    if (!current) throw new Error("Enrollment tidak ditemukan.");
+
+    if (
+      profile.role === "leader" &&
+      current.payment_timing !== "deferred"
+    ) {
+      throw new Error(
+        "Leader hanya dapat mengaktifkan enrollment Bayar di Akhir. Verifikasi pembayaran Bayar di Awal tetap dilakukan Admin.",
+      );
+    }
+
     const enrollment = await enrollmentService.activateEnrollment(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment.course_id);
 
@@ -169,7 +185,7 @@ export async function activateEnrollmentAction(enrollmentId: string) {
 
 export async function cancelEnrollmentAction(enrollmentId: string) {
   try {
-    await getAdminProfileId();
+    await leaderAccessService.requireStaffPermission("manage_enrollment");
     const enrollment = await enrollmentService.cancelEnrollment(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment.course_id);
 
@@ -193,7 +209,7 @@ export async function updateEnrollmentCategoryAction(
   category: EnrollmentCategory,
 ) {
   try {
-    await getAdminProfileId();
+    await leaderAccessService.requireStaffPermission("manage_enrollment");
     const enrollment = await enrollmentService.updateCategory(
       enrollmentId,
       category,
@@ -238,6 +254,76 @@ export async function updateEnrollmentPaymentTimingAction(
         error instanceof Error
           ? error.message
           : "Gagal memperbarui kategori pembayaran.",
+    };
+  }
+}
+
+
+export async function createEnrollmentAction(formData: FormData) {
+  try {
+    await leaderAccessService.requireStaffPermission("manage_enrollment");
+
+    const phone = String(formData.get("phone") ?? "").trim();
+    const courseId = String(formData.get("course_id") ?? "").trim();
+    const category = String(formData.get("category") ?? "regular");
+    const paymentTiming = String(
+      formData.get("payment_timing") ?? "upfront",
+    );
+
+    if (!phone || !courseId) {
+      throw new Error("Nomor WhatsApp dan Course wajib diisi.");
+    }
+    if (category !== "regular" && category !== "separated") {
+      throw new Error("Kategori enrollment tidak valid.");
+    }
+    if (paymentTiming !== "upfront" && paymentTiming !== "deferred") {
+      throw new Error("Kategori pembayaran tidak valid.");
+    }
+
+    const [student, course] = await Promise.all([
+      leaderAccessService.findStudentForEnrollmentByPhone(phone),
+      courseService.getCourseById(courseId),
+    ]);
+
+    if (!student) {
+      throw new Error(
+        "Peserta aktif dengan nomor WhatsApp tersebut tidak ditemukan.",
+      );
+    }
+    if (!course || course.status !== "active") {
+      throw new Error("Course aktif tidak ditemukan atau berada di luar scope.");
+    }
+    if (
+      paymentTiming === "deferred" &&
+      course.payment_policy !== "upfront_or_deferred"
+    ) {
+      throw new Error("Course ini hanya mendukung pembayaran di awal.");
+    }
+
+    const enrollment = await enrollmentService.createEnrollment({
+      profile_id: student.id,
+      course_id: course.id,
+      price_snapshot: course.is_free ? 0 : course.price,
+      discount_amount: 0,
+      category,
+      payment_timing: paymentTiming,
+    });
+
+    revalidateEnrollment(enrollment.id, enrollment.course_id);
+
+    return {
+      success: true,
+      message: "Enrollment berhasil dibuat.",
+      enrollmentId: enrollment.id,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Enrollment gagal dibuat.",
+      enrollmentId: null,
     };
   }
 }

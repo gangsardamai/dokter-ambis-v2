@@ -12,6 +12,8 @@ import { mapCourseForm } from "@/lib/forms/course";
 import {
   courseCommunityLinkService,
   courseService,
+  leaderAccessService,
+  profileService,
   organizationService,
   paymentAccountService,
   programService,
@@ -29,6 +31,7 @@ export default async function EditCoursePage({
   params,
 }: EditCoursePageProps) {
   const { id } = await params;
+  const profile = await profileService.getCurrentProfile();
   const course = await courseService.getCourseById(id);
 
   if (!course) {
@@ -36,16 +39,20 @@ export default async function EditCoursePage({
   }
 
   const [
-    organizations,
-    programs,
+    allOrganizations,
+    allPrograms,
     paymentAccounts,
     communityLink,
   ] = await Promise.all([
     organizationService.getOrganizations(),
     programService.getPrograms(),
     paymentAccountService.getActiveAccounts(),
-    courseCommunityLinkService.getCourseLink(id),
+    profile?.role === "admin" ? courseCommunityLinkService.getCourseLink(id) : Promise.resolve(null),
   ]);
+
+  const assignedPrograms = await leaderAccessService.getAssignablePrograms(allPrograms);
+  const programs = allPrograms.filter(item => item.id === course.program_id || assignedPrograms.some(assigned => assigned.id === item.id));
+  const organizations = allOrganizations.filter(item => item.id === course.organization_id || programs.some(program => program.organization_id === item.id));
 
   const courseOrganization = organizations.find(
     (organization) => organization.id === course.organization_id,
@@ -71,6 +78,7 @@ export default async function EditCoursePage({
   async function saveWhatsAppGroupAction(formData: FormData) {
     "use server";
 
+    await leaderAccessService.requireAdmin();
     const whatsappGroupUrl = String(
       formData.get("whatsapp_group_url") ?? "",
     );
@@ -116,12 +124,12 @@ export default async function EditCoursePage({
         />
       </FormCard>
 
-      <FormCard>
+      {profile?.role === "admin" && <FormCard>
         <CourseWhatsAppGroupForm
           defaultValue={communityLink?.whatsapp_group_url ?? ""}
           action={saveWhatsAppGroupAction}
         />
-      </FormCard>
+      </FormCard>}
     </main>
   );
 }

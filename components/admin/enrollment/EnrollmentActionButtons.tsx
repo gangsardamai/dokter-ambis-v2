@@ -25,6 +25,7 @@ interface EnrollmentActionButtonsProps {
   paymentTiming: PaymentTiming;
   paymentId: string | null;
   paymentStatus: PaymentStatus | null;
+  isAdmin: boolean;
 }
 
 const actionClass =
@@ -37,6 +38,7 @@ export function EnrollmentActionButtons({
   paymentTiming,
   paymentId,
   paymentStatus,
+  isAdmin,
 }: EnrollmentActionButtonsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -104,15 +106,15 @@ export function EnrollmentActionButtons({
     <section className="rounded-3xl border border-blue-100/80 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-5">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1769cf]">
-          Tindakan Admin
+          {isAdmin ? "Tindakan Admin" : "Tindakan Leader"}
         </p>
         <h2 className="mt-2 text-xl font-extrabold tracking-[-0.04em] text-[#061827]">
-          Kelola enrollment dan pembayaran
+          {isAdmin ? "Kelola enrollment dan pembayaran" : "Kelola enrollment dalam scope Anda"}
         </h2>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        {paymentId && paymentStatus !== "approved" && (
+        {isAdmin && paymentId && paymentStatus !== "approved" && (
           <>
             <button
               type="button"
@@ -133,7 +135,8 @@ export function EnrollmentActionButtons({
           </>
         )}
 
-        {enrollmentStatus !== "active" && (
+        {enrollmentStatus !== "active" &&
+          (isAdmin || paymentTiming === "deferred") && (
           <button
             type="button"
             disabled={isPending}
@@ -183,29 +186,30 @@ export function EnrollmentActionButtons({
           </div>
         </div>
 
-        <div>
-          <p className="mb-3 text-sm font-bold text-slate-700">
-            Kategori Pembayaran
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              disabled={isPending || paymentTiming === "upfront"}
-              onClick={() => updatePaymentTiming("upfront")}
-              className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
-            >
-              Bayar di Awal
-            </button>
-            <button
-              type="button"
-              disabled={isPending || paymentTiming === "deferred"}
-              onClick={() => updatePaymentTiming("deferred")}
-              className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
-            >
-              Bayar di Akhir
-            </button>
-          </div>
-        </div>
+        {isAdmin && (
+                  <div>
+                    <p className="mb-3 text-sm font-bold text-slate-700">
+                      Kategori Pembayaran
+                    </p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                      <button
+                        type="button"
+                        disabled={isPending || paymentTiming === "upfront"}
+                        onClick={() => updatePaymentTiming("upfront")}
+                        className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
+                      >
+                        Bayar di Awal
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPending || paymentTiming === "deferred"}
+                        onClick={() => updatePaymentTiming("deferred")}
+                        className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
+                      >
+                        Bayar di Akhir
+                      </button>
+                    </div>
+                  </div>        )}
       </div>
 
       {isPending && (

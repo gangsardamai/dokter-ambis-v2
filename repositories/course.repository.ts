@@ -1,3 +1,4 @@
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import type { Database } from "@/supabase/types/database.extended.types";
 
 import { BaseRepository } from "./base.repository";
@@ -272,9 +273,9 @@ export class CourseRepository extends BaseRepository {
 
   async create(data: CourseInsert): Promise<Course> {
     const supabase = await this.db();
-    const { data: created, error } = await supabase.from("courses").insert({ ...data, slug: data.slug.toLowerCase() }).select().single();
-    if (error) this.handleError(error);
-    return created;
+    return callDynamicRpc<Course>(supabase, "staff_create_master_record", {
+      target_type: "course", payload: { ...data, slug: data.slug.toLowerCase() },
+    });
   }
 
   async update(id: string, data: CourseUpdate): Promise<Course> {

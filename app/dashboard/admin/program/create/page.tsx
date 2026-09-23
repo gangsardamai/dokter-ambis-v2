@@ -4,10 +4,10 @@ import { PageTitle } from "@/components/admin";
 import ProgramForm from "@/components/admin/program/ProgramForm";
 import { createProgramAction } from "../actions";
 import { mapProgramForm } from "@/lib/forms/program";
-import { organizationService } from "@/services";
+import { leaderAccessService, organizationService } from "@/services";
 
 export default async function CreateProgramPage() {
-  const organizations = await organizationService.getOrganizations();
+  const organizations = await leaderAccessService.getAssignableOrganizations(await organizationService.getOrganizations());
 
   async function createAction(formData: FormData) {
     "use server";

@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { courseService, paymentAccountService } from "@/services";
+import {
+  courseService,
+  leaderAccessService,
+  paymentAccountService,
+} from "@/services";
 
 import { validateCourse } from "@/lib/validators/course.validator";
 
@@ -22,6 +26,8 @@ type CourseUpdate =
 export async function createCourseAction(
   data: CourseInsert
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation = validateCourse({
     title: data.title,
@@ -53,6 +59,8 @@ export async function updateCourseAction(
   id: string,
   data: CourseUpdate
 ): Promise<ActionResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
 
   const validation = validateCourse({
     title: data.title ?? "",
@@ -87,6 +95,7 @@ export async function deleteCourseAction(
   id: string
 ): Promise<ActionResult> {
 
+  await leaderAccessService.requireAdmin();
   await courseService.deleteCourse(id);
 
   revalidatePath("/dashboard/admin/course");

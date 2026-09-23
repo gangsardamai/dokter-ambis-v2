@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import {
   PageHeader,
@@ -8,6 +9,7 @@ import {
 import {
   announcementService,
   courseService,
+  leaderAccessService,
   organizationService,
 } from "@/services";
 
@@ -73,6 +75,15 @@ const stateLabel = {
 export default async function AnnouncementAdminPage({
   searchParams,
 }: AnnouncementAdminPageProps) {
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_announcements",
+    );
+  } catch {
+    redirect("/dashboard");
+  }
+
   const query = await searchParams;
   const organizationFilter = first(query.organization);
   const courseFilter = first(query.course);
@@ -177,88 +188,91 @@ export default async function AnnouncementAdminPage({
         </div>
       )}
 
-      <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1769cf]">
-              Urutan Dashboard
-            </p>
-            <h2 className="mt-1 text-xl font-extrabold text-[#061827]">
-              Atur urutan carousel peserta
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500">
-            Urutan bersifat global; peserta otomatis melewati pengumuman yang bukan targetnya.
-          </p>
-        </div>
-
-        {dashboardAnnouncements.length === 0 ? (
-          <p className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
-            Belum ada pengumuman yang dipilih untuk tampil di dashboard.
-          </p>
-        ) : (
-          <div className="mt-5 space-y-2">
-            {dashboardAnnouncements.map((announcement, index) => (
-              <div
-                key={announcement.id}
-                className="flex flex-col gap-3 rounded-2xl border border-slate-200 px-4 py-3 sm:flex-row sm:items-center"
-              >
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-black text-[#1769cf]">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-extrabold text-slate-900">
-                    {announcement.title}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {stateLabel[getState(announcement)]}
+      {profile.role === "admin" && (
+              <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1769cf]">
+                      Urutan Dashboard
+                    </p>
+                    <h2 className="mt-1 text-xl font-extrabold text-[#061827]">
+                      Atur urutan carousel peserta
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Urutan bersifat global; peserta otomatis melewati pengumuman yang bukan targetnya.
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <form
-                    action={async () => {
-                      "use server";
-                      await moveAnnouncementAction(
-                        announcement.id,
-                        "up",
-                      );
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      disabled={index === 0}
-                      className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Naikkan urutan"
-                    >
-                      ↑
-                    </button>
-                  </form>
-                  <form
-                    action={async () => {
-                      "use server";
-                      await moveAnnouncementAction(
-                        announcement.id,
-                        "down",
-                      );
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      disabled={
-                        index === dashboardAnnouncements.length - 1
-                      }
-                      className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Turunkan urutan"
-                    >
-                      ↓
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+        
+                {dashboardAnnouncements.length === 0 ? (
+                  <p className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+                    Belum ada pengumuman yang dipilih untuk tampil di dashboard.
+                  </p>
+                ) : (
+                  <div className="mt-5 space-y-2">
+                    {dashboardAnnouncements.map((announcement, index) => (
+                      <div
+                        key={announcement.id}
+                        className="flex flex-col gap-3 rounded-2xl border border-slate-200 px-4 py-3 sm:flex-row sm:items-center"
+                      >
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-black text-[#1769cf]">
+                          {index + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-extrabold text-slate-900">
+                            {announcement.title}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {stateLabel[getState(announcement)]}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <form
+                            action={async () => {
+                              "use server";
+                              await moveAnnouncementAction(
+                                announcement.id,
+                                "up",
+                              );
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              disabled={index === 0}
+                              className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                              aria-label="Naikkan urutan"
+                            >
+                              ↑
+                            </button>
+                          </form>
+                          <form
+                            action={async () => {
+                              "use server";
+                              await moveAnnouncementAction(
+                                announcement.id,
+                                "down",
+                              );
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              disabled={
+                                index === dashboardAnnouncements.length - 1
+                              }
+                              className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                              aria-label="Turunkan urutan"
+                            >
+                              ↓
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+        
+              )}
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <form
@@ -363,6 +377,10 @@ export default async function AnnouncementAdminPage({
                   courseMap.get(id)?.title ?? "Course",
               );
 
+              const canManage =
+                profile.role === "admin" ||
+                announcement.created_by === profile.id;
+
               return (
                 <article
                   key={announcement.id}
@@ -439,29 +457,33 @@ export default async function AnnouncementAdminPage({
                     </p>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <Link
-                      href={`/dashboard/admin/announcements/${announcement.id}/edit`}
-                      className="inline-flex min-h-10 items-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-[#1769cf] transition hover:bg-blue-100"
-                    >
-                      Edit
-                    </Link>
-                    <form
-                      action={async () => {
-                        "use server";
-                        await deleteAnnouncementAction(
-                          announcement.id,
-                        );
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                  {canManage ? (
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <Link
+                        href={`/dashboard/admin/announcements/${announcement.id}/edit`}
+                        className="inline-flex min-h-10 items-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-[#1769cf] transition hover:bg-blue-100"
                       >
-                        Hapus
-                      </button>
-                    </form>
-                  </div>
+                        Edit
+                      </Link>
+                      <form
+                        action={async () => {
+                          "use server";
+                          await deleteAnnouncementAction(announcement.id);
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                        >
+                          Hapus
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <p className="mt-5 text-xs font-semibold text-slate-400">
+                      Pengumuman ini dibuat Admin dan tersedia sebagai referensi dalam scope Anda.
+                    </p>
+                  )}
                 </article>
               );
             })}

@@ -106,13 +106,23 @@ begin
     raise exception 'RPC rekening yang tidak digunakan seharusnya sudah dihapus.';
   end if;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'enrollments'
-      and policyname = 'enrollments_student_insert'
-  ) then
-    raise exception 'Policy enrollments_student_insert tidak ditemukan.';
+  select with_check into policy_expression
+  from pg_policies
+  where schemaname = 'public'
+    and tablename = 'enrollments'
+    and policyname = 'enrollments_insert_authorized'
+    and cmd = 'INSERT'
+    and 'authenticated' = any(roles);
+
+  if policy_expression is null
+     or policy_expression not like '%is_active_student%'
+     or policy_expression not like '%auth.uid()%'
+     or policy_expression not like '%price_snapshot%'
+     or policy_expression not like '%pending_payment%'
+     or policy_expression not like '%pending_approval%'
+     or policy_expression not like '%upfront_or_deferred%'
+     or policy_expression not like '%leader_can_access_course%' then
+    raise exception 'Policy enrollment gabungan kehilangan guard student/payment/scope.';
   end if;
 
   select coalesce(qual, '') || ' ' || coalesce(with_check, '')
