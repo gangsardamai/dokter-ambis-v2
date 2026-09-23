@@ -338,6 +338,7 @@ function QuizItem({
 
       <div className="flex items-center gap-2">
         <Link
+          prefetch={false}
           href={
             mode === "student"
               ? `/dashboard/student/quiz/${quiz.id}`
