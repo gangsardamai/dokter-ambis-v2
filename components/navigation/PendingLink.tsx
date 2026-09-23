@@ -22,6 +22,7 @@ export default function PendingLink({
   pendingLabel = "Memuat...",
   contentClassName,
   className,
+  prefetch = false,
   ...props
 }: PendingLinkProps) {
   const [pending, setPending] = useState(false);
@@ -30,6 +31,7 @@ export default function PendingLink({
   return (
     <Link
       {...props}
+      prefetch={prefetch}
       aria-busy={pending || undefined}
       aria-disabled={pending || undefined}
       onNavigate={(event) => {
