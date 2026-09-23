@@ -6,12 +6,22 @@ import AnnouncementForm from "@/components/admin/announcement/AnnouncementForm";
 
 import {
   courseService,
+  leaderAccessService,
   organizationService,
 } from "@/services";
 
 import { createAnnouncementAction } from "../actions";
 
 export default async function CreateAnnouncementPage() {
+  let profile;
+  try {
+    profile = await leaderAccessService.requireStaffPermission(
+      "manage_announcements",
+    );
+  } catch {
+    redirect("/dashboard");
+  }
+
   const [organizations, courses] = await Promise.all([
     organizationService.getActiveUniversities(),
     courseService.getAvailableCourseDetails(),
@@ -54,6 +64,7 @@ export default async function CreateAnnouncementPage() {
           title: course.title,
           organizationId: course.organization_id,
         }))}
+        allowAllStudents={profile.role === "admin"}
         submitLabel="Simpan Pengumuman"
         action={create}
       />

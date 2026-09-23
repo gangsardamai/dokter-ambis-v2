@@ -25,6 +25,7 @@ interface AnnouncementFormProps {
   organizations: OrganizationOption[];
   courses: CourseOption[];
   defaultValues?: AnnouncementWithTargets;
+  allowAllStudents?: boolean;
   submitLabel: string;
   action: (formData: FormData) => Promise<void>;
 }
@@ -58,11 +59,12 @@ export default function AnnouncementForm({
   organizations,
   courses,
   defaultValues,
+  allowAllStudents = true,
   submitLabel,
   action,
 }: AnnouncementFormProps) {
   const [allStudents, setAllStudents] = useState(
-    defaultValues?.all_students ?? false,
+    allowAllStudents && (defaultValues?.all_students ?? false),
   );
   const [selectedOrganizations, setSelectedOrganizations] =
     useState<string[]>(defaultValues?.organizationIds ?? []);
@@ -156,25 +158,27 @@ export default function AnnouncementForm({
             </p>
           </div>
 
-          <label className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-white p-4">
-            <input
-              type="checkbox"
-              name="all_students"
-              checked={allStudents}
-              onChange={(event) =>
-                setAllStudents(event.target.checked)
-              }
-              className="mt-0.5 h-4 w-4 accent-[#1769cf]"
-            />
-            <span>
-              <span className="block text-sm font-extrabold text-slate-900">
-                Semua Peserta
+          {allowAllStudents && (
+            <label className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-white p-4">
+              <input
+                type="checkbox"
+                name="all_students"
+                checked={allStudents}
+                onChange={(event) =>
+                  setAllStudents(event.target.checked)
+                }
+                className="mt-0.5 h-4 w-4 accent-[#1769cf]"
+              />
+              <span>
+                <span className="block text-sm font-extrabold text-slate-900">
+                  Semua Peserta
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  Termasuk peserta yang baru mendaftar setelah pengumuman dibuat.
+                </span>
               </span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">
-                Termasuk peserta yang baru mendaftar setelah pengumuman dibuat.
-              </span>
-            </span>
-          </label>
+            </label>
+          )}
 
           {!allStudents && (
             <div className="mt-5 space-y-6">
