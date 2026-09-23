@@ -18,18 +18,6 @@ interface MaterialRouteContext {
   }>;
 }
 
-const FILE_MIME_TYPES: Record<string, string> = {
-  pdf: "application/pdf",
-  ppt: "application/vnd.ms-powerpoint",
-  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  xls: "application/vnd.ms-excel",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  zip: "application/zip",
-  mp3: "audio/mpeg",
-};
-
 function materialErrorResponse(
   status: number,
   detail: string,
@@ -68,252 +56,29 @@ function materialErrorResponse(
   });
 }
 
-function decodeHtmlEntities(value: string): string {
-  return value
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&#x27;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-}
-
-function getHtmlAttribute(
-  tag: string,
-  attribute: string,
-): string | null {
-  const pattern = new RegExp(
-    `${attribute}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
-    "i",
-  );
-  const match = tag.match(pattern);
-  const value = match?.[1] ?? match?.[2] ?? match?.[3];
-
-  return value ? decodeHtmlEntities(value) : null;
-}
-
-function getGoogleDriveConfirmationUrl(
-  html: string,
-  fileId: string,
-): string | null {
-  const formMatch = html.match(
-    /<form\b[^>]*action\s*=\s*(?:"([^"]+)"|'([^']+)')[^>]*>([\s\S]*?)<\/form>/i,
-  );
-
-  if (formMatch) {
-    const action = decodeHtmlEntities(
-      formMatch[1] ?? formMatch[2] ?? "",
-    );
-    const body = formMatch[3] ?? "";
-
-    try {
-      const url = new URL(
-        action,
-        "https://drive.usercontent.google.com",
-      );
-
-      for (const inputTag of body.match(/<input\b[^>]*>/gi) ?? []) {
-        const name = getHtmlAttribute(inputTag, "name");
-        const value = getHtmlAttribute(inputTag, "value");
-
-        if (name && value !== null) {
-          url.searchParams.set(name, value);
-        }
-      }
-
-      if (
-        url.protocol === "https:" &&
-        url.hostname === "drive.usercontent.google.com" &&
-        url.pathname === "/download" &&
-        url.searchParams.get("id") === fileId &&
-        url.searchParams.has("confirm")
-      ) {
-        return url.toString();
-      }
-    } catch {
-      // Continue to the link fallback below.
-    }
-  }
-
-  for (const anchorTag of html.match(/<a\b[^>]*>/gi) ?? []) {
-    const href = getHtmlAttribute(anchorTag, "href");
-
-    if (!href) {
-      continue;
-    }
-
-    try {
-      const url = new URL(
-        href,
-        "https://drive.usercontent.google.com",
-      );
-
-      if (
-        url.protocol === "https:" &&
-        url.hostname === "drive.usercontent.google.com" &&
-        url.pathname === "/download" &&
-        url.searchParams.get("id") === fileId &&
-        url.searchParams.has("confirm")
-      ) {
-        return url.toString();
-      }
-    } catch {
-      // Ignore malformed links from the warning page.
-    }
-  }
-
-  return null;
-}
-
-function getResponseCookies(response: Response): string | null {
-  const headers = response.headers as Headers & {
-    getSetCookie?: () => string[];
-  };
-  const setCookies = headers.getSetCookie?.() ?? [];
-
-  if (setCookies.length > 0) {
-    return setCookies
-      .map((cookie) => cookie.split(";", 1)[0])
-      .filter(Boolean)
-      .join("; ");
-  }
-
-  const setCookie = response.headers.get("set-cookie");
-  return setCookie ? setCookie.split(";", 1)[0] : null;
-}
-
-async function fetchGoogleDriveFile(
-  fileId: string,
-  range: string | null,
-): Promise<Response> {
-  const initialUrl = new URL(
+function getGoogleDriveDownloadUrl(fileId: string): URL {
+  const url = new URL(
     "https://drive.usercontent.google.com/download",
   );
-  initialUrl.searchParams.set("id", fileId);
-  initialUrl.searchParams.set("export", "download");
-  initialUrl.searchParams.set("confirm", "t");
 
-  const headers = new Headers({
-    Accept: "application/octet-stream,*/*",
-    "User-Agent": "DokterAmbis/1.0",
-  });
+  url.searchParams.set("id", fileId);
+  url.searchParams.set("export", "download");
+  url.searchParams.set("confirm", "t");
 
-  if (range) {
-    headers.set("Range", range);
-  }
+  return url;
+}
 
-  let response = await fetch(initialUrl, {
-    headers,
-    redirect: "follow",
-    cache: "no-store",
-  });
-
-  const contentType = response.headers.get("content-type") ?? "";
-
-  if (!contentType.toLowerCase().includes("text/html")) {
-    return response;
-  }
-
-  const cookies = getResponseCookies(response);
-  const html = await response.text();
-  const confirmationUrl = getGoogleDriveConfirmationUrl(
-    html,
-    fileId,
+function noStoreRedirect(url: string | URL): NextResponse {
+  const response = NextResponse.redirect(url, 307);
+  response.headers.set(
+    "Cache-Control",
+    "private, no-store, max-age=0",
   );
-
-  if (!confirmationUrl) {
-    throw new Error("Google Drive confirmation link was not found.");
-  }
-
-  const confirmedHeaders = new Headers(headers);
-
-  if (cookies) {
-    confirmedHeaders.set("Cookie", cookies);
-  }
-
-  response = await fetch(confirmationUrl, {
-    headers: confirmedHeaders,
-    redirect: "follow",
-    cache: "no-store",
-  });
-
-  const confirmedContentType =
-    response.headers.get("content-type") ?? "";
-
-  if (confirmedContentType.toLowerCase().includes("text/html")) {
-    throw new Error("Google Drive returned an HTML page instead of the file.");
-  }
-
   return response;
 }
 
-function getDownloadFileName(
-  title: string,
-  fileType: string,
-): string {
-  const cleanTitle = title
-    .replace(/[\u0000-\u001f\u007f]/g, "")
-    .replace(/[\\/:*?"<>|]/g, "-")
-    .trim() || "materi";
-  const extension = `.${fileType.toLowerCase()}`;
-
-  return cleanTitle.toLowerCase().endsWith(extension)
-    ? cleanTitle
-    : `${cleanTitle}${extension}`;
-}
-
-function getContentDisposition(fileName: string): string {
-  const asciiName = fileName
-    .normalize("NFKD")
-    .replace(/[^\x20-\x7E]/g, "_")
-    .replace(/["\\]/g, "_");
-
-  return `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
-}
-
-function createGoogleDriveDownloadResponse(
-  upstream: Response,
-  title: string,
-  fileType: string,
-): Response {
-  if (!upstream.body) {
-    return materialErrorResponse(
-      502,
-      "File Google Drive tidak mengembalikan data.",
-    );
-  }
-
-  const headers = new Headers({
-    "Content-Type":
-      FILE_MIME_TYPES[fileType] ?? "application/octet-stream",
-    "Content-Disposition": getContentDisposition(
-      getDownloadFileName(title, fileType),
-    ),
-    "Cache-Control": "private, no-store, max-age=0",
-    "X-Content-Type-Options": "nosniff",
-  });
-
-  for (const headerName of [
-    "accept-ranges",
-    "content-length",
-    "content-range",
-    "etag",
-    "last-modified",
-  ]) {
-    const value = upstream.headers.get(headerName);
-
-    if (value) {
-      headers.set(headerName, value);
-    }
-  }
-
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers,
-  });
-}
-
 export async function GET(
-  request: Request,
+  _request: Request,
   context: MaterialRouteContext,
 ) {
   const { fileId } = await context.params;
@@ -321,7 +86,7 @@ export async function GET(
 
   const { data: file, error } = await supabase
     .from("lesson_files")
-    .select("file_path, title, file_type")
+    .select("file_path, title")
     .eq("id", fileId)
     .maybeSingle();
 
@@ -336,7 +101,7 @@ export async function GET(
     parseGoogleSheetsFilePath(file.file_path);
 
   if (googleSheetsFileId) {
-    return NextResponse.redirect(
+    return noStoreRedirect(
       getGoogleSheetsViewUrl(googleSheetsFileId),
     );
   }
@@ -345,30 +110,12 @@ export async function GET(
     parseGoogleDriveFilePath(file.file_path);
 
   if (googleDriveFileId) {
-    try {
-      const upstream = await fetchGoogleDriveFile(
-        googleDriveFileId,
-        request.headers.get("range"),
-      );
-
-      if (!upstream.ok && upstream.status !== 206) {
-        return materialErrorResponse(
-          upstream.status === 404 ? 404 : 502,
-          "File Google Drive tidak dapat diunduh. Pastikan file masih tersedia dan izin berbagi tidak berubah.",
-        );
-      }
-
-      return createGoogleDriveDownloadResponse(
-        upstream,
-        file.title,
-        file.file_type,
-      );
-    } catch {
-      return materialErrorResponse(
-        502,
-        "File Google Drive gagal diproses untuk diunduh. Silakan coba lagi atau hubungi Admin Dokter Ambis.",
-      );
-    }
+    // Important: do not proxy the file body through the application host.
+    // Authorization is still checked above through Supabase RLS, then the
+    // browser downloads directly from Google Drive.
+    return noStoreRedirect(
+      getGoogleDriveDownloadUrl(googleDriveFileId),
+    );
   }
 
   const r2File = parseR2FilePath(file.file_path);
@@ -389,7 +136,7 @@ export async function GET(
         downloadName: file.title,
       });
 
-      return NextResponse.redirect(signed.url);
+      return noStoreRedirect(signed.url);
     } catch {
       return materialErrorResponse(
         500,
@@ -425,5 +172,5 @@ export async function GET(
     );
   }
 
-  return NextResponse.redirect(data.signedUrl);
+  return noStoreRedirect(data.signedUrl);
 }
