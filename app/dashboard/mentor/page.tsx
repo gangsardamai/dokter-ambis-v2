@@ -8,9 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   coursePinService,
   courseService,
-  organizationService,
   profileService,
-  programService,
 } from "@/services";
 
 export default async function MentorDashboardPage() {
@@ -40,49 +38,30 @@ export default async function MentorDashboardPage() {
     course_id: string;
     is_active: boolean;
   }>;
-  const assignedCourseIds = new Set(
-    assignmentRows
-      .filter((assignment) => assignment.is_active)
-      .map((assignment) => assignment.course_id),
-  );
+  const assignedCourseIds = assignmentRows
+    .filter((assignment) => assignment.is_active)
+    .map((assignment) => assignment.course_id);
 
-  const [allCourses, organizations, programs, pinnedCourseIds] =
-    await Promise.all([
-      courseService.getCourses(),
-      organizationService.getOrganizations(),
-      programService.getPrograms(),
-      coursePinService.getPinnedCourseIds(profile.id),
-    ]);
+  const [assignedCourses, pinnedCourseIds] = await Promise.all([
+    courseService.getCourseDetailsByIds(assignedCourseIds),
+    coursePinService.getPinnedCourseIds(profile.id),
+  ]);
 
-  const organizationsById = new Map(
-    organizations.map((organization) => [organization.id, organization]),
-  );
-  const programsById = new Map(
-    programs.map((program) => [program.id, program]),
-  );
-
-  const courses: DashboardCourseItem[] = allCourses
-    .filter((course) => assignedCourseIds.has(course.id))
-    .map((course) => {
-      const organization = organizationsById.get(course.organization_id);
-      const program = programsById.get(course.program_id);
-
-      return {
-        id: course.id,
-        title: course.title,
-        description: course.description,
-        organizationTitle:
-          organization?.title ?? "Universitas belum tersedia",
-        organizationShortName: organization?.short_name ?? null,
-        programTitle: program?.title ?? "Program belum tersedia",
-        statusLabel:
-          course.status === "active" ? "Aktif" : course.status,
-        metaLabel: "Akses pengelolaan",
-        priceLabel: "Mentor",
-        href: `/dashboard/mentor/course/${course.id}/explorer`,
-        actionLabel: "Buka Course Explorer",
-      };
-    });
+  const courses: DashboardCourseItem[] = assignedCourses.map((course) => ({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    organizationTitle:
+      course.organization?.title ?? "Universitas belum tersedia",
+    organizationShortName: course.organization?.short_name ?? null,
+    programTitle: course.program?.title ?? "Program belum tersedia",
+    statusLabel:
+      course.status === "active" ? "Aktif" : course.status,
+    metaLabel: "Akses pengelolaan",
+    priceLabel: "Mentor",
+    href: `/dashboard/mentor/course/${course.id}/explorer`,
+    actionLabel: "Buka Course Explorer",
+  }));
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
