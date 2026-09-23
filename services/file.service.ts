@@ -30,6 +30,10 @@ export class LessonFileService {
     return await lessonFileRepository.getByLesson(lessonId);
   }
 
+  async getFilesByLessons(lessonIds: string[]) {
+    return await lessonFileRepository.getByLessons(lessonIds);
+  }
+
   async getFilesByCourse(courseId: string) {
     return await lessonFileRepository.getByCourse(courseId);
   }
