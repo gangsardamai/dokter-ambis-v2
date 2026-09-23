@@ -18,6 +18,7 @@ interface OrganizationActionMenuProps {
   organizationId: string;
   status: OrganizationStatus;
   isGeneral: boolean;
+  isAdmin?: boolean;
 }
 
 const actionBase =
@@ -27,6 +28,7 @@ export default function OrganizationActionMenu({
   organizationId,
   status,
   isGeneral,
+  isAdmin = true,
 }: OrganizationActionMenuProps) {
   const [isPending, startTransition] = useTransition();
   const isActive = status === "active";
@@ -111,7 +113,7 @@ export default function OrganizationActionMenu({
         </button>
       )}
 
-      {!isGeneral ? (
+      {isAdmin && !isGeneral ? (
         <button
           type="button"
           disabled={isPending}

@@ -5,11 +5,13 @@ import {
 
 import OrganizationTable from "@/components/admin/organization/OrganizationTable";
 
-import { organizationService } from "@/services";
+import { organizationService, profileService } from "@/services";
 
 export default async function OrganizationPage() {
-  const organizations =
-    await organizationService.getOrganizations();
+  const [organizations, profile] = await Promise.all([
+    organizationService.getOrganizations(),
+    profileService.getCurrentProfile(),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
@@ -28,6 +30,7 @@ export default async function OrganizationPage() {
 
       <OrganizationTable
         organizations={organizations}
+        isAdmin={profile?.role === "admin"}
       />
     </main>
   );

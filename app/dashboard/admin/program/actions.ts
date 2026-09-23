@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { programService } from "@/services";
+import { leaderAccessService, programService } from "@/services";
 
 import { validateProgram } from "@/lib/validators/program";
 
@@ -149,6 +149,7 @@ export async function deleteProgramAction(
   id: string
 ): Promise<ActionResult> {
 
+  await leaderAccessService.requireAdmin();
   await programService.deleteProgram(
     id
   );

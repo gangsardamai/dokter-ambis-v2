@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { courseService, paymentAccountService } from "@/services";
+import {
+  courseService,
+  leaderAccessService,
+  paymentAccountService,
+} from "@/services";
 
 import { validateCourse } from "@/lib/validators/course.validator";
 
@@ -87,6 +91,7 @@ export async function deleteCourseAction(
   id: string
 ): Promise<ActionResult> {
 
+  await leaderAccessService.requireAdmin();
   await courseService.deleteCourse(id);
 
   revalidatePath("/dashboard/admin/course");

@@ -5,12 +5,15 @@ import {
 
 import ProgramTable from "@/components/admin/program/ProgramTable";
 
-import { programService } from "@/services";
+import { profileService, programService } from "@/services";
 
 import { deleteProgramAction } from "./actions";
 
 export default async function ProgramPage() {
-  const programs = await programService.getPrograms();
+  const [programs, profile] = await Promise.all([
+    programService.getPrograms(),
+    profileService.getCurrentProfile(),
+  ]);
 
   async function handleDelete(
     id: string,
@@ -39,7 +42,7 @@ export default async function ProgramPage() {
 
       <ProgramTable
         programs={programs}
-        onDelete={handleDelete}
+        onDelete={profile?.role === "admin" ? handleDelete : undefined}
       />
     </main>
   );

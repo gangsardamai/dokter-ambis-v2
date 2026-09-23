@@ -10,6 +10,7 @@ type Organization =
 
 interface OrganizationTableProps {
   organizations: Organization[];
+  isAdmin?: boolean;
 }
 
 function UniversityIcon() {
@@ -36,6 +37,7 @@ function UniversityIcon() {
 
 export default function OrganizationTable({
   organizations,
+  isAdmin = true,
 }: OrganizationTableProps) {
   if (organizations.length === 0) {
     return (
@@ -96,6 +98,7 @@ export default function OrganizationTable({
               organizationId={organization.id}
               status={organization.status}
               isGeneral={organization.is_general}
+              isAdmin={isAdmin}
             />
           </div>
         </article>
