@@ -49,6 +49,7 @@ export default function Universities({
             {organizations.map((organization) => (
               <Link
                 key={organization.id}
+                prefetch={false}
                 href={`/kelas?organization=${encodeURIComponent(
                   organization.slug,
                 )}`}
@@ -102,6 +103,7 @@ export default function Universities({
           <div className="mt-9 text-center">
             <Link
               href="/kelas"
+              prefetch={false}
               className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-blue-200 bg-white px-6 py-3 text-sm font-black text-[#1769cf] transition hover:border-blue-400 hover:bg-blue-50"
             >
               Lihat Semua Kelas
