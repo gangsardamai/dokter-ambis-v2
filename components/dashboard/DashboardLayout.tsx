@@ -40,6 +40,7 @@ export default function DashboardLayout({
   const [currentMessageUnreadCount, setCurrentMessageUnreadCount] = useState(
     messageUnreadCount,
   );
+  const lastUnreadRefreshAt = useRef(Date.now());
 
   useEffect(() => {
     function updateUnreadCount(event: Event) {
@@ -62,19 +63,17 @@ export default function DashboardLayout({
   useEffect(() => {
     let active = true;
     const minimumRefreshIntervalMs = 5 * 60 * 1000;
-    const lastRefreshAt = { current: Date.now() };
-
     async function refreshUnreadCount(force = false) {
       const now = Date.now();
 
       if (
         !force &&
-        now - lastRefreshAt.current < minimumRefreshIntervalMs
+        now - lastUnreadRefreshAt.current < minimumRefreshIntervalMs
       ) {
         return;
       }
 
-      lastRefreshAt.current = now;
+      lastUnreadRefreshAt.current = now;
       const count = await getLessonMessageUnreadCountAction();
 
       if (active) {
