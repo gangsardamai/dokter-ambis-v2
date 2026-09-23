@@ -80,6 +80,7 @@ export default function Sidebar({
 
         <Link
           href={homeHref}
+          prefetch={false}
           onClick={() => {
             if (pathname !== homeHref) {
               setPendingNavigation({ href: homeHref, sourcePath: pathname });
@@ -143,6 +144,7 @@ export default function Sidebar({
                   <Link
                     key={`${section.title}-${item.title}`}
                     href={item.href}
+                    prefetch={false}
                     onClick={() => {
                       if (pathname !== item.href) {
                         setPendingNavigation({

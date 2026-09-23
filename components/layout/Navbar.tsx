@@ -48,6 +48,7 @@ export default function Navbar() {
             <Link
               key={menu.href}
               href={menu.href}
+              prefetch={false}
               className="text-sm font-semibold text-slate-600 transition hover:text-[#1769cf]"
             >
               {menu.label}
@@ -56,6 +57,7 @@ export default function Navbar() {
 
           <Link
             href="/login"
+            prefetch={false}
             className="text-sm font-semibold text-[#033b63] transition hover:text-[#1769cf]"
           >
             Masuk
@@ -63,6 +65,7 @@ export default function Navbar() {
 
           <Link
             href="/register"
+            prefetch={false}
             className="rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             Daftar
@@ -121,6 +124,7 @@ export default function Navbar() {
             <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
               <Link
                 href="/login"
+                prefetch={false}
                 className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-bold text-[#033b63]"
               >
                 Masuk
@@ -128,6 +132,7 @@ export default function Navbar() {
 
               <Link
                 href="/register"
+                prefetch={false}
                 className="rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-4 py-3 text-center text-sm font-bold text-white"
               >
                 Daftar

@@ -45,6 +45,7 @@ export default function Hero() {
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start">
             <Link
               href="/register"
+              prefetch={false}
               className="rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-7 py-3.5 text-center text-sm font-bold text-white shadow-[0_10px_25px_rgba(23,105,207,0.22)] transition hover:-translate-y-0.5 hover:shadow-lg"
             >
               Mulai Belajar
@@ -52,6 +53,7 @@ export default function Hero() {
 
             <Link
               href="/kelas"
+              prefetch={false}
               className="rounded-xl border border-blue-200 bg-white px-7 py-3.5 text-center text-sm font-bold text-[#1769cf] transition hover:border-blue-400 hover:bg-blue-50"
             >
               Lihat Program
