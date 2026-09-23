@@ -51,6 +51,24 @@ export class VideoRepository extends BaseRepository {
     return data ?? [];
   }
 
+  async getByLessons(
+    lessonIds: string[],
+  ): Promise<Video[]> {
+    if (lessonIds.length === 0) return [];
+
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("videos")
+      .select("*")
+      .in("lesson_id", lessonIds)
+      .order("video_order");
+
+    if (error) this.handleError(error);
+
+    return data ?? [];
+  }
+
   async getByCourse(
     courseId: string
   ): Promise<Video[]> {
