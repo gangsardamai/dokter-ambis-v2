@@ -27,7 +27,14 @@ export type Database = Omit<ApplicationDatabase, "public"> & {
       CourseCommunityLinkTables &
       CoursePinTables &
       AnnouncementTables;
-    Functions: ApplicationDatabase["public"]["Functions"] &
+    Functions: Omit<
+      ApplicationDatabase["public"]["Functions"],
+      | keyof TryoutFunctions
+      | keyof TryoutFollowupFunctions
+      | keyof PaymentAccountFunctions
+      | keyof MentorFeatureFunctions
+      | keyof AdminStudentManagementFunctions
+    > &
       TryoutFunctions &
       TryoutFollowupFunctions &
       PaymentAccountFunctions &

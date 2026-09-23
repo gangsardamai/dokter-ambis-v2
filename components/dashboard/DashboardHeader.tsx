@@ -11,12 +11,14 @@ interface DashboardHeaderProps {
 
 const titleByRole = {
   admin: "Admin DokterAmbis",
+  leader: "Leader DokterAmbis",
   mentor: "Mentor DokterAmbis",
   student: "Student DokterAmbis",
 } as const;
 
 const roleLabel = {
   admin: "Admin",
+  leader: "Leader",
   mentor: "Mentor",
   student: "Mahasiswa",
 } as const;

@@ -16,8 +16,11 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
-function roleLabel(role: "student" | "mentor" | "admin"): string {
+function roleLabel(
+  role: "student" | "mentor" | "leader" | "admin",
+): string {
   if (role === "mentor") return "Mentor";
+  if (role === "leader") return "Leader";
   if (role === "admin") return "Admin";
   return "Peserta";
 }

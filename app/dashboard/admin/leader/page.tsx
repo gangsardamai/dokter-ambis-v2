@@ -43,7 +43,7 @@ export default async function LeaderManagementPage({ searchParams }: PageProps) 
   const [{ leaders, scopes, permissions }, organizations, programs, courses] =
     await Promise.all([
       leaderAccessService.getManagementData(),
-      organizationService.getUniversities(),
+      organizationService.getOrganizations(),
       programService.getPrograms(),
       courseService.getCourses(),
     ]);
