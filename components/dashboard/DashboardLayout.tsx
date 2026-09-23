@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -60,21 +61,43 @@ export default function DashboardLayout({
 
   useEffect(() => {
     let active = true;
+    const minimumRefreshIntervalMs = 5 * 60 * 1000;
+    const lastRefreshAt = { current: Date.now() };
 
-    async function refreshUnreadCount() {
+    async function refreshUnreadCount(force = false) {
+      const now = Date.now();
+
+      if (
+        !force &&
+        now - lastRefreshAt.current < minimumRefreshIntervalMs
+      ) {
+        return;
+      }
+
+      lastRefreshAt.current = now;
       const count = await getLessonMessageUnreadCountAction();
-      if (active) setCurrentMessageUnreadCount(count);
+
+      if (active) {
+        setCurrentMessageUnreadCount(count);
+      }
     }
 
-    const interval = window.setInterval(() => {
+    function refreshWhenVisible() {
       if (document.visibilityState === "visible") {
         void refreshUnreadCount();
       }
-    }, 30_000);
+    }
+
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       active = false;
-      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener(
+        "visibilitychange",
+        refreshWhenVisible,
+      );
     };
   }, []);
   const sidebarContext = useMemo(
