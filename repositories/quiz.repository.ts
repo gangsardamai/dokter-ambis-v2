@@ -51,6 +51,24 @@ export class QuizRepository extends BaseRepository {
     return data ?? [];
   }
 
+  async getByLessons(
+    lessonIds: string[],
+  ): Promise<Quiz[]> {
+    if (lessonIds.length === 0) return [];
+
+    const supabase = await this.db();
+
+    const { data, error } = await supabase
+      .from("quizzes")
+      .select("*")
+      .in("lesson_id", lessonIds)
+      .order("quiz_order");
+
+    if (error) this.handleError(error);
+
+    return data ?? [];
+  }
+
   async getByCourse(
     courseId: string
   ): Promise<Quiz[]> {
