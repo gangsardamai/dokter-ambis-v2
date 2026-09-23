@@ -19,6 +19,10 @@ type DeviceType =
 
 const DEVICE_COOKIE_NAME =
   "dokter_ambis_device_identifier";
+
+// Temporary operational switch: disable the student device limit without
+// deleting existing device-session data. Set back to true to re-enable it.
+const DEVICE_LIMIT_ENABLED = false;
 const VALID_DEVICE_TYPES: DeviceType[] = [
   "desktop",
   "laptop",
@@ -147,7 +151,7 @@ export async function loginAction(
     );
   }
 
-  if (profile.role === "student") {
+  if (profile.role === "student" && DEVICE_LIMIT_ENABLED) {
     const cookieStore = await cookies();
     const requestHeaders = await headers();
     const savedDeviceIdentifier = cookieStore.get(
