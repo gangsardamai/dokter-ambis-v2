@@ -31,3 +31,7 @@ Organization assignments include descendant programs/courses. Program assignment
 4. Publish only after those checks pass; monitor request failures and audit events.
 
 Do not roll back by restoring the former permissive policies. If application rollback is required, retain the narrower database access controls and assess RPC compatibility separately.
+
+## CI follow-up
+
+The full migration replay exposed seven historical mentor migrations present in production but absent from Git. Their original versioned SQL was recovered from migration history. Two Try Out RPC definitions are synchronized in a new migration, including a qualified explanation-image parameter to avoid PL/pgSQL ambiguity. A regression test covers update, attempt retrieval and ownership. Database lint now fails CI on errors rather than merely printing them. Payment tests bootstrap their synthetic Admin with the profile guard temporarily disabled inside the rollback-only test transaction; the guard is restored before behavioral assertions.

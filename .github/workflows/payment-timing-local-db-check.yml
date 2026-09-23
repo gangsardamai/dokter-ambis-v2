@@ -49,7 +49,7 @@ jobs:
         run: supabase db start
 
       - name: Lint database schema
-        run: supabase db lint --local --level error
+        run: supabase db lint --local --level error --fail-on error
 
       - name: Verify payment timing schema
         env:
