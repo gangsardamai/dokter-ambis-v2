@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 
-import { requireActiveAdmin } from "@/lib/auth/require-active-admin";
+import { requireActiveAdminOrLeader } from "@/lib/auth/require-active-admin-or-leader";
 
-export default async function AdminOnlyLayout({
+export default async function ScopedStaffLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  await requireActiveAdmin();
+  await requireActiveAdminOrLeader();
   return children;
 }

@@ -5,6 +5,7 @@ import { ExplorerPage } from "@/components/admin/explorer";
 import {
   courseExplorerService,
   courseService,
+  profileService,
 } from "@/services";
 
 export default async function Page({
@@ -14,12 +15,13 @@ export default async function Page({
 }) {
   const { id } = await params;
 
-  const [course, content] = await Promise.all([
+  const [course, content, profile] = await Promise.all([
     courseService.getCourseById(id),
     courseExplorerService.getCourseContent(id),
+    profileService.getCurrentProfile(),
   ]);
 
-  if (!course) {
+  if (!course || !profile) {
     notFound();
   }
 
@@ -27,6 +29,7 @@ export default async function Page({
     <ExplorerPage
       course={course}
       content={content}
+      managerRole={profile.role === "leader" ? "leader" : "admin"}
     />
   );
 }

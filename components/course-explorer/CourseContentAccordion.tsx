@@ -26,6 +26,7 @@ interface CourseContentAccordionProps {
   courseId: string;
   content: CourseExplorerContent;
   mode: ExplorerMode;
+  managerRole?: "admin" | "leader";
   completedLessonIds?: string[];
   lessonMessages?: Record<string, StudentLessonMessageThread>;
 }
@@ -148,11 +149,13 @@ function ManagerItemMenu({
   id,
   courseId,
   itemTitle,
+  managerRole = "admin",
 }: {
   type: "file" | "video" | "quiz";
   id: string;
   courseId?: string;
   itemTitle?: string;
+  managerRole?: "admin" | "leader";
 }) {
   const basePath =
     type === "file"
@@ -171,7 +174,7 @@ function ManagerItemMenu({
       </Link>
       {type === "file" && courseId && itemTitle && (
         <DeleteExplorerItemButton
-          managerRole="admin"
+          managerRole={managerRole}
           resourceType="file"
           courseId={courseId}
           itemId={id}
@@ -188,10 +191,12 @@ function FileItem({
   courseId,
   file,
   mode,
+  managerRole,
 }: {
   courseId: string;
   file: ExplorerFile;
   mode: ExplorerMode;
+  managerRole?: "admin" | "leader";
 }) {
   const isGoogleDrive = isGoogleDriveFilePath(file.file_path);
 
@@ -238,6 +243,7 @@ function FileItem({
             id={file.id}
             courseId={courseId}
             itemTitle={file.title}
+            managerRole={managerRole}
           />
         )}
       </div>
@@ -360,6 +366,7 @@ function LessonPanel({
   courseId,
   content,
   mode,
+  managerRole = "admin",
   completed,
   messageThread,
   activeVideoId,
@@ -368,6 +375,7 @@ function LessonPanel({
   courseId: string;
   content: ExplorerLessonContent;
   mode: ExplorerMode;
+  managerRole?: "admin" | "leader";
   completed: boolean;
   messageThread?: StudentLessonMessageThread;
   activeVideoId: string | null;
@@ -449,7 +457,7 @@ function LessonPanel({
                   Edit Lesson
                 </Link>
                 <DeleteExplorerItemButton
-                  managerRole="admin"
+                  managerRole={managerRole}
                   resourceType="lesson"
                   courseId={courseId}
                   itemId={lesson.id}
@@ -475,6 +483,7 @@ function LessonPanel({
                   courseId={courseId}
                   file={file}
                   mode={mode}
+                  managerRole={managerRole}
                 />
               ))}
               {videos.map((video) => (
@@ -529,6 +538,7 @@ function FolderPanel({
   courseId,
   folderContent,
   mode,
+  managerRole = "admin",
   completedLessonSet,
   lessonMessages,
   activeVideoId,
@@ -537,6 +547,7 @@ function FolderPanel({
   courseId: string;
   folderContent: CourseExplorerContent["folders"][number];
   mode: ExplorerMode;
+  managerRole?: "admin" | "leader";
   completedLessonSet: Set<string>;
   lessonMessages: Record<string, StudentLessonMessageThread>;
   activeVideoId: string | null;
@@ -619,7 +630,7 @@ function FolderPanel({
                   Edit Folder
                 </Link>
                 <DeleteExplorerItemButton
-                  managerRole="admin"
+                  managerRole={managerRole}
                   resourceType="folder"
                   courseId={courseId}
                   itemId={folder.id}
@@ -643,6 +654,7 @@ function FolderPanel({
                   courseId={courseId}
                   content={lessonContent}
                   mode={mode}
+                  managerRole={managerRole}
                   completed={completedLessonSet.has(lessonContent.lesson.id)}
                   messageThread={lessonMessages[lessonContent.lesson.id]}
                   activeVideoId={activeVideoId}
@@ -661,6 +673,7 @@ export default function CourseContentAccordion({
   courseId,
   content,
   mode,
+  managerRole = "admin",
   completedLessonIds = [],
   lessonMessages = {},
 }: CourseContentAccordionProps) {
@@ -689,6 +702,7 @@ export default function CourseContentAccordion({
           courseId={courseId}
           folderContent={folderContent}
           mode={mode}
+          managerRole={managerRole}
           completedLessonSet={completedLessonSet}
           lessonMessages={lessonMessages}
           activeVideoId={activeVideoId}
@@ -708,6 +722,7 @@ export default function CourseContentAccordion({
                 courseId={courseId}
                 content={lessonContent}
                 mode={mode}
+                managerRole={managerRole}
                 completed={completedLessonSet.has(lessonContent.lesson.id)}
                 messageThread={lessonMessages[lessonContent.lesson.id]}
                 activeVideoId={activeVideoId}

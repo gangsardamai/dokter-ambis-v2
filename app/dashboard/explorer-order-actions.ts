@@ -8,7 +8,7 @@ import {
   profileService,
 } from "@/services";
 
-export type ExplorerManagerRole = "admin" | "mentor";
+export type ExplorerManagerRole = "admin" | "leader" | "mentor";
 
 export interface LessonOrderGroupInput {
   folderId: string | null;

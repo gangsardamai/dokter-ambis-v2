@@ -16,7 +16,7 @@ type Course =
 interface ExplorerPageProps {
   course: Course;
   content: CourseExplorerContent;
-  managerRole?: "admin" | "mentor";
+  managerRole?: "admin" | "leader" | "mentor";
 }
 
 export function ExplorerPage({
@@ -43,6 +43,7 @@ export function ExplorerPage({
         courseId={course.id}
         content={content}
         mode="manager"
+        managerRole={managerRole}
       />
     );
 

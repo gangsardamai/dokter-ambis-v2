@@ -2,7 +2,7 @@ import Link from "next/link";
 
 interface ExplorerToolbarProps {
   courseId: string;
-  managerRole?: "admin" | "mentor";
+  managerRole?: "admin" | "leader" | "mentor";
 }
 
 function PlusIcon() {
@@ -28,7 +28,9 @@ export function ExplorerToolbar({
   managerRole = "admin",
 }: ExplorerToolbarProps) {
   const explorerBase =
-    `/dashboard/${managerRole}/course/${courseId}/explorer`;
+    managerRole === "mentor"
+      ? `/dashboard/mentor/course/${courseId}/explorer`
+      : `/dashboard/admin/course/${courseId}/explorer`;
 
   return (
     <div className="rounded-3xl border border-blue-100/80 bg-white p-4 shadow-sm">
