@@ -66,7 +66,7 @@ async function getAuthorizedTryout(tryoutId: string) {
     .select("role, status")
     .eq("id", user.id)
     .maybeSingle();
-  if (!profile || profile.status !== "active" || !["admin", "mentor"].includes(profile.role)) {
+  if (!profile || profile.status !== "active" || !["admin", "leader", "mentor"].includes(profile.role)) {
     return { supabase, error: NextResponse.json({ message: "Anda tidak memiliki akses upload gambar Try Out." }, { status: 403 }) };
   }
 
