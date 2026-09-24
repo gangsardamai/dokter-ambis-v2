@@ -61,20 +61,41 @@ export class CourseService {
   async createCourse(
     data: CourseInsert,
     whatsappGroupUrl?: string | null,
+    requestedSlug?: string,
   ) {
     await this.validateProgramOwnership(
       data.organization_id,
       data.program_id,
     );
 
-    const slug = await createUniqueSlug(
-      data.title,
-      async (candidate) =>
-        (await courseRepository.findByOrganizationAndSlug(
+    let slug = requestedSlug?.trim().toLowerCase() ?? "";
+
+    if (slug) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        throw new Error("Slug link pendaftaran tidak valid. Generate ulang link.");
+      }
+
+      const existing =
+        await courseRepository.findByOrganizationAndSlug(
           data.organization_id,
-          candidate,
-        )) === null,
-    );
+          slug,
+        );
+
+      if (existing) {
+        throw new Error(
+          "Link pendaftaran sudah digunakan Course lain. Generate ulang link.",
+        );
+      }
+    } else {
+      slug = await createUniqueSlug(
+        data.title,
+        async (candidate) =>
+          (await courseRepository.findByOrganizationAndSlug(
+            data.organization_id,
+            candidate,
+          )) === null,
+      );
+    }
 
     return await courseRepository.create(
       {
