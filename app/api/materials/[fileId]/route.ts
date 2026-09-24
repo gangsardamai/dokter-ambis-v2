@@ -6,6 +6,7 @@ import {
   parseR2FilePath,
 } from "@/lib/cloudflare/r2";
 import {
+  getGoogleDriveDownloadUrl,
   getGoogleSheetsViewUrl,
   parseGoogleDriveFilePath,
   parseGoogleSheetsFilePath,
@@ -54,18 +55,6 @@ function materialErrorResponse(
       "X-Content-Type-Options": "nosniff",
     },
   });
-}
-
-function getGoogleDriveDownloadUrl(fileId: string): URL {
-  const url = new URL(
-    "https://drive.usercontent.google.com/download",
-  );
-
-  url.searchParams.set("id", fileId);
-  url.searchParams.set("export", "download");
-  url.searchParams.set("confirm", "t");
-
-  return url;
 }
 
 function noStoreRedirect(url: string | URL): NextResponse {
