@@ -2,7 +2,7 @@ import {db,asUser} from './load.mjs';
 export {db,asUser};
 export const id=n=>'10000000-0000-4000-8000-'+String(n).padStart(12,'0');
 for(const [n,role] of [[1,'admin'],[2,'leader'],[3,'student'],[4,'mentor'],[5,'leader'],[6,'student'],[7,'student']]){
- await db.exec(`insert into auth.users values('${id(n)}'); insert into profiles(id,full_name,phone,role) values('${id(n)}','Test ${role}','08123456780${n}','${role}');`);
+ await db.exec(`insert into auth.users(id,email) values('${id(n)}','test${n}@example.com'); insert into profiles(id,full_name,phone,role) values('${id(n)}','Test ${role}','08123456780${n}','${role}');`);
 }
 await asUser(id(1));
 await db.exec(`insert into payment_accounts(id,label,bank_name,account_number,account_holder_name) values('${id(9)}','Test','Test','1234567890','Test');`);
