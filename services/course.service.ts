@@ -58,7 +58,10 @@ export class CourseService {
     return await courseRepository.count();
   }
 
-  async createCourse(data: CourseInsert) {
+  async createCourse(
+    data: CourseInsert,
+    whatsappGroupUrl?: string | null,
+  ) {
     await this.validateProgramOwnership(
       data.organization_id,
       data.program_id,
@@ -73,10 +76,27 @@ export class CourseService {
         )) === null,
     );
 
-    return await courseRepository.create({
-      ...data,
-      slug,
-    });
+    return await courseRepository.create(
+      {
+        ...data,
+        slug,
+      },
+      whatsappGroupUrl,
+    );
+  }
+
+  async getRegistrationSlugPreview(
+    organizationId: string,
+    title: string,
+  ) {
+    return createUniqueSlug(
+      title,
+      async (candidate) =>
+        (await courseRepository.findByOrganizationAndSlug(
+          organizationId,
+          candidate,
+        )) === null,
+    );
   }
 
   async updateCourse(id: string, data: CourseUpdate) {
