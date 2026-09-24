@@ -132,24 +132,26 @@ export default async function TryoutReviewPage({
               })}
             </div>
 
-            <div className="mt-6 rounded-2xl bg-blue-50 p-5">
-              <p className="text-xs font-black uppercase tracking-wide text-blue-700">
-                Pembahasan
-              </p>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
-                {question.explanation ?? "Pembahasan belum ditambahkan."}
-              </p>
-              {question.explanation_image_path && review.tryout_id && (
-                <Image
-                  src={`/api/tryout-images/${review.tryout_id}/${question.id}?kind=explanation&attemptId=${attemptId}`}
-                  alt={`Gambar pembahasan ${question.question_order}`}
-                  width={1000}
-                  height={650}
-                  unoptimized
-                  className="mt-4 max-h-[32rem] w-auto rounded-2xl border border-blue-100 object-contain"
-                />
-              )}
-            </div>
+            {(question.explanation || question.explanation_image_path) && (
+              <div className="mt-6 rounded-2xl bg-blue-50 p-5">
+                <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+                  Pembahasan
+                </p>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                  {question.explanation ?? "Pembahasan belum ditambahkan."}
+                </p>
+                {question.explanation_image_path && review.tryout_id && (
+                  <Image
+                    src={`/api/tryout-images/${review.tryout_id}/${question.id}?kind=explanation&attemptId=${attemptId}`}
+                    alt={`Gambar pembahasan ${question.question_order}`}
+                    width={1000}
+                    height={650}
+                    unoptimized
+                    className="mt-4 max-h-[32rem] w-auto rounded-2xl border border-blue-100 object-contain"
+                  />
+                )}
+              </div>
+            )}
           </article>
         ))}
       </section>
