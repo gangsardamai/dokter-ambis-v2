@@ -5,6 +5,7 @@ import {
   type AdminStudentOrganizationRef,
   type AdminStudentProfileRow,
 } from "@/repositories";
+import { profileService } from "./profile.service";
 
 export interface AdminStudentDirectoryFilters {
   search?: string;
@@ -77,6 +78,8 @@ export class AdminStudentService {
       100,
     );
 
+    const profile = await profileService.getCurrentProfile();
+
     const [profilePage, courseOptions] = await Promise.all([
       adminStudentRepository.getStudentsPage({
         search: filters.search,
@@ -84,6 +87,7 @@ export class AdminStudentService {
         courseId: filters.courseId,
         page,
         pageSize,
+        scopeToVisibleEnrollments: profile?.role === "leader",
       }),
       adminStudentRepository.getCourseOptions(),
     ]);

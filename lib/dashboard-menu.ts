@@ -66,6 +66,8 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
         { title: "Universitas", href: "/dashboard/admin/organization" },
         { title: "Program", href: "/dashboard/admin/program" },
         { title: "Course", href: "/dashboard/admin/course" },
+        { title: "Mahasiswa", href: "/dashboard/admin/student" },
+        { title: "Mentor", href: "/dashboard/admin/mentor" },
       ],
     },
     {
@@ -74,6 +76,12 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
         { title: "Kotak Pesan", href: "/dashboard/admin/messages" },
         { title: "Pengumuman", href: "/dashboard/admin/announcements" },
         { title: "Enrollment", href: "/dashboard/admin/enrollment" },
+      ],
+    },
+    {
+      title: "Pembelajaran",
+      items: [
+        { title: "Try Out", href: "/dashboard/admin/tryout" },
       ],
     },
   ],

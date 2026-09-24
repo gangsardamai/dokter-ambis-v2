@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/admin";
 import { DeleteStudentButton } from "@/components/admin/student/DeleteStudentButton";
-import { adminStudentService } from "@/services";
+import { adminStudentService, profileService } from "@/services";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -172,13 +172,16 @@ export default async function AdminStudentPage({
   const courseId = getStringParam(params.course);
   const requestedPage = getPageParam(params.page);
 
-  const directory = await adminStudentService.getDirectory({
-    search: query,
-    organizationId,
-    courseId,
-    page: requestedPage,
-    pageSize: 25,
-  });
+  const [directory, profile] = await Promise.all([
+    adminStudentService.getDirectory({
+      search: query,
+      organizationId,
+      courseId,
+      page: requestedPage,
+      pageSize: 25,
+    }),
+    profileService.getCurrentProfile(),
+  ]);
 
   const currentPage = Math.min(directory.page, directory.totalPages);
   const hasFilters = Boolean(query || organizationId || courseId);
@@ -220,7 +223,9 @@ export default async function AdminStudentPage({
             {directory.total}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Termasuk mahasiswa yang belum memiliki enrollment.
+            {profile?.role === "leader"
+              ? "Hanya mahasiswa yang terdaftar pada course dalam scope Anda."
+              : "Termasuk mahasiswa yang belum memiliki enrollment."}
           </p>
         </div>
 
@@ -485,11 +490,13 @@ export default async function AdminStudentPage({
                     >
                       Lihat Detail
                     </Link>
-                    <DeleteStudentButton
-                      studentId={student.id}
-                      fullName={student.full_name}
-                      email={student.email}
-                    />
+                    {profile?.role === "admin" && (
+                      <DeleteStudentButton
+                        studentId={student.id}
+                        fullName={student.full_name}
+                        email={student.email}
+                      />
+                    )}
                   </div>
                 </div>
               </article>

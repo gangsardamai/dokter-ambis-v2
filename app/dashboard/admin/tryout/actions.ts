@@ -11,10 +11,14 @@ import {
 import { profileService, tryoutService } from "@/services";
 import type { UpdateTryoutInput } from "@/types/tryout";
 
-async function requireAdminProfile() {
+async function requireTryoutManagerProfile() {
   const profile = await profileService.getCurrentProfile();
-  if (!profile || profile.role !== "admin") {
-    throw new Error("Akses Admin diperlukan.");
+  if (
+    !profile ||
+    profile.status !== "active" ||
+    !["admin", "leader"].includes(profile.role)
+  ) {
+    throw new Error("Akses pengelola Try Out diperlukan.");
   }
   return profile;
 }
@@ -23,7 +27,7 @@ export async function createTryoutAction(formData: FormData) {
   let tryoutId = "";
 
   try {
-    const profile = await requireAdminProfile();
+    const profile = await requireTryoutManagerProfile();
     const created = await tryoutService.createTryout({
       ...parseTryoutForm(formData),
       createdBy: profile.id,
@@ -46,7 +50,7 @@ export async function updateTryoutAction(
   formData: FormData,
 ) {
   try {
-    await requireAdminProfile();
+    await requireTryoutManagerProfile();
     const input: UpdateTryoutInput = parseTryoutForm(formData);
     await tryoutService.updateTryout(tryoutId, input);
   } catch (error) {
@@ -63,7 +67,7 @@ export async function updateTryoutAction(
 }
 
 export async function deleteTryoutAction(tryoutId: string) {
-  await requireAdminProfile();
+  await requireTryoutManagerProfile();
   await tryoutService.deleteTryout(tryoutId);
   revalidatePath("/dashboard/admin/tryout");
   redirect("/dashboard/admin/tryout?deleted=true");
@@ -74,7 +78,7 @@ export async function createTryoutQuestionAction(
   formData: FormData,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await requireAdminProfile();
+    await requireTryoutManagerProfile();
     await tryoutService.createQuestion(
       parseTryoutQuestionForm(tryoutId, formData),
     );
@@ -91,7 +95,7 @@ export async function updateTryoutQuestionAction(
   formData: FormData,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await requireAdminProfile();
+    await requireTryoutManagerProfile();
     const { tryoutId: _ignored, ...input } = parseTryoutQuestionForm(
       tryoutId,
       formData,
@@ -109,7 +113,7 @@ export async function deleteTryoutQuestionAction(
   tryoutId: string,
   questionId: string,
 ) {
-  await requireAdminProfile();
+  await requireTryoutManagerProfile();
   await tryoutService.deleteQuestion(questionId);
   revalidatePath(`/dashboard/admin/tryout/${tryoutId}/questions`);
   redirect(`/dashboard/admin/tryout/${tryoutId}/questions?deleted=true`);

@@ -2,7 +2,13 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 try {
  const {db}=await import('./load.mjs');
- await db.exec(fs.readFileSync(new URL('../../supabase/migrations/20260923035411_leader_access_integrity.sql',import.meta.url),'utf8'));
+ for (const migration of [
+   '../../supabase/migrations/20260923035411_leader_access_integrity.sql',
+   '../../supabase/migrations/20260924013700_leader_scoped_students_tryouts_mentors.sql',
+   '../../supabase/migrations/20260924020200_leader_profile_promotion_guard.sql',
+ ]) {
+   await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
+ }
  const {asUser,id}=await import('./seed.mjs');
  let tests=0;
  async function query(sql){return (await db.query(sql)).rows}
@@ -10,6 +16,27 @@ try {
  async function allowed(name,sql){const r=await query(sql);assert(r.length>0,name);console.log('PASS',name);tests++;return r}
  await denied('unassigned course hidden',`select id from courses where id='${id(13)}'`);
  await allowed('assigned course visible',`select id from courses where id='${id(12)}'`);
+ await allowed('scoped student visible',`select id from profiles where id='${id(3)}'`);
+ await denied('out-of-scope student hidden',`select id from profiles where id='${id(6)}'`);
+ await allowed('scoped student email query allowed',`select * from admin_get_student_emails(array['${id(3)}','${id(6)}']::uuid[])`);
+ assert.equal((await query(`select count(*)::int count from admin_get_student_emails(array['${id(3)}','${id(6)}']::uuid[])`))[0].count,1);tests++;console.log('PASS out-of-scope student email filtered');
+ await asUser(id(1));
+ await db.exec(`update leader_permissions set enabled=false where leader_id='${id(2)}' and permission='manage_enrollment'`);
+ await asUser(id(2));
+ await allowed('student visibility is scope-only, not enrollment-permission-gated',`select id from profiles where id='${id(3)}'`);
+ await allowed('scoped enrollment remains readable without management permission',`select id from enrollments where id='${id(30)}'`);
+ await asUser(id(1));
+ await db.exec(`update leader_permissions set enabled=true where leader_id='${id(2)}' and permission='manage_enrollment'`);
+ await asUser(id(2));
+ await allowed('Leader can reset scoped student devices',`select admin_reset_student_devices('${id(3)}')`);
+ await allowed('Leader can promote scoped student to Mentor',`select admin_promote_student_to_mentor('${id(7)}')`);
+ await denied('Leader cannot promote out-of-scope student',`select admin_promote_student_to_mentor('${id(6)}')`);
+ await allowed('Leader creates Try Out in scoped course',`insert into tryouts(id,course_id,title,created_by,review_release_mode) values('${id(50)}','${id(12)}','Leader scoped TO','${id(2)}','immediate') returning id`);
+ await denied('Leader cannot create Try Out outside scope',`insert into tryouts(id,course_id,title,created_by,review_release_mode) values('${id(51)}','${id(22)}','Forbidden TO','${id(2)}','immediate') returning id`);
+ await asUser(id(1));
+ await db.exec(`insert into tryouts(id,course_id,title,created_by,review_release_mode) values('${id(52)}','${id(12)}','Admin scoped TO','${id(1)}','immediate')`);
+ await asUser(id(2));
+ await allowed('Leader can manage existing Try Out in scope',`update tryouts set title='Leader managed TO' where id='${id(52)}' returning id`);
  await denied('ancestor edit denied',`update organizations set title='hacked' where id='${id(10)}' returning id`);
  await denied('ancestor program edit denied',`update programs set title='hacked' where id='${id(11)}' returning id`);
  await denied('sibling course creation denied',`select staff_create_master_record('course','{"title":"Sibling","slug":"sibling","organization_id":"${id(10)}","program_id":"${id(11)}","payment_account_id":"${id(9)}"}')`);
@@ -32,6 +59,10 @@ try {
 
  await asUser(id(1));
  await db.exec(`reset role; insert into leader_scopes(leader_id,program_id) values('${id(5)}','${id(21)}'); insert into mentor_details(id,profile_id) values('${id(60)}','${id(4)}'); insert into course_mentors(course_id,mentor_id) values('${id(12)}','${id(60)}'); insert into enrollments(id,profile_id,course_id,price_snapshot,status,activated_at) values('${id(31)}','${id(3)}','${id(22)}',100000,'active',now());`);
+ await asUser(id(2));
+ await allowed('Leader reads Mentor directory with scoped courses',`select admin_get_mentor_directory()`);
+ await allowed('Leader assigns Mentor to scoped course',`select admin_set_mentor_assignment('${id(4)}','${id(12)}',true)`);
+ await denied('Leader cannot assign Mentor outside scope',`select admin_set_mentor_assignment('${id(4)}','${id(22)}',true)`);
  await asUser(id(5));
  await allowed('program assignment includes child courses',`select id from courses where id='${id(22)}'`);
  await allowed('program assignment can create child course',`select staff_create_master_record('course','{"title":"Program Child","slug":"program-child","organization_id":"${id(20)}","program_id":"${id(21)}","payment_account_id":"${id(9)}"}')`);
@@ -75,6 +106,8 @@ try {
  await asUser(id(2));
  await denied('revocation immediately hides course',`select id from courses where id='${id(12)}'`);
  await denied('revocation immediately hides enrollment',`select id from enrollments where id='${id(30)}'`);
+ await denied('revocation immediately hides student profile',`select id from profiles where id='${id(3)}'`);
+ await denied('revocation immediately hides scoped Try Out',`select id from tryouts where id='${id(50)}'`);
  await asUser(id(3));
  await allowed('student enrollment preserved',`select id from enrollments where id='${id(30)}'`);
  await denied('student cannot change role',`update profiles set role='admin' where id='${id(3)}' returning id`);
