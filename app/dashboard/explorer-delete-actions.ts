@@ -9,7 +9,7 @@ import {
   profileService,
 } from "@/services";
 
-type ManagerRole = "admin" | "mentor";
+type ManagerRole = "admin" | "leader" | "mentor";
 type ExplorerResourceType = "folder" | "lesson" | "file";
 
 interface DeleteExplorerItemInput {
@@ -72,7 +72,9 @@ export async function deleteExplorerItemAction(
     }
 
     revalidatePath(
-      `/dashboard/${input.managerRole}/course/${courseId}/explorer`,
+      input.managerRole === "mentor"
+        ? `/dashboard/mentor/course/${courseId}/explorer`
+        : `/dashboard/admin/course/${courseId}/explorer`,
     );
 
     if (input.resourceType === "file") {
