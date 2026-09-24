@@ -27,6 +27,7 @@ interface RegistrationPreviewResult {
   success: boolean;
   message: string;
   registrationUrl?: string;
+  courseSlug?: string;
 }
 
 interface CourseFormProps {
@@ -63,6 +64,7 @@ export default function CourseForm({
     String(defaultValues?.title ?? ""),
   );
   const [registrationUrl, setRegistrationUrl] = useState("");
+  const [registrationSlug, setRegistrationSlug] = useState("");
   const [registrationMessage, setRegistrationMessage] =
     useState<string | null>(null);
   const [isGeneratingRegistrationLink, setIsGeneratingRegistrationLink] =
@@ -86,6 +88,7 @@ export default function CourseForm({
 
     if (!organizationId) {
       setRegistrationUrl("");
+      setRegistrationSlug("");
       setRegistrationMessage("Pilih Organization terlebih dahulu.");
       return;
     }
@@ -99,18 +102,25 @@ export default function CourseForm({
         title.trim(),
       );
 
-      if (!result.success || !result.registrationUrl) {
+      if (
+        !result.success ||
+        !result.registrationUrl ||
+        !result.courseSlug
+      ) {
         setRegistrationUrl("");
+        setRegistrationSlug("");
         setRegistrationMessage(result.message);
         return;
       }
 
       setRegistrationUrl(result.registrationUrl);
+      setRegistrationSlug(result.courseSlug);
       setRegistrationMessage(
-        "Preview link dibuat. Link final mengikuti slug saat Course disimpan.",
+        "Link sudah disiapkan dan akan dipertahankan saat Course disimpan.",
       );
     } catch (error) {
       setRegistrationUrl("");
+      setRegistrationSlug("");
       setRegistrationMessage(
         error instanceof Error
           ? error.message
@@ -163,6 +173,7 @@ export default function CourseForm({
             const nextOrganizationId = event.target.value;
             setOrganizationId(nextOrganizationId);
             setRegistrationUrl("");
+            setRegistrationSlug("");
             setRegistrationMessage(null);
 
             const selectedProgram = programOptions.find(
@@ -224,6 +235,7 @@ export default function CourseForm({
           onChange={(event) => {
             setTitle(event.target.value);
             setRegistrationUrl("");
+            setRegistrationSlug("");
             setRegistrationMessage(null);
           }}
         />
@@ -266,6 +278,12 @@ export default function CourseForm({
 
         {showCreationSetup ? (
           <div className="space-y-6 border-t border-slate-200 pt-6">
+            <input
+              type="hidden"
+              name="registration_slug"
+              value={registrationSlug}
+            />
+
             <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
               <CourseRegistrationLinkCard
                 registrationUrl={registrationUrl}
