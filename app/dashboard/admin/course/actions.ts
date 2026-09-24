@@ -28,6 +28,7 @@ type CourseUpdate =
 export async function createCourseAction(
   data: CourseInsert,
   whatsappGroupUrl = "",
+  requestedRegistrationSlug = "",
 ): Promise<ActionResult> {
   await leaderAccessService.requireStaffPermission("manage_master_data");
 
@@ -57,6 +58,7 @@ export async function createCourseAction(
     await courseService.createCourse(
       data,
       normalizedWhatsAppGroupUrl,
+      requestedRegistrationSlug,
     );
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Course gagal dibuat.");
@@ -71,6 +73,7 @@ export interface CourseRegistrationPreviewResult {
   success: boolean;
   message: string;
   registrationUrl?: string;
+  courseSlug?: string;
 }
 
 export async function generateCourseRegistrationLinkAction(
@@ -126,6 +129,7 @@ export async function generateCourseRegistrationLinkAction(
       message: "Preview link berhasil dibuat.",
       registrationUrl:
         `${siteUrl}/daftar/${organization.slug}/${courseSlug}`,
+      courseSlug,
     };
   } catch (error) {
     return {
