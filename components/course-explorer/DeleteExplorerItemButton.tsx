@@ -5,7 +5,7 @@ import { useTransition } from "react";
 
 import { deleteExplorerItemAction } from "@/app/dashboard/explorer-delete-actions";
 
-type ManagerRole = "admin" | "mentor";
+type ManagerRole = "admin" | "leader" | "mentor";
 type ExplorerResourceType = "folder" | "lesson" | "file";
 
 interface DeleteExplorerItemButtonProps {
