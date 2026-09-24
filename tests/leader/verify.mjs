@@ -9,6 +9,7 @@ try {
    '../../supabase/migrations/20260924024000_leader_course_explorer_mentor_rating.sql',
    '../../supabase/migrations/20260924025500_leader_scoped_course_content.sql',
    '../../supabase/migrations/20260924031000_course_create_registration_whatsapp.sql',
+   '../../supabase/migrations/20260924031700_optimize_course_community_link_rls.sql',
  ]) {
    await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
  }
