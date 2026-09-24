@@ -7,6 +7,7 @@ try {
    '../../supabase/migrations/20260924013700_leader_scoped_students_tryouts_mentors.sql',
    '../../supabase/migrations/20260924020200_leader_profile_promotion_guard.sql',
    '../../supabase/migrations/20260924024000_leader_course_explorer_mentor_rating.sql',
+   '../../supabase/migrations/20260924025500_leader_scoped_course_content.sql',
  ]) {
    await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
  }
@@ -69,6 +70,13 @@ try {
  await denied('Leader cannot toggle Mentor Rating outside scope',`select admin_set_mentor_rating_enabled('${id(22)}',true)`);
  await allowed('Leader selects rated Mentors in scoped course',`select admin_set_course_rating_mentors('${id(12)}',array['${id(60)}']::uuid[])`);
  await denied('Leader cannot select rated Mentors outside scope',`select admin_set_course_rating_mentors('${id(22)}',array['${id(60)}']::uuid[])`);
+ await allowed('Leader can create folder in scoped course',`insert into lesson_folders(id,course_id,slug,title,folder_order,publication_status) values('${id(70)}','${id(12)}','leader-folder','Leader Folder',1,'draft') returning id`);
+ await denied('Leader cannot create folder outside scope',`insert into lesson_folders(id,course_id,slug,title,folder_order,publication_status) values('${id(71)}','${id(22)}','forbidden-folder','Forbidden Folder',1,'draft') returning id`);
+ await allowed('Leader can create lesson in scoped course',`insert into lessons(id,course_id,folder_id,slug,title,lesson_order,duration,publication_status) values('${id(72)}','${id(12)}','${id(70)}','leader-lesson','Leader Lesson',1,1,'draft') returning id`);
+ await denied('Leader cannot create lesson outside scope',`insert into lessons(id,course_id,slug,title,lesson_order,duration,publication_status) values('${id(73)}','${id(22)}','forbidden-lesson','Forbidden Lesson',1,1,'draft') returning id`);
+ await allowed('Leader can create file in scoped lesson',`insert into lesson_files(id,lesson_id,title,file_type,file_path,file_order,publication_status) values('${id(74)}','${id(72)}','Leader File','pdf','gdrive:test',1,'draft') returning id`);
+ await allowed('Leader can create video in scoped lesson',`insert into videos(id,lesson_id,title,provider,provider_video_id,duration,video_order,publication_status) values('${id(75)}','${id(72)}','Leader Video','youtube','test-video',1,1,'draft') returning id`);
+ await allowed('Leader can create quiz in scoped lesson',`insert into quizzes(id,lesson_id,title,duration,quiz_order,publication_status) values('${id(76)}','${id(72)}','Leader Quiz',10,1,'draft') returning id`);
  await asUser(id(5));
  await allowed('program assignment includes child courses',`select id from courses where id='${id(22)}'`);
  await allowed('program assignment can create child course',`select staff_create_master_record('course','{"title":"Program Child","slug":"program-child","organization_id":"${id(20)}","program_id":"${id(21)}","payment_account_id":"${id(9)}"}')`);
@@ -114,6 +122,11 @@ try {
  await denied('revocation immediately hides enrollment',`select id from enrollments where id='${id(30)}'`);
  await denied('revocation immediately hides student profile',`select id from profiles where id='${id(3)}'`);
  await denied('revocation immediately hides scoped Try Out',`select id from tryouts where id='${id(50)}'`);
+ await denied('revocation immediately hides scoped folder',`select id from lesson_folders where id='${id(70)}'`);
+ await denied('revocation immediately hides scoped lesson',`select id from lessons where id='${id(72)}'`);
+ await denied('revocation immediately hides scoped file',`select id from lesson_files where id='${id(74)}'`);
+ await denied('revocation immediately hides scoped video',`select id from videos where id='${id(75)}'`);
+ await denied('revocation immediately hides scoped quiz',`select id from quizzes where id='${id(76)}'`);
  await asUser(id(3));
  await allowed('student enrollment preserved',`select id from enrollments where id='${id(30)}'`);
  await denied('student cannot change role',`update profiles set role='admin' where id='${id(3)}' returning id`);
