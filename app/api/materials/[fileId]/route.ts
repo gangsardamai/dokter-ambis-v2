@@ -6,7 +6,7 @@ import {
   parseR2FilePath,
 } from "@/lib/cloudflare/r2";
 import {
-  getGoogleDriveDownloadUrl,
+  getGoogleDriveInputUrl,
   getGoogleSheetsViewUrl,
   parseGoogleDriveFilePath,
   parseGoogleSheetsFilePath,
@@ -99,11 +99,13 @@ export async function GET(
     parseGoogleDriveFilePath(file.file_path);
 
   if (googleDriveFileId) {
-    // Important: do not proxy the file body through the application host.
-    // Authorization is still checked above through Supabase RLS, then the
-    // browser downloads directly from Google Drive.
+    // Open the canonical Drive viewer instead of the direct usercontent
+    // download endpoint. Password-protected/encrypted PDFs can trigger a
+    // Google virus-scan page whose "Download anyway" link resolves to
+    // drive.usercontent.google.com/open and returns 404. The Drive viewer
+    // handles protected PDFs with its password prompt and avoids that 404.
     return noStoreRedirect(
-      getGoogleDriveDownloadUrl(googleDriveFileId),
+      getGoogleDriveInputUrl(googleDriveFileId),
     );
   }
 
