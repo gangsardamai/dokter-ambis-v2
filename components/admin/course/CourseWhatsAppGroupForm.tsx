@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 
-import { PrimaryButton, TextInput } from "@/components/admin";
+import { PrimaryButton } from "@/components/admin";
+import CourseWhatsAppGroupFields from "./CourseWhatsAppGroupFields";
 
 interface CourseWhatsAppGroupFormProps {
   defaultValue: string;
@@ -49,28 +50,7 @@ export default function CourseWhatsAppGroupForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <h2 className="text-xl font-black text-slate-950">
-          Grup WhatsApp Peserta
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          Masukkan satu link undangan grup untuk course ini. Kosongkan kolom lalu
-          simpan untuk menghapus tombol dari halaman peserta.
-        </p>
-      </div>
-
-      <TextInput
-        label="Link Grup WhatsApp"
-        name="whatsapp_group_url"
-        defaultValue={defaultValue}
-        placeholder="https://chat.whatsapp.com/..."
-      />
-
-      <p className="text-xs leading-5 text-slate-500">
-        Hanya link dengan domain chat.whatsapp.com yang dapat disimpan. Siapa pun
-        yang memperoleh link tersebut dapat membukanya dan bergabung sesuai
-        pengaturan grup di WhatsApp.
-      </p>
+      <CourseWhatsAppGroupFields defaultValue={defaultValue} />
 
       <div className="flex flex-wrap items-center gap-3">
         <PrimaryButton type="submit" disabled={isSubmitting}>
