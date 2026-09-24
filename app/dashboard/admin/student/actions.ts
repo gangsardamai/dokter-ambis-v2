@@ -17,6 +17,18 @@ async function ensureActiveAdmin(): Promise<void> {
   }
 }
 
+async function ensureActiveStudentManager(): Promise<void> {
+  const profile = await profileService.getCurrentProfile();
+
+  if (
+    !profile ||
+    profile.status !== "active" ||
+    !["admin", "leader"].includes(profile.role)
+  ) {
+    throw new Error("Anda tidak memiliki izin mengelola mahasiswa.");
+  }
+}
+
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
@@ -31,7 +43,7 @@ export async function resetStudentDevicesAction(
   profileId: string,
 ): Promise<AdminStudentActionResult> {
   try {
-    await ensureActiveAdmin();
+    await ensureActiveStudentManager();
     const deletedCount = await adminStudentService.resetStudentDevices(profileId);
 
     revalidateStudentPages(profileId);
@@ -56,7 +68,7 @@ export async function setStudentPasswordAction(
   newPassword: string,
 ): Promise<AdminStudentActionResult> {
   try {
-    await ensureActiveAdmin();
+    await ensureActiveStudentManager();
     await adminStudentService.setStudentPassword(profileId, newPassword);
 
     revalidateStudentPages(profileId);
@@ -77,10 +89,11 @@ export async function promoteStudentToMentorAction(
   profileId: string,
 ): Promise<AdminStudentActionResult> {
   try {
-    await ensureActiveAdmin();
+    await ensureActiveStudentManager();
     await adminStudentService.promoteStudentToMentor(profileId);
 
-    revalidateStudentPages(profileId);
+    revalidatePath("/dashboard/admin/student");
+    revalidatePath("/dashboard/admin/mentor");
     revalidatePath("/dashboard/mentor");
 
     return {
