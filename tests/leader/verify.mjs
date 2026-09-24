@@ -5,6 +5,7 @@ try {
  for (const migration of [
    '../../supabase/migrations/20260923035411_leader_access_integrity.sql',
    '../../supabase/migrations/20260924013700_leader_scoped_students_tryouts_mentors.sql',
+   '../../supabase/migrations/20260924020200_leader_profile_promotion_guard.sql',
  ]) {
    await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
  }
