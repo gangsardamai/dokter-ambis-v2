@@ -14,6 +14,7 @@ import {
 
 import {
   createCourseAction,
+  generateCourseRegistrationLinkAction,
 } from "../actions";
 
 import {
@@ -37,11 +38,8 @@ export default async function CreateCoursePage() {
 
     const result =
       await createCourseAction(
-
-        mapCourseForm(
-          formData
-        )
-
+        mapCourseForm(formData),
+        String(formData.get("whatsapp_group_url") ?? ""),
       );
 
     if (!result.success) {
@@ -75,6 +73,8 @@ export default async function CreateCoursePage() {
         submitLabel="Simpan Course"
 
         action={createAction}
+        showCreationSetup
+        generateRegistrationLink={generateCourseRegistrationLinkAction}
 
         organizationOptions={
           organizations.map(
