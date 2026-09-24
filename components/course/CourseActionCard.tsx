@@ -5,6 +5,7 @@ import { Card } from "@/components/ui";
 interface CourseActionCardProps {
   courseId: string;
   isAdmin?: boolean;
+  canManageCourseTools?: boolean;
 }
 
 const actionClass =
@@ -13,6 +14,7 @@ const actionClass =
 export default function CourseActionCard({
   courseId,
   isAdmin = true,
+  canManageCourseTools = isAdmin,
 }: CourseActionCardProps) {
   return (
     <Card>
@@ -21,13 +23,13 @@ export default function CourseActionCard({
           Manajemen Blok
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          {isAdmin
-            ? "Kelola identitas Course, mentor, serta struktur materi pembelajaran."
+          {canManageCourseTools
+            ? "Kelola identitas Course, mentor, serta struktur materi pembelajaran sesuai akses Anda."
             : "Kelola identitas Course yang termasuk dalam scope Anda."}
         </p>
 
         <div className="mt-6 space-y-3">
-          {isAdmin && (
+          {canManageCourseTools && (
             <>
               <Link
                 href={`/dashboard/admin/course/${courseId}/explorer`}
