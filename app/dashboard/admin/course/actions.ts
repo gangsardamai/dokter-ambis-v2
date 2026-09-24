@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  courseCommunityLinkService,
   courseService,
   leaderAccessService,
+  organizationService,
   paymentAccountService,
 } from "@/services";
 
@@ -24,7 +26,8 @@ type CourseUpdate =
   Database["public"]["Tables"]["courses"]["Update"];
 
 export async function createCourseAction(
-  data: CourseInsert
+  data: CourseInsert,
+  whatsappGroupUrl = "",
 ): Promise<ActionResult> {
   await leaderAccessService.requireStaffPermission("manage_master_data");
 
@@ -45,7 +48,16 @@ export async function createCourseAction(
     await paymentAccountService.requireActiveAccount(
       data.payment_account_id ?? "",
     );
-    await courseService.createCourse(data);
+
+    const normalizedWhatsAppGroupUrl =
+      courseCommunityLinkService.normalizeWhatsAppGroupUrl(
+        whatsappGroupUrl,
+      );
+
+    await courseService.createCourse(
+      data,
+      normalizedWhatsAppGroupUrl,
+    );
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Course gagal dibuat.");
   }
@@ -53,6 +65,77 @@ export async function createCourseAction(
   revalidatePath("/dashboard/admin/course");
 
   return success("Course berhasil dibuat.");
+}
+
+export interface CourseRegistrationPreviewResult {
+  success: boolean;
+  message: string;
+  registrationUrl?: string;
+}
+
+export async function generateCourseRegistrationLinkAction(
+  organizationId: string,
+  title: string,
+): Promise<CourseRegistrationPreviewResult> {
+  await leaderAccessService.requireStaffPermission("manage_master_data");
+
+  const normalizedTitle = title.trim();
+  const normalizedOrganizationId = organizationId.trim();
+
+  if (!normalizedTitle) {
+    return {
+      success: false,
+      message: "Nama Blok wajib diisi terlebih dahulu.",
+    };
+  }
+
+  if (!normalizedOrganizationId) {
+    return {
+      success: false,
+      message: "Pilih Organization terlebih dahulu.",
+    };
+  }
+
+  try {
+    const organization =
+      await organizationService.getOrganizationById(
+        normalizedOrganizationId,
+      );
+
+    if (!organization) {
+      return {
+        success: false,
+        message:
+          "Organization tidak ditemukan atau berada di luar scope Anda.",
+      };
+    }
+
+    const courseSlug =
+      await courseService.getRegistrationSlugPreview(
+        organization.id,
+        normalizedTitle,
+      );
+
+    const siteUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+      "https://dokterambis.com"
+    ).replace(/\/+$/, "");
+
+    return {
+      success: true,
+      message: "Preview link berhasil dibuat.",
+      registrationUrl:
+        `${siteUrl}/daftar/${organization.slug}/${courseSlug}`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Link pendaftaran gagal dibuat.",
+    };
+  }
 }
 
 export async function updateCourseAction(
