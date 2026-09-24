@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
+import { isAdminConsoleRole } from "@/lib/auth/role-access";
 import { profileService } from "@/services";
 
 interface AdminLayoutProps {
@@ -14,7 +15,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/login");
   }
 
-  if (profile.role === "admin" || profile.role === "leader") {
+  if (isAdminConsoleRole(profile.role)) {
     return children;
   }
 
