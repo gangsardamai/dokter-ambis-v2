@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin";
+import { StudentAccountActions } from "@/components/admin/student/StudentAccountActions";
 import { adminStudentService } from "@/services";
 import type { Database } from "@/supabase/types/database.types";
 
@@ -232,6 +233,8 @@ export default async function AdminStudentDetailPage({
           </div>
         )}
       </section>
+
+      <StudentAccountActions studentId={student.id} />
 
       <section className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
