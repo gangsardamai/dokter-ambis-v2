@@ -244,7 +244,12 @@ export function getGoogleSheetsViewUrl(
 export function getGoogleDriveDownloadUrl(
   fileId: string,
 ): string {
-  return `https://drive.usercontent.google.com/download?id=${encodeURIComponent(
+  // Start the download flow on drive.google.com rather than directly on
+  // drive.usercontent.google.com. For encrypted/password-protected files,
+  // Google may show a "can't scan for viruses" confirmation page whose
+  // Download anyway link is relative ("/open"). Starting on the usercontent
+  // host makes that relative link resolve to an invalid 404 endpoint.
+  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(
     fileId,
-  )}&export=download&confirm=t`;
+  )}&confirm=t`;
 }
