@@ -8,6 +8,10 @@ interface TextInputProps {
 
   defaultValue?: string;
 
+  value?: string;
+
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+
   placeholder?: string;
 
 }
@@ -21,6 +25,10 @@ export default function TextInput({
   required,
 
   defaultValue,
+
+  value,
+
+  onChange,
 
   placeholder,
 
@@ -44,7 +52,9 @@ export default function TextInput({
         name={name}
         type="text"
         required={required}
-        defaultValue={defaultValue}
+        {...(value !== undefined
+          ? { value, onChange }
+          : { defaultValue })}
         placeholder={placeholder}
         className="
           w-full
