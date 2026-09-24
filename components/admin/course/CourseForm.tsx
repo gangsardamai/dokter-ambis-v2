@@ -11,6 +11,8 @@ import {
   TextAreaInput,
   TextInput,
 } from "@/components/admin";
+import CourseRegistrationLinkCard from "./CourseRegistrationLinkCard";
+import CourseWhatsAppGroupFields from "./CourseWhatsAppGroupFields";
 import type { Database } from "@/supabase/types/database.extended.types";
 
 type CourseInsert = Database["public"]["Tables"]["courses"]["Insert"];
@@ -21,6 +23,12 @@ interface SelectOption {
   organizationId?: string;
 }
 
+interface RegistrationPreviewResult {
+  success: boolean;
+  message: string;
+  registrationUrl?: string;
+}
+
 interface CourseFormProps {
   defaultValues?: Partial<CourseInsert>;
   organizationOptions: SelectOption[];
@@ -28,6 +36,11 @@ interface CourseFormProps {
   paymentAccountOptions: SelectOption[];
   submitLabel: string;
   action: (formData: FormData) => Promise<void>;
+  showCreationSetup?: boolean;
+  generateRegistrationLink?: (
+    organizationId: string,
+    title: string,
+  ) => Promise<RegistrationPreviewResult>;
 }
 
 export default function CourseForm({
@@ -37,6 +50,8 @@ export default function CourseForm({
   paymentAccountOptions,
   submitLabel,
   action,
+  showCreationSetup = false,
+  generateRegistrationLink,
 }: CourseFormProps) {
   const [organizationId, setOrganizationId] = useState(
     defaultValues?.organization_id ?? "",
@@ -44,6 +59,14 @@ export default function CourseForm({
   const [programId, setProgramId] = useState(
     defaultValues?.program_id ?? "",
   );
+  const [title, setTitle] = useState(
+    String(defaultValues?.title ?? ""),
+  );
+  const [registrationUrl, setRegistrationUrl] = useState("");
+  const [registrationMessage, setRegistrationMessage] =
+    useState<string | null>(null);
+  const [isGeneratingRegistrationLink, setIsGeneratingRegistrationLink] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -55,6 +78,48 @@ export default function CourseForm({
         (program) => program.organizationId === organizationId,
       )
     : [];
+
+  async function handleGenerateRegistrationLink() {
+    if (!generateRegistrationLink || !title.trim()) {
+      return;
+    }
+
+    if (!organizationId) {
+      setRegistrationUrl("");
+      setRegistrationMessage("Pilih Organization terlebih dahulu.");
+      return;
+    }
+
+    setIsGeneratingRegistrationLink(true);
+    setRegistrationMessage(null);
+
+    try {
+      const result = await generateRegistrationLink(
+        organizationId,
+        title.trim(),
+      );
+
+      if (!result.success || !result.registrationUrl) {
+        setRegistrationUrl("");
+        setRegistrationMessage(result.message);
+        return;
+      }
+
+      setRegistrationUrl(result.registrationUrl);
+      setRegistrationMessage(
+        "Preview link dibuat. Link final mengikuti slug saat Course disimpan.",
+      );
+    } catch (error) {
+      setRegistrationUrl("");
+      setRegistrationMessage(
+        error instanceof Error
+          ? error.message
+          : "Link pendaftaran gagal dibuat.",
+      );
+    } finally {
+      setIsGeneratingRegistrationLink(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,6 +162,8 @@ export default function CourseForm({
           onChange={(event) => {
             const nextOrganizationId = event.target.value;
             setOrganizationId(nextOrganizationId);
+            setRegistrationUrl("");
+            setRegistrationMessage(null);
 
             const selectedProgram = programOptions.find(
               (program) => program.value === programId,
@@ -153,7 +220,12 @@ export default function CourseForm({
           label="Nama Blok"
           name="title"
           required
-          defaultValue={defaultValues?.title ?? ""}
+          value={title}
+          onChange={(event) => {
+            setTitle(event.target.value);
+            setRegistrationUrl("");
+            setRegistrationMessage(null);
+          }}
         />
 
         <TextAreaInput
@@ -191,6 +263,24 @@ export default function CourseForm({
             { label: "Archived", value: "archived" },
           ]}
         />
+
+        {showCreationSetup ? (
+          <div className="space-y-6 border-t border-slate-200 pt-6">
+            <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+              <CourseRegistrationLinkCard
+                registrationUrl={registrationUrl}
+                canGenerate={Boolean(title.trim())}
+                isGenerating={isGeneratingRegistrationLink}
+                generateMessage={registrationMessage}
+                onGenerate={handleGenerateRegistrationLink}
+              />
+            </section>
+
+            <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+              <CourseWhatsAppGroupFields />
+            </section>
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-3">
           <PrimaryButton type="submit" disabled={isSubmitting}>
