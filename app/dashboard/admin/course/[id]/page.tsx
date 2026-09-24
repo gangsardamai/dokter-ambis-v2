@@ -34,8 +34,10 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!course || !profile) notFound();
 
   const isAdmin = profile.role === "admin";
+  const canManageCourseTools =
+    profile.role === "admin" || profile.role === "leader";
   let ratingContext: MentorRatingContext = {
-    enabled: false,
+    enabled: course.mentor_rating_enabled,
     mentors: [],
   };
 
@@ -58,11 +60,15 @@ export default async function CourseDetailPage({ params }: Props) {
           {isAdmin && <CourseRelationCard courseId={course.id} />}
         </div>
         <div>
-          <CourseActionCard courseId={course.id} isAdmin={isAdmin} />
+          <CourseActionCard
+            courseId={course.id}
+            isAdmin={isAdmin}
+            canManageCourseTools={canManageCourseTools}
+          />
         </div>
       </div>
 
-      {isAdmin && (
+      {canManageCourseTools && (
         <>
           <section className="mt-8 rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -109,7 +115,7 @@ export default async function CourseDetailPage({ params }: Props) {
             </div>
           </section>
 
-          {ratingContext.enabled && (
+          {isAdmin && ratingContext.enabled && (
             <div className="mt-6">
               <MentorRatingSection
                 courseId={course.id}
