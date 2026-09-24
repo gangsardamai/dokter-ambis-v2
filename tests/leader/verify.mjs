@@ -6,6 +6,7 @@ try {
    '../../supabase/migrations/20260923035411_leader_access_integrity.sql',
    '../../supabase/migrations/20260924013700_leader_scoped_students_tryouts_mentors.sql',
    '../../supabase/migrations/20260924020200_leader_profile_promotion_guard.sql',
+   '../../supabase/migrations/20260924024000_leader_course_explorer_mentor_rating.sql',
  ]) {
    await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
  }
@@ -63,6 +64,11 @@ try {
  await allowed('Leader reads Mentor directory with scoped courses',`select admin_get_mentor_directory()`);
  await allowed('Leader assigns Mentor to scoped course',`select admin_set_mentor_assignment('${id(4)}','${id(12)}',true)`);
  await denied('Leader cannot assign Mentor outside scope',`select admin_set_mentor_assignment('${id(4)}','${id(22)}',true)`);
+ await allowed('Leader enables Mentor Rating in scoped course',`select admin_set_mentor_rating_enabled('${id(12)}',true)`);
+ assert.equal((await query(`select mentor_rating_enabled from courses where id='${id(12)}'`))[0].mentor_rating_enabled,true);tests++;console.log('PASS scoped Mentor Rating toggle persisted');
+ await denied('Leader cannot toggle Mentor Rating outside scope',`select admin_set_mentor_rating_enabled('${id(22)}',true)`);
+ await allowed('Leader selects rated Mentors in scoped course',`select admin_set_course_rating_mentors('${id(12)}',array['${id(60)}']::uuid[])`);
+ await denied('Leader cannot select rated Mentors outside scope',`select admin_set_course_rating_mentors('${id(22)}',array['${id(60)}']::uuid[])`);
  await asUser(id(5));
  await allowed('program assignment includes child courses',`select id from courses where id='${id(22)}'`);
  await allowed('program assignment can create child course',`select staff_create_master_record('course','{"title":"Program Child","slug":"program-child","organization_id":"${id(20)}","program_id":"${id(21)}","payment_account_id":"${id(9)}"}')`);
