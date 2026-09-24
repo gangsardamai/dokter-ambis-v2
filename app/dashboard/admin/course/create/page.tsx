@@ -40,6 +40,7 @@ export default async function CreateCoursePage() {
       await createCourseAction(
         mapCourseForm(formData),
         String(formData.get("whatsapp_group_url") ?? ""),
+        String(formData.get("registration_slug") ?? ""),
       );
 
     if (!result.success) {
