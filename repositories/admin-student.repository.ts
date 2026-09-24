@@ -62,6 +62,7 @@ export interface AdminStudentListQuery {
   courseId?: string;
   page: number;
   pageSize: number;
+  scopeToVisibleEnrollments?: boolean;
 }
 
 export interface AdminStudentProfilePage {
@@ -80,8 +81,9 @@ export class AdminStudentRepository extends BaseRepository {
   private async getFilteredProfileIds(
     organizationId?: string,
     courseId?: string,
+    forceVisibleEnrollmentScope = false,
   ): Promise<string[] | null> {
-    if (!organizationId && !courseId) {
+    if (!organizationId && !courseId && !forceVisibleEnrollmentScope) {
       return null;
     }
 
@@ -122,6 +124,7 @@ export class AdminStudentRepository extends BaseRepository {
     const filteredProfileIds = await this.getFilteredProfileIds(
       queryInput.organizationId,
       queryInput.courseId,
+      queryInput.scopeToVisibleEnrollments,
     );
 
     if (filteredProfileIds && filteredProfileIds.length === 0) {
