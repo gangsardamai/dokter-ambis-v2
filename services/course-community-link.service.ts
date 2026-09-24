@@ -3,7 +3,7 @@ import {
   courseRepository,
 } from "@/repositories";
 
-function normalizeWhatsAppGroupUrl(value: string): string | null {
+export function normalizeWhatsAppGroupUrl(value: string): string | null {
   const trimmed = value.trim();
 
   if (!trimmed) return null;
@@ -38,6 +38,10 @@ function normalizeWhatsAppGroupUrl(value: string): string | null {
 }
 
 export class CourseCommunityLinkService {
+  normalizeWhatsAppGroupUrl(value: string): string | null {
+    return normalizeWhatsAppGroupUrl(value);
+  }
+
   async getCourseLink(courseId: string) {
     return courseCommunityLinkRepository.getByCourseId(courseId);
   }

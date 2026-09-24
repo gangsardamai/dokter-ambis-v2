@@ -271,11 +271,23 @@ export class CourseRepository extends BaseRepository {
     return count ?? 0;
   }
 
-  async create(data: CourseInsert): Promise<Course> {
+  async create(
+    data: CourseInsert,
+    whatsappGroupUrl?: string | null,
+  ): Promise<Course> {
     const supabase = await this.db();
-    return callDynamicRpc<Course>(supabase, "staff_create_master_record", {
-      target_type: "course", payload: { ...data, slug: data.slug.toLowerCase() },
-    });
+
+    return callDynamicRpc<Course>(
+      supabase,
+      "staff_create_course_with_setup",
+      {
+        payload: {
+          ...data,
+          slug: data.slug.toLowerCase(),
+        },
+        whatsapp_group_url: whatsappGroupUrl ?? null,
+      },
+    );
   }
 
   async update(id: string, data: CourseUpdate): Promise<Course> {

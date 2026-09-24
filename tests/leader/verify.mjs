@@ -8,6 +8,8 @@ try {
    '../../supabase/migrations/20260924020200_leader_profile_promotion_guard.sql',
    '../../supabase/migrations/20260924024000_leader_course_explorer_mentor_rating.sql',
    '../../supabase/migrations/20260924025500_leader_scoped_course_content.sql',
+   '../../supabase/migrations/20260924031000_course_create_registration_whatsapp.sql',
+   '../../supabase/migrations/20260924031700_optimize_course_community_link_rls.sql',
  ]) {
    await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
  }
@@ -77,9 +79,14 @@ try {
  await allowed('Leader can create file in scoped lesson',`insert into lesson_files(id,lesson_id,title,file_type,file_path,file_order,publication_status) values('${id(74)}','${id(72)}','Leader File','pdf','gdrive:test',1,'draft') returning id`);
  await allowed('Leader can create video in scoped lesson',`insert into videos(id,lesson_id,title,provider,provider_video_id,duration,video_order,publication_status) values('${id(75)}','${id(72)}','Leader Video','youtube','test-video',1,1,'draft') returning id`);
  await allowed('Leader can create quiz in scoped lesson',`insert into quizzes(id,lesson_id,title,duration,quiz_order,publication_status) values('${id(76)}','${id(72)}','Leader Quiz',10,1,'draft') returning id`);
+ await allowed('Leader can save WhatsApp group in scoped course',`insert into course_community_links(course_id,whatsapp_group_url) values('${id(12)}','https://chat.whatsapp.com/LeaderScoped123') returning course_id`);
+ await allowed('Leader can update WhatsApp group in scoped course',`update course_community_links set whatsapp_group_url='https://chat.whatsapp.com/LeaderScoped456' where course_id='${id(12)}' returning course_id`);
+ await denied('Leader cannot save WhatsApp group outside scope',`insert into course_community_links(course_id,whatsapp_group_url) values('${id(22)}','https://chat.whatsapp.com/Forbidden123') returning course_id`);
  await asUser(id(5));
  await allowed('program assignment includes child courses',`select id from courses where id='${id(22)}'`);
  await allowed('program assignment can create child course',`select staff_create_master_record('course','{"title":"Program Child","slug":"program-child","organization_id":"${id(20)}","program_id":"${id(21)}","payment_account_id":"${id(9)}"}')`);
+ const [courseWithWa]=await allowed('Leader creates Course and WhatsApp link atomically',`select staff_create_course_with_setup('{"title":"Program Child WA","slug":"program-child-wa","organization_id":"${id(20)}","program_id":"${id(21)}","payment_account_id":"${id(9)}"}','https://chat.whatsapp.com/AtomicLeader123') data`);
+ await allowed('atomic Course setup stores WhatsApp link',`select course_id from course_community_links where course_id='${courseWithWa.data.id}' and whatsapp_group_url='https://chat.whatsapp.com/AtomicLeader123'`);
  await denied('program scope cannot edit university',`update organizations set title='Not allowed' where id='${id(20)}' returning id`);
  await denied('another Leader cannot modify announcement',`select staff_save_announcement('${a.data.id}','${payload}', '{}',array['${id(22)}']::uuid[])`);
  await asUser(id(3));
@@ -127,6 +134,7 @@ try {
  await denied('revocation immediately hides scoped file',`select id from lesson_files where id='${id(74)}'`);
  await denied('revocation immediately hides scoped video',`select id from videos where id='${id(75)}'`);
  await denied('revocation immediately hides scoped quiz',`select id from quizzes where id='${id(76)}'`);
+ await denied('revocation immediately hides scoped WhatsApp group',`select course_id from course_community_links where course_id='${id(12)}'`);
  await asUser(id(3));
  await allowed('student enrollment preserved',`select id from enrollments where id='${id(30)}'`);
  await denied('student cannot change role',`update profiles set role='admin' where id='${id(3)}' returning id`);

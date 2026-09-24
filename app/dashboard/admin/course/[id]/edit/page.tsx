@@ -47,7 +47,9 @@ export default async function EditCoursePage({
     organizationService.getOrganizations(),
     programService.getPrograms(),
     paymentAccountService.getActiveAccounts(),
-    profile?.role === "admin" ? courseCommunityLinkService.getCourseLink(id) : Promise.resolve(null),
+    profile && ["admin", "leader"].includes(profile.role)
+      ? courseCommunityLinkService.getCourseLink(id)
+      : Promise.resolve(null),
   ]);
 
   const assignedPrograms = await leaderAccessService.getAssignablePrograms(allPrograms);
@@ -78,7 +80,16 @@ export default async function EditCoursePage({
   async function saveWhatsAppGroupAction(formData: FormData) {
     "use server";
 
-    await leaderAccessService.requireAdmin();
+    const currentProfile = await profileService.getCurrentProfile();
+
+    if (
+      !currentProfile ||
+      currentProfile.status !== "active" ||
+      !["admin", "leader"].includes(currentProfile.role)
+    ) {
+      throw new Error("Akses pengelola Course diperlukan.");
+    }
+
     const whatsappGroupUrl = String(
       formData.get("whatsapp_group_url") ?? "",
     );
@@ -124,7 +135,7 @@ export default async function EditCoursePage({
         />
       </FormCard>
 
-      {profile?.role === "admin" && <FormCard>
+      {profile && ["admin", "leader"].includes(profile.role) && <FormCard>
         <CourseWhatsAppGroupForm
           defaultValue={communityLink?.whatsapp_group_url ?? ""}
           action={saveWhatsAppGroupAction}
