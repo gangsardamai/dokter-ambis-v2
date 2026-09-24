@@ -39,8 +39,8 @@ export default function TryoutAttemptClient({
     payload.questions ?? [],
   );
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [remainingSeconds, setRemainingSeconds] = useState(
-    payload.remaining_seconds ?? 0,
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(
+    payload.remaining_seconds ?? null,
   );
   const [savingQuestionId, setSavingQuestionId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -83,15 +83,25 @@ export default function TryoutAttemptClient({
   );
 
   useEffect(() => {
+    if (payload.remaining_seconds == null) return;
+
     const timer = window.setInterval(() => {
-      setRemainingSeconds((current) => Math.max(0, current - 1));
+      setRemainingSeconds((current) =>
+        current === null ? null : Math.max(0, current - 1),
+      );
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [payload.remaining_seconds]);
 
   useEffect(() => {
-    if (remainingSeconds > 0 || autoSubmitStarted.current) return;
+    if (
+      remainingSeconds === null ||
+      remainingSeconds > 0 ||
+      autoSubmitStarted.current
+    ) {
+      return;
+    }
     autoSubmitStarted.current = true;
     void submitAttempt(true);
   }, [remainingSeconds, submitAttempt]);
@@ -177,12 +187,14 @@ export default function TryoutAttemptClient({
           </div>
           <div
             className={`rounded-xl px-4 py-2 text-lg font-black tabular-nums ${
-              remainingSeconds <= 300
+              remainingSeconds !== null && remainingSeconds <= 300
                 ? "bg-red-50 text-red-700"
                 : "bg-blue-50 text-blue-700"
             }`}
           >
-            {formatTime(remainingSeconds)}
+            {remainingSeconds === null
+              ? "Tanpa batas waktu"
+              : formatTime(remainingSeconds)}
           </div>
         </header>
 

@@ -62,8 +62,10 @@ export function parseTryoutForm(
   if (!courseId || !title) {
     throw new Error("Course dan judul Try Out wajib diisi.");
   }
-  if (durationMinutes < 1 || durationMinutes > 600) {
-    throw new Error("Durasi Try Out harus antara 1–600 menit.");
+  if (durationMinutes < 0 || durationMinutes > 600) {
+    throw new Error(
+      "Durasi Try Out harus 0 (tanpa batas waktu) atau antara 1–600 menit.",
+    );
   }
   if (maxAttempts < 1 || maxAttempts > 10) {
     throw new Error("Jumlah percobaan harus antara 1–10.");

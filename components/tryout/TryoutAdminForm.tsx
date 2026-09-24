@@ -94,7 +94,7 @@ export default function TryoutAdminForm({
             id="durationMinutes"
             name="durationMinutes"
             type="number"
-            min={1}
+            min={0}
             max={600}
             required
             defaultValue={tryout?.duration_minutes ?? 120}

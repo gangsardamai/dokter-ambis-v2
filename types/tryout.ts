@@ -133,8 +133,8 @@ export interface TryoutAttemptPayload {
   tryout_id?: string;
   title?: string;
   attempt_number?: number;
-  expires_at?: string;
-  remaining_seconds?: number;
+  expires_at?: string | null;
+  remaining_seconds?: number | null;
   questions?: TryoutAttemptQuestion[];
   result?: TryoutResultPayload;
 }

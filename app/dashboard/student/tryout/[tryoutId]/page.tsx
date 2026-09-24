@@ -82,8 +82,12 @@ export default async function StudentTryoutDetailPage({
 
         <div className="grid grid-cols-3 border-t border-white/10 bg-white/5 text-center">
           <div className="p-4">
-            <p className="text-2xl font-black">{tryout.duration_minutes}</p>
-            <p className="mt-1 text-xs font-bold text-blue-100">menit</p>
+            <p className="text-2xl font-black">
+              {tryout.duration_minutes === 0 ? "∞" : tryout.duration_minutes}
+            </p>
+            <p className="mt-1 text-xs font-bold text-blue-100">
+              {tryout.duration_minutes === 0 ? "tanpa batas" : "menit"}
+            </p>
           </div>
           <div className="border-x border-white/10 p-4">
             <p className="text-2xl font-black">{attemptsRemaining}</p>
@@ -132,10 +136,16 @@ export default async function StudentTryoutDetailPage({
             Sebelum Memulai
           </h2>
           <ul className="mt-4 space-y-3 text-sm font-semibold leading-6 text-amber-900/80">
-            <li>• Timer menggunakan waktu server dan terus berjalan setelah dimulai.</li>
+            {tryout.duration_minutes === 0 ? (
+              <li>• Try Out ini tidak memiliki batas waktu pengerjaan.</li>
+            ) : (
+              <li>• Timer menggunakan waktu server dan terus berjalan setelah dimulai.</li>
+            )}
             <li>• Jawaban tersimpan otomatis setiap kali pilihan diubah.</li>
             <li>• Refresh halaman tidak menghapus jawaban yang sudah tersimpan.</li>
-            <li>• Attempt akan dikirim otomatis saat waktu habis.</li>
+            {tryout.duration_minutes > 0 && (
+              <li>• Attempt akan dikirim otomatis saat waktu habis.</li>
+            )}
           </ul>
         </article>
       </section>

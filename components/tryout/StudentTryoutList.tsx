@@ -75,10 +75,10 @@ export default function StudentTryoutList({
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-2xl bg-slate-50 p-3">
                 <p className="font-black text-slate-900">
-                  {tryout.duration_minutes}
+                  {tryout.duration_minutes === 0 ? "∞" : tryout.duration_minutes}
                 </p>
                 <p className="mt-1 text-[11px] font-bold text-slate-500">
-                  menit
+                  {tryout.duration_minutes === 0 ? "tanpa batas" : "menit"}
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-3">
