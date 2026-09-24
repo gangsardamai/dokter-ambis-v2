@@ -18,6 +18,7 @@ interface CourseTableProps {
   pinnedCourses?: CourseDetails[];
   pinnedCourseIds?: string[];
   isAdmin?: boolean;
+  canManageCourseTools?: boolean;
 }
 
 interface MentorDirectoryAssignment {
@@ -55,6 +56,7 @@ export default async function CourseTable({
   pinnedCourses = [],
   pinnedCourseIds = [],
   isAdmin = true,
+  canManageCourseTools = isAdmin,
 }: CourseTableProps) {
   const pinnedIdSet = new Set(pinnedCourseIds);
   const orderedCourses = [
@@ -73,7 +75,7 @@ export default async function CourseTable({
 
   let directory: MentorDirectory = { mentors: [] };
 
-  if (isAdmin) {
+  if (canManageCourseTools) {
     const supabase = await createClient();
     directory = await callDynamicRpc<MentorDirectory>(
       supabase,
@@ -170,7 +172,7 @@ export default async function CourseTable({
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              {isAdmin && (
+              {canManageCourseTools && (
                 <>
                                 <Link
                                   href={`/dashboard/admin/course/${course.id}/explorer`}
