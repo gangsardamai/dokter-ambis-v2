@@ -187,6 +187,7 @@ export default async function CoursePage({ searchParams }: CoursePageProps) {
         pinnedCourses={pinnedCourses}
         pinnedCourseIds={pinnedCourseIds}
         isAdmin={profile.role === "admin"}
+        canManageCourseTools={profile.role === "admin" || profile.role === "leader"}
       />
     </main>
   );
