@@ -7,7 +7,7 @@ import {
   LEADER_PERMISSIONS,
   type LeaderPermission,
 } from "@/lib/leader-access";
-import { leaderAccessService } from "@/services";
+import { adminStudentService, leaderAccessService, profileService } from "@/services";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -24,6 +24,24 @@ export async function promoteLeaderAction(formData: FormData) {
 
   await leaderAccessService.promoteStudentByPhone(phone);
   finish("leader-created");
+}
+
+export async function setLeaderPasswordAction(formData: FormData) {
+  const profile = await profileService.getCurrentProfile();
+  if (!profile || profile.role !== "admin" || profile.status !== "active") {
+    throw new Error("Anda tidak memiliki izin sebagai admin.");
+  }
+
+  const leaderId = value(formData, "leader_id");
+  const newPassword = String(formData.get("new_password") ?? "");
+
+  if (!leaderId) throw new Error("Akun Leader tidak ditemukan.");
+  if (newPassword.trim().length < 6) {
+    throw new Error("Password baru minimal 6 karakter.");
+  }
+
+  await adminStudentService.setStudentPassword(leaderId, newPassword);
+  finish("password-updated");
 }
 
 export async function setLeaderStatusAction(formData: FormData) {
