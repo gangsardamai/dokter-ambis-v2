@@ -34,7 +34,7 @@ const feedbackLabels: Record<string, string> = {
   "leader-deactivated": "Leader berhasil dinonaktifkan.",
   "permissions-updated": "Permission Leader berhasil diperbarui.",
   "scope-added": "Scope Leader berhasil ditambahkan.",
-  "scope-removed": "Scope Leader berhasil dihapus.",
+  "scope-removed": "Scope Leader berhasil dihapus.",\n  "password-updated": "Password Leader berhasil diubah.",
 };
 
 export default async function LeaderManagementPage({ searchParams }: PageProps) {
@@ -161,6 +161,30 @@ export default async function LeaderManagementPage({ searchParams }: PageProps) 
                       className="min-h-10 rounded-xl border border-slate-200 px-4 text-sm font-black text-slate-700 disabled:cursor-not-allowed"
                     >
                       {leader.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+                    </PendingSubmitButton>
+                  </form>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <h3 className="font-black text-slate-950">Reset Password Leader</h3>
+                  <p className="mt-1 text-sm text-slate-600">Khusus admin. Password minimal 6 karakter.</p>
+                  <form action={setLeaderPasswordAction} className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <input type="hidden" name="leader_id" value={leader.id} />
+                    <input
+                      name="new_password"
+                      type="password"
+                      required
+                      minLength={6}
+                      maxLength={72}
+                      autoComplete="new-password"
+                      placeholder="Password baru"
+                      className="min-h-11 flex-1 rounded-xl border border-amber-200 bg-white px-4 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                    />
+                    <PendingSubmitButton
+                      pendingLabel="Mengubah..."
+                      className="min-h-11 rounded-xl bg-amber-600 px-5 text-sm font-black text-white disabled:cursor-not-allowed"
+                    >
+                      Ubah Password
                     </PendingSubmitButton>
                   </form>
                 </div>
