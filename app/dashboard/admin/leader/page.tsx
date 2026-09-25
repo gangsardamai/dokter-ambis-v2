@@ -17,6 +17,7 @@ import {
   promoteLeaderAction,
   removeLeaderScopeAction,
   setLeaderPermissionsAction,
+  setLeaderPasswordAction,
   setLeaderStatusAction,
 } from "./actions";
 
