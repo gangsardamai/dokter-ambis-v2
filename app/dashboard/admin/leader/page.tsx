@@ -35,7 +35,8 @@ const feedbackLabels: Record<string, string> = {
   "leader-deactivated": "Leader berhasil dinonaktifkan.",
   "permissions-updated": "Permission Leader berhasil diperbarui.",
   "scope-added": "Scope Leader berhasil ditambahkan.",
-  "scope-removed": "Scope Leader berhasil dihapus.",\n  "password-updated": "Password Leader berhasil diubah.",
+  "scope-removed": "Scope Leader berhasil dihapus.",
+  "password-updated": "Password Leader berhasil diubah.",
 };
 
 export default async function LeaderManagementPage({ searchParams }: PageProps) {
