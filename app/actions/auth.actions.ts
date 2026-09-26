@@ -1,6 +1,7 @@
 "use server";
 
 import { getRoleDashboard } from "@/lib/auth/role-dashboard";
+import { DEVICE_LIMIT_ENABLED } from "@/lib/auth/device-limit";
 
 import { randomUUID } from "node:crypto";
 import {
@@ -22,9 +23,6 @@ type DeviceType =
 const DEVICE_COOKIE_NAME =
   "dokter_ambis_device_identifier";
 
-// Temporary operational switch: disable the student device limit without
-// deleting existing device-session data. Set back to true to re-enable it.
-const DEVICE_LIMIT_ENABLED = true;
 const VALID_DEVICE_TYPES: DeviceType[] = [
   "desktop",
   "laptop",

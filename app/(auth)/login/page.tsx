@@ -166,9 +166,6 @@ export default async function LoginPage({
           </Link>
         </p>
 
-        <p className="mt-5 text-center text-xs text-gray-500">
-          Akun peserta dapat digunakan pada maksimal dua perangkat aktif.
-        </p>
       </div>
     </main>
   );

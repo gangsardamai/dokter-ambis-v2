@@ -2,6 +2,7 @@
 
 import { cookies, headers } from "next/headers";
 
+import { DEVICE_LIMIT_ENABLED } from "@/lib/auth/device-limit";
 import { resolveUniversityOrigin } from "@/lib/university-options";
 import {
   authService,
@@ -181,48 +182,50 @@ export async function registerAction(
       };
     }
 
-    const cookieStore = await cookies();
-    const requestHeaders = await headers();
-    const savedDeviceIdentifier = cookieStore.get(
-      DEVICE_COOKIE_NAME,
-    )?.value;
-    const deviceIdentifier =
-      savedDeviceIdentifier || data.deviceIdentifier?.trim() || "";
+    if (DEVICE_LIMIT_ENABLED) {
+      const cookieStore = await cookies();
+      const requestHeaders = await headers();
+      const savedDeviceIdentifier = cookieStore.get(
+        DEVICE_COOKIE_NAME,
+      )?.value;
+      const deviceIdentifier =
+        savedDeviceIdentifier || data.deviceIdentifier?.trim() || "";
 
-    try {
-      await deviceService.registerOrRefreshStudentDevice({
-        profileId: profile.id,
-        deviceIdentifier,
-        deviceName: data.deviceName?.trim() || "Perangkat peserta",
-        deviceType: parseDeviceType(data.deviceType),
-        userAgent: requestHeaders.get("user-agent"),
-        ipAddress: getIpAddress(
-          requestHeaders.get("x-forwarded-for"),
-          requestHeaders.get("x-real-ip"),
-        ),
+      try {
+        await deviceService.registerOrRefreshStudentDevice({
+          profileId: profile.id,
+          deviceIdentifier,
+          deviceName: data.deviceName?.trim() || "Perangkat peserta",
+          deviceType: parseDeviceType(data.deviceType),
+          userAgent: requestHeaders.get("user-agent"),
+          ipAddress: getIpAddress(
+            requestHeaders.get("x-forwarded-for"),
+            requestHeaders.get("x-real-ip"),
+          ),
+        });
+      } catch (error) {
+        await authService.logout();
+
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Perangkat belum dapat didaftarkan.";
+
+        return {
+          success: true,
+          message: "Akun berhasil dibuat. Silakan masuk untuk melanjutkan.",
+          redirectTo: getLoginFallbackPath(message, nextPath),
+        };
+      }
+
+      cookieStore.set(DEVICE_COOKIE_NAME, deviceIdentifier, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
       });
-    } catch (error) {
-      await authService.logout();
-
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Perangkat belum dapat didaftarkan.";
-
-      return {
-        success: true,
-        message: "Akun berhasil dibuat. Silakan masuk untuk melanjutkan.",
-        redirectTo: getLoginFallbackPath(message, nextPath),
-      };
     }
-
-    cookieStore.set(DEVICE_COOKIE_NAME, deviceIdentifier, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-    });
 
     return {
       success: true,
