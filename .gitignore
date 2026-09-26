@@ -49,3 +49,6 @@ Thumbs.db
 
 # Supabase local temporary files
 /supabase/.temp/
+/dist/
+.vinext/
+.wrangler/
