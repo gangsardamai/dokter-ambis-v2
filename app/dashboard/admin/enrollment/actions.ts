@@ -8,7 +8,6 @@ import {
   enrollmentService,
   leaderAccessService,
   paymentService,
-  profileService,
 } from "@/services";
 
 type EnrollmentCategory =
@@ -64,9 +63,9 @@ export async function approveAllEnrollmentsAction() {
 
 export async function approveAllPaymentsAction() {
   try {
-    const adminProfileId = await getEnrollmentStaffProfileId();
+    const staffProfileId = await getEnrollmentStaffProfileId();
     const payments = await paymentService.approveAllPendingPayments(
-      adminProfileId,
+      staffProfileId,
     );
     revalidateEnrollment();
 
@@ -93,8 +92,8 @@ export async function approvePaymentAction(
   enrollmentId: string,
 ) {
   try {
-    const adminProfileId = await getEnrollmentStaffProfileId();
-    await paymentService.approvePayment(paymentId, adminProfileId);
+    const staffProfileId = await getEnrollmentStaffProfileId();
+    await paymentService.approvePayment(paymentId, staffProfileId);
     const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment?.course_id);
 
@@ -122,8 +121,8 @@ export async function rejectPaymentAction(
   notes?: string,
 ) {
   try {
-    const adminProfileId = await getEnrollmentStaffProfileId();
-    await paymentService.rejectPayment(paymentId, adminProfileId, notes);
+    const staffProfileId = await getEnrollmentStaffProfileId();
+    await paymentService.rejectPayment(paymentId, staffProfileId, notes);
     const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment?.course_id);
 
