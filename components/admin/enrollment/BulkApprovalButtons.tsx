@@ -52,7 +52,11 @@ function DownloadIcon() {
   );
 }
 
-export function BulkApprovalButtons() {
+export function BulkApprovalButtons({
+  showDownload = true,
+}: {
+  showDownload?: boolean;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -69,7 +73,7 @@ export function BulkApprovalButtons() {
 
   function approveAllEnrollments() {
     const confirmed = window.confirm(
-      "Setujui semua enrollment yang berstatus menunggu verifikasi?",
+      "Setujui semua enrollment Bayar di Akhir yang dapat Anda kelola?",
     );
 
     if (!confirmed) {
@@ -87,7 +91,7 @@ export function BulkApprovalButtons() {
 
   function approveAllPayments() {
     const confirmed = window.confirm(
-      "Setujui semua payment pending dan aktifkan enrollment terkait?",
+      "Setujui semua payment pending yang dapat Anda kelola dan aktifkan enrollment terkait?",
     );
 
     if (!confirmed) {
@@ -143,14 +147,16 @@ export function BulkApprovalButtons() {
   return (
     <div className="w-full space-y-3 sm:w-auto">
       <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-        <button
-          type="button"
-          onClick={downloadExcel}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:w-auto"
-        >
-          <DownloadIcon />
-          Download Excel
-        </button>
+        {showDownload && (
+          <button
+            type="button"
+            onClick={downloadExcel}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:w-auto"
+          >
+            <DownloadIcon />
+            Download Excel
+          </button>
+        )}
 
         <button
           type="button"
