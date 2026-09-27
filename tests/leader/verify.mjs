@@ -10,6 +10,7 @@ try {
    '../../supabase/migrations/20260924025500_leader_scoped_course_content.sql',
    '../../supabase/migrations/20260924031000_course_create_registration_whatsapp.sql',
    '../../supabase/migrations/20260924031700_optimize_course_community_link_rls.sql',
+   '../../supabase/migrations/20260927154809_leader_scoped_payment_management.sql',
  ]) {
    await db.exec(fs.readFileSync(new URL(migration, import.meta.url), 'utf8'));
  }
@@ -118,7 +119,10 @@ try {
  await asUser(id(1));
  await db.exec(`update profiles set status='active' where id='${id(2)}'; insert into enrollments(id,profile_id,course_id,price_snapshot,status) values('${id(32)}','${id(5)}','${id(12)}',100000,'pending_payment');`);
  await asUser(id(2));
- await denied('upfront activation denied',`update enrollments set status='active',activated_at=now() where id='${id(32)}' returning id`);
+ await allowed('upfront manual activation permitted',`update enrollments set status='active',activated_at=now() where id='${id(32)}' returning id`);
+ await allowed('Leader changes upfront to deferred',`select admin_update_enrollment_payment_timing('${id(32)}','deferred')`);
+ assert.equal((await query(`select payment_timing from enrollments where id='${id(32)}'`))[0].payment_timing,'deferred');tests++;console.log('PASS Leader payment timing change persisted');
+ await denied('Leader cannot change deferred back to upfront',`select admin_update_enrollment_payment_timing('${id(32)}','upfront')`);
  await denied('enrollment deletion denied',`delete from enrollments where id='${id(30)}' returning id`);
  await denied('Leader cannot read admin audit',`select id from leader_audit_events`);
  await asUser(id(1));
