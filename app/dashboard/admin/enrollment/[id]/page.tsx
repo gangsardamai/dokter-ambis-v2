@@ -127,7 +127,7 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
   let paymentProofUrl: string | null = null;
   let paymentProofError: string | null = null;
 
-  if (profile.role === "admin" && payment?.payment_proof_path) {
+  if (payment?.payment_proof_path) {
     try {
       paymentProofUrl = await paymentProofService.getPaymentProofSignedUrl(
         payment.payment_proof_path,
@@ -252,7 +252,7 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
         </DetailCard>
       </div>
 
-      {profile.role === "admin" && payment?.payment_proof_path && (
+      {payment?.payment_proof_path && (
         <DetailCard title="Bukti Pembayaran">
           {paymentProofError && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
