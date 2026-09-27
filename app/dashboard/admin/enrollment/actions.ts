@@ -15,13 +15,10 @@ type EnrollmentCategory =
   Database["public"]["Enums"]["enrollment_category"];
 type PaymentTiming = Database["public"]["Enums"]["payment_timing"];
 
-async function getAdminProfileId(): Promise<string> {
-  const profile = await profileService.getCurrentProfile();
-
-  if (!profile) throw new Error("Profile admin tidak ditemukan.");
-  if (profile.role !== "admin" || profile.status !== "active") {
-    throw new Error("Anda tidak memiliki izin sebagai admin.");
-  }
+async function getEnrollmentStaffProfileId(): Promise<string> {
+  const profile = await leaderAccessService.requireStaffPermission(
+    "manage_enrollment",
+  );
 
   return profile.id;
 }
@@ -43,7 +40,7 @@ function revalidateEnrollment(enrollmentId?: string, courseId?: string) {
 
 export async function approveAllEnrollmentsAction() {
   try {
-    await getAdminProfileId();
+    await getEnrollmentStaffProfileId();
     const enrollments = await enrollmentService.approveAllPendingEnrollments();
     revalidateEnrollment();
 
@@ -67,7 +64,7 @@ export async function approveAllEnrollmentsAction() {
 
 export async function approveAllPaymentsAction() {
   try {
-    const adminProfileId = await getAdminProfileId();
+    const adminProfileId = await getEnrollmentStaffProfileId();
     const payments = await paymentService.approveAllPendingPayments(
       adminProfileId,
     );
@@ -96,7 +93,7 @@ export async function approvePaymentAction(
   enrollmentId: string,
 ) {
   try {
-    const adminProfileId = await getAdminProfileId();
+    const adminProfileId = await getEnrollmentStaffProfileId();
     await paymentService.approvePayment(paymentId, adminProfileId);
     const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment?.course_id);
@@ -125,7 +122,7 @@ export async function rejectPaymentAction(
   notes?: string,
 ) {
   try {
-    const adminProfileId = await getAdminProfileId();
+    const adminProfileId = await getEnrollmentStaffProfileId();
     await paymentService.rejectPayment(paymentId, adminProfileId, notes);
     const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment?.course_id);
@@ -150,21 +147,7 @@ export async function rejectPaymentAction(
 
 export async function activateEnrollmentAction(enrollmentId: string) {
   try {
-    const profile = await leaderAccessService.requireStaffPermission(
-      "manage_enrollment",
-    );
-    const current = await enrollmentService.getEnrollmentById(enrollmentId);
-    if (!current) throw new Error("Enrollment tidak ditemukan.");
-
-    if (
-      profile.role === "leader" &&
-      current.payment_timing !== "deferred"
-    ) {
-      throw new Error(
-        "Leader hanya dapat mengaktifkan enrollment Bayar di Akhir. Verifikasi pembayaran Bayar di Awal tetap dilakukan Admin.",
-      );
-    }
-
+    await leaderAccessService.requireStaffPermission("manage_enrollment");
     const enrollment = await enrollmentService.activateEnrollment(enrollmentId);
     revalidateEnrollment(enrollmentId, enrollment.course_id);
 
@@ -236,7 +219,7 @@ export async function updateEnrollmentPaymentTimingAction(
   paymentTiming: PaymentTiming,
 ) {
   try {
-    await getAdminProfileId();
+    await getEnrollmentStaffProfileId();
     const enrollment = await enrollmentService.updatePaymentTiming(
       enrollmentId,
       paymentTiming,
