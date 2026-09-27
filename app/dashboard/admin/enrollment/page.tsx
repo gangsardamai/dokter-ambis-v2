@@ -253,7 +253,7 @@ export default async function EnrollmentPage({
             >
               Tambah Enrollment
             </PrimaryButton>
-            {profile.role === "admin" && <BulkApprovalButtons />}
+            <BulkApprovalButtons showDownload={profile.role === "admin"} />
           </div>
         }
       />
