@@ -109,12 +109,14 @@ export function EnrollmentActionButtons({
           {isAdmin ? "Tindakan Admin" : "Tindakan Leader"}
         </p>
         <h2 className="mt-2 text-xl font-extrabold tracking-[-0.04em] text-[#061827]">
-          {isAdmin ? "Kelola enrollment dan pembayaran" : "Kelola enrollment dalam scope Anda"}
+          {isAdmin
+            ? "Kelola enrollment dan pembayaran"
+            : "Kelola enrollment dan pembayaran dalam scope Anda"}
         </h2>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        {isAdmin && paymentId && paymentStatus !== "approved" && (
+        {paymentId && paymentStatus === "pending" && (
           <>
             <button
               type="button"
@@ -135,8 +137,8 @@ export function EnrollmentActionButtons({
           </>
         )}
 
-        {enrollmentStatus !== "active" &&
-          (isAdmin || paymentTiming === "deferred") && (
+        {(enrollmentStatus === "pending_payment" ||
+          enrollmentStatus === "pending_approval") && (
           <button
             type="button"
             disabled={isPending}
@@ -186,30 +188,33 @@ export function EnrollmentActionButtons({
           </div>
         </div>
 
-        {isAdmin && (
-                  <div>
-                    <p className="mb-3 text-sm font-bold text-slate-700">
-                      Kategori Pembayaran
-                    </p>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                      <button
-                        type="button"
-                        disabled={isPending || paymentTiming === "upfront"}
-                        onClick={() => updatePaymentTiming("upfront")}
-                        className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
-                      >
-                        Bayar di Awal
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isPending || paymentTiming === "deferred"}
-                        onClick={() => updatePaymentTiming("deferred")}
-                        className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
-                      >
-                        Bayar di Akhir
-                      </button>
-                    </div>
-                  </div>        )}
+        {(isAdmin || paymentTiming === "upfront") && (
+          <div>
+            <p className="mb-3 text-sm font-bold text-slate-700">
+              Kategori Pembayaran
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              {isAdmin && (
+                <button
+                  type="button"
+                  disabled={isPending || paymentTiming === "upfront"}
+                  onClick={() => updatePaymentTiming("upfront")}
+                  className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
+                >
+                  Bayar di Awal
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={isPending || paymentTiming === "deferred"}
+                onClick={() => updatePaymentTiming("deferred")}
+                className={`${actionClass} border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-400`}
+              >
+                Bayar di Akhir
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isPending && (
