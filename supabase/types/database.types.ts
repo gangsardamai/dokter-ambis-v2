@@ -725,6 +725,7 @@ export type Database = {
       }
       lesson_files: {
         Row: {
+          access_mode: string
           created_at: string
           file_order: number
           file_path: string
@@ -738,6 +739,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          access_mode?: string
           created_at?: string
           file_order?: number
           file_path: string
@@ -751,6 +753,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          access_mode?: string
           created_at?: string
           file_order?: number
           file_path?: string
