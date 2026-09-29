@@ -237,6 +237,7 @@ export default function LockedPdfViewer({
   useEffect(() => {
     if (!documentProxy) return;
 
+    const pdf = documentProxy;
     let cancelled = false;
 
     async function renderCurrentPage() {
@@ -246,7 +247,7 @@ export default function LockedPdfViewer({
       setPageLoading(true);
 
       try {
-        const page = await documentProxy.getPage(pageNumber);
+        const page = await pdf.getPage(pageNumber);
         if (cancelled) return;
 
         const displayViewport = page.getViewport({ scale: zoom });
