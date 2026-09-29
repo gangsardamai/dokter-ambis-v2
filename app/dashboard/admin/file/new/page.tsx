@@ -22,9 +22,10 @@ export default async function NewFilePage({
 }: {
   searchParams: Promise<{
     lessonId?: string;
+    accessMode?: "normal" | "locked";
   }>;
 }) {
-  const { lessonId } = await searchParams;
+  const { lessonId, accessMode } = await searchParams;
 
   const lessons =
     await lessonService.getLessons();
@@ -34,8 +35,12 @@ export default async function NewFilePage({
     <Container>
 
       <PageHeader
-        title="Tambah File"
-        description="Tambahkan file materi baru."
+        title={accessMode === "locked" ? "Tambah File Locked" : "Tambah File"}
+        description={
+          accessMode === "locked"
+            ? "Tambahkan PDF Google Drive yang hanya dapat dibuka di viewer website."
+            : "Tambahkan file materi baru."
+        }
       />
 
       <Card>
@@ -44,6 +49,7 @@ export default async function NewFilePage({
 
           <FileForm
             initialLessonId={lessonId}
+            initialAccessMode={accessMode === "locked" ? "locked" : "normal"}
             lessonCourseIds={Object.fromEntries(
               lessons.map((lesson) => [
                 lesson.id,

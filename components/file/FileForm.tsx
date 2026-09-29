@@ -14,6 +14,7 @@ import {
   parseGoogleDriveFilePath,
   parseGoogleSheetsFilePath,
   type CourseFileType,
+  type FileAccessMode,
   type FileFormPayload,
   type FileSourceProvider,
 } from "@/lib/file/file-source";
@@ -41,6 +42,7 @@ interface SelectOption {
 interface FileFormProps {
   initialData?: FileFormData;
   initialLessonId?: string;
+  initialAccessMode?: FileAccessMode;
   lessonOptions: SelectOption[];
   lessonCourseIds: Record<string, string>;
   submitLabel?: string;
@@ -52,6 +54,7 @@ interface FileFormProps {
 export default function FileForm({
   initialData,
   initialLessonId,
+  initialAccessMode = "normal",
   lessonOptions,
   lessonCourseIds,
   submitLabel = "Simpan",
@@ -60,13 +63,17 @@ export default function FileForm({
   const initialGoogleSheetsId = initialData
     ? parseGoogleSheetsFilePath(initialData.file_path)
     : null;
+  const initialFileAccessMode: FileAccessMode =
+    initialData?.access_mode ?? initialAccessMode;
   const initialGoogleDriveId = initialData
     ? parseGoogleDriveFilePath(initialData.file_path)
     : null;
   const initialSourceProvider: SelectableSourceProvider =
-    initialGoogleSheetsId
-      ? "google_sheets"
-      : "google_drive";
+    initialFileAccessMode === "locked"
+      ? "google_drive"
+      : initialGoogleSheetsId
+        ? "google_sheets"
+        : "google_drive";
   const initialSourceUrl = initialGoogleSheetsId
     ? getGoogleSheetsInputUrl(initialGoogleSheetsId)
     : initialGoogleDriveId
@@ -79,11 +86,16 @@ export default function FileForm({
   const [title, setTitle] = useState(
     initialData?.title ?? "",
   );
+  const [accessMode] = useState<FileAccessMode>(
+    initialFileAccessMode,
+  );
   const [fileType, setFileType] =
     useState<FileType>(
-      initialGoogleSheetsId
-        ? "xlsx"
-        : initialData?.file_type ?? "pdf",
+      initialFileAccessMode === "locked"
+        ? "pdf"
+        : initialGoogleSheetsId
+          ? "xlsx"
+          : initialData?.file_type ?? "pdf",
     );
   const [sourceProvider, setSourceProvider] =
     useState<SelectableSourceProvider>(
@@ -106,10 +118,13 @@ export default function FileForm({
       ? extractGoogleSheetsFileId(sourceUrl)
       : extractGoogleDriveFileId(sourceUrl);
 
+  const isLocked = accessMode === "locked";
   const isGoogleSheets =
     sourceProvider === "google_sheets";
 
   function handleSourceProviderChange(value: string) {
+    if (isLocked) return;
+
     const nextProvider =
       value as SelectableSourceProvider;
 
@@ -126,7 +141,7 @@ export default function FileForm({
     setSourceUrl(value);
     setErrorMessage("");
 
-    if (extractGoogleSheetsFileId(value)) {
+    if (!isLocked && extractGoogleSheetsFileId(value)) {
       setSourceProvider("google_sheets");
       setFileType("xlsx");
       return;
@@ -172,9 +187,10 @@ export default function FileForm({
       const result = await onSubmit({
         lesson_id: lessonId,
         title: title.trim(),
-        file_type: isGoogleSheets ? "xlsx" : fileType,
-        source_provider: sourceProvider,
+        file_type: isLocked ? "pdf" : isGoogleSheets ? "xlsx" : fileType,
+        source_provider: isLocked ? "google_drive" : sourceProvider,
         file_path: sourceUrl.trim(),
+        access_mode: accessMode,
         publication_status: publicationStatus,
         is_required: isRequired,
       });
@@ -224,49 +240,65 @@ export default function FileForm({
         onChange={setTitle}
       />
 
-      <SelectField
-        label="Sumber File"
-        value={sourceProvider}
-        onChange={handleSourceProviderChange}
-        options={[
-          {
-            value: "google_drive",
-            label: "Google Drive",
-          },
-          {
-            value: "google_sheets",
-            label: "Google Spreadsheet (Sheets)",
-          },
-        ]}
-      />
+      {isLocked ? (
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <p className="text-sm font-black text-blue-900">File Locked</p>
+          <p className="mt-1 text-xs leading-5 text-blue-800">
+            File Locked menggunakan PDF dari Google Drive, hanya tampil di viewer website,
+            tanpa tombol download. Peserta dapat mencetak dengan watermark nama peserta + DokterAmbis.
+          </p>
+        </div>
+      ) : (
+        <SelectField
+          label="Sumber File"
+          value={sourceProvider}
+          onChange={handleSourceProviderChange}
+          options={[
+            {
+              value: "google_drive",
+              label: "Google Drive",
+            },
+            {
+              value: "google_sheets",
+              label: "Google Spreadsheet (Sheets)",
+            },
+          ]}
+        />
+      )}
 
-      <SelectField
-        label="Tipe File"
-        value={isGoogleSheets ? "xlsx" : fileType}
-        onChange={(value) =>
-          setFileType(value as FileType)
-        }
-        options={
-          isGoogleSheets
-            ? [
-                {
-                  value: "xlsx",
-                  label: "Google Spreadsheet (XLSX)",
-                },
-              ]
-            : [
-                { value: "pdf", label: "PDF" },
-                { value: "ppt", label: "PPT" },
-                { value: "pptx", label: "PPTX" },
-                { value: "doc", label: "DOC" },
-                { value: "docx", label: "DOCX" },
-                { value: "xls", label: "XLS" },
-                { value: "xlsx", label: "XLSX" },
-                { value: "zip", label: "ZIP" },
-                { value: "mp3", label: "MP3" },
-              ]
-        }
-      />
+      {isLocked ? (
+        <div className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
+          Tipe File: PDF
+        </div>
+      ) : (
+        <SelectField
+          label="Tipe File"
+          value={isGoogleSheets ? "xlsx" : fileType}
+          onChange={(value) =>
+            setFileType(value as FileType)
+          }
+          options={
+            isGoogleSheets
+              ? [
+                  {
+                    value: "xlsx",
+                    label: "Google Spreadsheet (XLSX)",
+                  },
+                ]
+              : [
+                  { value: "pdf", label: "PDF" },
+                  { value: "ppt", label: "PPT" },
+                  { value: "pptx", label: "PPTX" },
+                  { value: "doc", label: "DOC" },
+                  { value: "docx", label: "DOCX" },
+                  { value: "xls", label: "XLS" },
+                  { value: "xlsx", label: "XLSX" },
+                  { value: "zip", label: "ZIP" },
+                  { value: "mp3", label: "MP3" },
+                ]
+          }
+        />
+      )}
 
       <div>
         <TextInput
@@ -280,9 +312,11 @@ export default function FileForm({
           onChange={handleSourceUrlChange}
         />
         <p className="mt-2 text-xs leading-5 text-slate-500">
-          {isGoogleSheets
-            ? "Tempel link Google Sheets dari docs.google.com/spreadsheets. Pastikan General access adalah Anyone with the link sebagai Viewer. Peserta akan membuka spreadsheet di tab baru tanpa dipaksa mengunduh file."
-            : "Gunakan link file drive.google.com. Pastikan General access adalah Anyone with the link sebagai Viewer dan opsi download diizinkan. File yang diterima: PDF, PPT/PPTX, DOC/DOCX, XLS/XLSX, ZIP, dan MP3."}
+          {isLocked
+            ? "Tempel link PDF Google Drive. Pastikan General access adalah Anyone with the link sebagai Viewer. File tidak boleh diproteksi password agar viewer locked dan print watermark dapat bekerja."
+            : isGoogleSheets
+              ? "Tempel link Google Sheets dari docs.google.com/spreadsheets. Pastikan General access adalah Anyone with the link sebagai Viewer. Peserta akan membuka spreadsheet di tab baru tanpa dipaksa mengunduh file."
+              : "Gunakan link file drive.google.com. Pastikan General access adalah Anyone with the link sebagai Viewer dan opsi download diizinkan. File yang diterima: PDF, PPT/PPTX, DOC/DOCX, XLS/XLSX, ZIP, dan MP3."}
         </p>
         {sourceUrl && !sourceFileId && (
           <p className="mt-2 text-sm font-semibold text-red-600">

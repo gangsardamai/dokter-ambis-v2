@@ -104,6 +104,12 @@ function LessonPanel({
               Tambah File
             </Link>
             <Link
+              href={`/dashboard/mentor/file/new?lessonId=${lesson.id}&accessMode=locked`}
+              className={menuLinkClass}
+            >
+              Tambah File Locked
+            </Link>
+            <Link
               href={`/dashboard/mentor/video/new?lessonId=${lesson.id}`}
               className={menuLinkClass}
             >
@@ -133,49 +139,68 @@ function LessonPanel({
           </div>
         ) : (
           <div className="space-y-3">
-            {files.map((file) => (
-              <article
-                key={file.id}
-                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="break-words text-sm font-black text-slate-950">
-                      {file.title}
+            {files.map((file) => {
+              const isLocked = file.access_mode === "locked";
+
+              return (
+                <article
+                  key={file.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="break-words text-sm font-black text-slate-950">
+                        {file.title}
+                      </p>
+                      {isLocked && (
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-black uppercase tracking-wide text-violet-700">
+                          🔒 Locked
+                        </span>
+                      )}
+                      <StatusBadge status={file.publication_status} />
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      File · {file.file_type.toUpperCase()}
                     </p>
-                    <StatusBadge status={file.publication_status} />
                   </div>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    File · {file.file_type.toUpperCase()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`/api/materials/${file.id}`}
-                    className="inline-flex min-h-10 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100"
-                  >
-                    Download
-                  </a>
-                  <ActionMenu label={`Aksi file ${file.title}`}>
-                    <Link
-                      href={`/dashboard/mentor/file/${file.id}/edit`}
-                      className={menuLinkClass}
-                    >
-                      Edit File
-                    </Link>
-                    <DeleteExplorerItemButton
-                      managerRole="mentor"
-                      resourceType="file"
-                      courseId={courseId}
-                      itemId={file.id}
-                      itemTitle={file.title}
-                      label="Hapus File"
-                      className={deleteMenuClass}
-                    />
-                  </ActionMenu>
-                </div>
-              </article>
-            ))}
+                  <div className="flex items-center gap-2">
+                    {isLocked ? (
+                      <Link
+                        href={`/dashboard/locked-file/${file.id}`}
+                        prefetch={false}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl bg-violet-50 px-4 py-2 text-sm font-black text-violet-700 hover:bg-violet-100"
+                      >
+                        Buka File
+                      </Link>
+                    ) : (
+                      <a
+                        href={`/api/materials/${file.id}`}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100"
+                      >
+                        Download
+                      </a>
+                    )}
+                    <ActionMenu label={`Aksi file ${file.title}`}>
+                      <Link
+                        href={`/dashboard/mentor/file/${file.id}/edit`}
+                        className={menuLinkClass}
+                      >
+                        Edit File
+                      </Link>
+                      <DeleteExplorerItemButton
+                        managerRole="mentor"
+                        resourceType="file"
+                        courseId={courseId}
+                        itemId={file.id}
+                        itemTitle={file.title}
+                        label="Hapus File"
+                        className={deleteMenuClass}
+                      />
+                    </ActionMenu>
+                  </div>
+                </article>
+              );
+            })}
 
             {videos.map((video) => (
               <article

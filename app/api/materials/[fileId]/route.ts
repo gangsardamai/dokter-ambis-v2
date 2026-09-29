@@ -75,7 +75,7 @@ export async function GET(
 
   const { data: file, error } = await supabase
     .from("lesson_files")
-    .select("file_path, title")
+    .select("file_path, title, access_mode")
     .eq("id", fileId)
     .maybeSingle();
 
@@ -83,6 +83,13 @@ export async function GET(
     return materialErrorResponse(
       404,
       "File tidak ditemukan atau Anda tidak memiliki akses.",
+    );
+  }
+
+  if (file.access_mode === "locked") {
+    return materialErrorResponse(
+      403,
+      "File Locked hanya dapat dibuka melalui viewer DokterAmbis.",
     );
   }
 

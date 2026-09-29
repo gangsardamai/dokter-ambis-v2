@@ -32,6 +32,8 @@ const VALIDATION_MESSAGES = new Set([
   "Lesson dan judul file wajib diisi.",
   "Tipe file tidak diizinkan.",
   "Status publikasi tidak valid.",
+  "Mode akses file tidak valid.",
+  "File Locked hanya mendukung PDF dari Google Drive.",
   "URL Google Drive tidak valid. Gunakan URL file drive.google.com, bukan URL folder.",
   "URL Google Spreadsheet tidak valid. Gunakan URL docs.google.com/spreadsheets.",
   "Upload file sedang dinonaktifkan. Gunakan file dari Google Drive atau Google Spreadsheet.",
@@ -82,6 +84,20 @@ function normalizeFilePayload(
     throw new Error("Status publikasi tidak valid.");
   }
 
+  if (
+    data.access_mode !== "normal" &&
+    data.access_mode !== "locked"
+  ) {
+    throw new Error("Mode akses file tidak valid.");
+  }
+
+  if (
+    data.access_mode === "locked" &&
+    (data.source_provider !== "google_drive" || data.file_type !== "pdf")
+  ) {
+    throw new Error("File Locked hanya mendukung PDF dari Google Drive.");
+  }
+
   let normalizedFilePath: string;
 
   if (data.source_provider === "google_drive") {
@@ -125,6 +141,7 @@ function normalizeFilePayload(
     title,
     file_type: data.file_type,
     file_path: normalizedFilePath,
+    access_mode: data.access_mode,
     publication_status: data.publication_status,
     is_required: data.is_required,
   };
@@ -157,6 +174,7 @@ export async function updateFileAction(
       title: normalized.title,
       file_type: normalized.file_type,
       file_path: normalized.file_path,
+      access_mode: normalized.access_mode,
       publication_status:
         normalized.publication_status,
       is_required: normalized.is_required,

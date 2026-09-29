@@ -8,12 +8,15 @@ export type FileSourceProvider =
   | "google_drive"
   | "google_sheets";
 
+export type FileAccessMode = "normal" | "locked";
+
 export interface FileFormPayload {
   lesson_id: string;
   title: string;
   file_type: CourseFileType;
   source_provider: FileSourceProvider;
   file_path: string;
+  access_mode: FileAccessMode;
   publication_status: string;
   is_required: boolean;
 }
