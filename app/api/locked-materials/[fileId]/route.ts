@@ -10,6 +10,11 @@ interface LockedMaterialRouteContext {
   }>;
 }
 
+interface DrivePdfResult {
+  bytes: ArrayBuffer;
+  contentType: string;
+}
+
 function errorResponse(status: number, message: string): Response {
   return Response.json(
     { error: message },
@@ -22,7 +27,100 @@ function errorResponse(status: number, message: string): Response {
   );
 }
 
-async function fetchDrivePdf(fileId: string): Promise<Response | null> {
+function looksLikePdf(bytes: ArrayBuffer): boolean {
+  const header = new Uint8Array(bytes.slice(0, 5));
+
+  return (
+    header.length >= 5 &&
+    header[0] === 0x25 &&
+    header[1] === 0x50 &&
+    header[2] === 0x44 &&
+    header[3] === 0x46 &&
+    header[4] === 0x2d
+  );
+}
+
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function getGoogleConfirmationUrl(
+  html: string,
+  fallbackFileId: string,
+): string | null {
+  const formMatch = html.match(
+    /<form[^>]+id=["']download-form["'][^>]*action=["']([^"']+)["'][^>]*>/i,
+  );
+
+  const action = formMatch?.[1]
+    ? decodeHtml(formMatch[1])
+    : "https://drive.usercontent.google.com/download";
+
+  const inputPattern =
+    /<input[^>]+(?:type=["']hidden["'][^>]+)?name=["']([^"']+)["'][^>]+value=["']([^"']*)["'][^>]*>/gi;
+
+  const params = new URLSearchParams();
+  let match: RegExpExecArray | null;
+
+  while ((match = inputPattern.exec(html)) !== null) {
+    params.set(decodeHtml(match[1]), decodeHtml(match[2]));
+  }
+
+  if (!params.has("id")) {
+    params.set("id", fallbackFileId);
+  }
+
+  if (!params.has("export")) {
+    params.set("export", "download");
+  }
+
+  if (
+    !params.has("confirm") &&
+    !html.toLowerCase().includes("download-form")
+  ) {
+    return null;
+  }
+
+  try {
+    const url = new URL(action);
+    for (const [key, value] of params.entries()) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchDriveCandidate(
+  url: string,
+): Promise<{
+  response: Response;
+  bytes: ArrayBuffer;
+}> {
+  const response = await fetch(url, {
+    redirect: "follow",
+    cache: "no-store",
+    headers: {
+      Accept: "application/pdf,application/octet-stream,*/*;q=0.8",
+      "User-Agent":
+        "Mozilla/5.0 (compatible; DokterAmbisLockedFile/1.0)",
+    },
+  });
+
+  const bytes = await response.arrayBuffer();
+
+  return { response, bytes };
+}
+
+async function fetchDrivePdf(
+  fileId: string,
+): Promise<DrivePdfResult | null> {
   const urls = [
     getGoogleDriveDownloadUrl(fileId),
     `https://drive.usercontent.google.com/download?id=${encodeURIComponent(
@@ -31,21 +129,52 @@ async function fetchDrivePdf(fileId: string): Promise<Response | null> {
   ];
 
   for (const url of urls) {
-    const response = await fetch(url, {
-      redirect: "follow",
-      cache: "no-store",
-      headers: {
-        Accept: "application/pdf,*/*;q=0.8",
-      },
-    });
+    const first = await fetchDriveCandidate(url);
 
-    if (!response.ok) continue;
+    if (!first.response.ok) continue;
 
-    const contentType =
-      response.headers.get("content-type")?.toLowerCase() ?? "";
+    const firstContentType =
+      first.response.headers.get("content-type")?.toLowerCase() ?? "";
 
-    if (contentType.includes("application/pdf")) {
-      return response;
+    // Google Drive sometimes serves a valid PDF as application/octet-stream,
+    // so verify the actual bytes instead of relying only on Content-Type.
+    if (
+      firstContentType.includes("application/pdf") ||
+      looksLikePdf(first.bytes)
+    ) {
+      return {
+        bytes: first.bytes,
+        contentType: firstContentType || "application/pdf",
+      };
+    }
+
+    if (
+      firstContentType.includes("text/html") ||
+      firstContentType.includes("application/xhtml")
+    ) {
+      const html = new TextDecoder("utf-8").decode(first.bytes);
+      const confirmationUrl = getGoogleConfirmationUrl(html, fileId);
+
+      if (!confirmationUrl) continue;
+
+      const confirmed = await fetchDriveCandidate(confirmationUrl);
+
+      if (!confirmed.response.ok) continue;
+
+      const confirmedContentType =
+        confirmed.response.headers
+          .get("content-type")
+          ?.toLowerCase() ?? "";
+
+      if (
+        confirmedContentType.includes("application/pdf") ||
+        looksLikePdf(confirmed.bytes)
+      ) {
+        return {
+          bytes: confirmed.bytes,
+          contentType: confirmedContentType || "application/pdf",
+        };
+      }
     }
   }
 
@@ -93,22 +222,21 @@ export async function GET(
   }
 
   try {
-    const driveResponse = await fetchDrivePdf(googleDriveFileId);
+    const drivePdf = await fetchDrivePdf(googleDriveFileId);
 
-    if (!driveResponse) {
+    if (!drivePdf) {
       return errorResponse(
         502,
-        "PDF tidak dapat dibaca dari Google Drive. Pastikan file dapat diakses Anyone with the link sebagai Viewer dan tidak diproteksi password.",
+        "PDF belum dapat dibaca dari Google Drive. Pastikan file adalah PDF dan dapat diakses Anyone with the link sebagai Viewer.",
       );
     }
 
-    const bytes = await driveResponse.arrayBuffer();
-
-    return new Response(bytes, {
+    return new Response(drivePdf.bytes, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": 'inline; filename="dokterambis-locked.pdf"',
+        "Content-Length": String(drivePdf.bytes.byteLength),
         "Cache-Control": "private, no-store, max-age=0",
         "X-Content-Type-Options": "nosniff",
         "X-Robots-Tag": "noindex, nofollow, noarchive",
