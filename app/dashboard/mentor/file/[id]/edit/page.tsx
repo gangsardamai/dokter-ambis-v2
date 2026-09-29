@@ -48,6 +48,7 @@ export default async function MentorEditFilePage({
                   title: file.title,
                   file_type: file.file_type,
                   file_path: file.file_path,
+                  access_mode: file.access_mode,
                   publication_status:
                     file.publication_status,
                   is_required: file.is_required,
