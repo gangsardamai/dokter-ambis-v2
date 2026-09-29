@@ -10,22 +10,30 @@ import { lessonService } from "@/services";
 export default async function MentorNewFilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ lessonId?: string }>;
+  searchParams: Promise<{
+    lessonId?: string;
+    accessMode?: "normal" | "locked";
+  }>;
 }) {
-  const { lessonId } = await searchParams;
+  const { lessonId, accessMode } = await searchParams;
   const lessons = await lessonService.getLessons();
 
   return (
     <Container>
       <PageHeader
-        title="Tambah File"
-        description="Tambahkan file materi pada course yang ditugaskan."
+        title={accessMode === "locked" ? "Tambah File Locked" : "Tambah File"}
+        description={
+          accessMode === "locked"
+            ? "Tambahkan PDF Google Drive yang hanya dapat dibuka di viewer website."
+            : "Tambahkan file materi pada course yang ditugaskan."
+        }
       />
 
       <Card>
         <div className="p-6">
           <FileForm
             initialLessonId={lessonId}
+            initialAccessMode={accessMode === "locked" ? "locked" : "normal"}
             lessonCourseIds={Object.fromEntries(
               lessons.map((lesson) => [
                 lesson.id,
