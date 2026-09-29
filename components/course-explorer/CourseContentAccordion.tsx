@@ -199,6 +199,7 @@ function FileItem({
   managerRole?: "admin" | "leader";
 }) {
   const isGoogleDrive = isGoogleDriveFilePath(file.file_path);
+  const isLocked = file.access_mode === "locked";
 
   return (
     <article className="flex min-w-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -215,11 +216,22 @@ function FileItem({
                 Google Drive
               </span>
             )}
+            {isLocked && (
+              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-violet-700">
+                🔒 Locked
+              </span>
+            )}
             {mode === "manager" && (
               <StatusBadge status={file.publication_status} />
             )}
           </div>
-          {mode === "student" && isGoogleDrive && (
+          {mode === "student" && isLocked && (
+            <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
+              File hanya dapat dibuka di viewer DokterAmbis. Download dinonaktifkan;
+              print tersedia dengan watermark nama peserta.
+            </p>
+          )}
+          {mode === "student" && isGoogleDrive && !isLocked && (
             <p className="mt-2 max-w-xl text-xs leading-5 text-slate-500">
               Jika unduhan tidak dimulai atau Google Drive menampilkan error,
               silakan hubungi Admin Dokter Ambis.
@@ -229,14 +241,24 @@ function FileItem({
       </div>
 
       <div className="flex items-center gap-2">
-        <a
-          href={`/api/materials/${file.id}`}
-          target={isGoogleDrive ? "_blank" : undefined}
-          rel={isGoogleDrive ? "noopener noreferrer" : undefined}
-          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 sm:flex-none"
-        >
-          Download
-        </a>
+        {isLocked ? (
+          <Link
+            href={`/dashboard/locked-file/${file.id}`}
+            prefetch={false}
+            className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-violet-50 px-4 py-2 text-sm font-black text-violet-700 transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-violet-200 sm:flex-none"
+          >
+            Buka File
+          </Link>
+        ) : (
+          <a
+            href={`/api/materials/${file.id}`}
+            target={isGoogleDrive ? "_blank" : undefined}
+            rel={isGoogleDrive ? "noopener noreferrer" : undefined}
+            className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-blue-50 px-4 py-2 text-sm font-black text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 sm:flex-none"
+          >
+            Download
+          </a>
+        )}
         {mode === "manager" && (
           <ManagerItemMenu
             type="file"
@@ -437,6 +459,12 @@ function LessonPanel({
                   className={menuLinkClass}
                 >
                   Tambah File
+                </Link>
+                <Link
+                  href={`/dashboard/admin/file/new?lessonId=${lesson.id}&accessMode=locked`}
+                  className={menuLinkClass}
+                >
+                  Tambah File Locked
                 </Link>
                 <Link
                   href={`/dashboard/admin/video/new?lessonId=${lesson.id}`}
