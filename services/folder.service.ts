@@ -38,6 +38,13 @@ export class FolderService {
   }
 
   async createFolder(data: LessonFolderInsert) {
+    if (data.parent_folder_id) {
+      const parent = await folderRepository.getById(data.parent_folder_id);
+      if (!parent || parent.course_id !== data.course_id) {
+        throw new Error("Folder induk tidak termasuk dalam course yang dipilih.");
+      }
+    }
+
     const existingFolders = await folderRepository.getByCourse(
       data.course_id,
     );
@@ -52,6 +59,7 @@ export class FolderService {
     return await folderRepository.create({
       ...data,
       slug,
+      publication_status: "published",
     });
   }
 
@@ -65,9 +73,27 @@ export class FolderService {
       throw new Error("Folder tidak ditemukan.");
     }
 
+    const targetParentId =
+      data.parent_folder_id === undefined
+        ? existing.parent_folder_id
+        : data.parent_folder_id;
+
+    if (targetParentId) {
+      const parent = await folderRepository.getById(targetParentId);
+      if (
+        !parent ||
+        parent.course_id !== existing.course_id ||
+        parent.id === existing.id
+      ) {
+        throw new Error("Folder induk tidak valid untuk course ini.");
+      }
+    }
+
     return await folderRepository.update(id, {
       ...data,
+      course_id: existing.course_id,
       slug: existing.slug,
+      publication_status: "published",
     });
   }
 
