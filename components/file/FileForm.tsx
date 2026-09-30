@@ -117,6 +117,8 @@ export default function FileForm({
   const isLocked = accessMode === "locked";
   const isGoogleSheets =
     sourceProvider === "google_sheets";
+  const isContextualLesson =
+    Boolean(lessonId) && lessonOptions.length === 1;
 
   function handleSourceProviderChange(value: string) {
     if (isLocked) return;
@@ -216,7 +218,7 @@ export default function FileForm({
         </div>
       )}
 
-      {initialLessonId && !initialData ? (
+      {isContextualLesson ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
             Lesson
