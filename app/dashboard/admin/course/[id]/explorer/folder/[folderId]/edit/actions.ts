@@ -35,9 +35,7 @@ export async function updateFolderFormAction(
     folder_order: Number(
       formData.get("folder_order") ?? 1,
     ),
-    publication_status: String(
-      formData.get("publication_status") ?? "draft",
-    ),
+    publication_status: "published",
   });
 
   redirect(
