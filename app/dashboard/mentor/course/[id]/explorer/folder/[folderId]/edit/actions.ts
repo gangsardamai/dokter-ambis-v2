@@ -32,9 +32,6 @@ export async function updateMentorFolderAction(
     description: String(
       formData.get("description") ?? "",
     ).trim(),
-    folder_order: Number(
-      formData.get("folder_order") ?? 1,
-    ),
     publication_status: "published",
   });
 
