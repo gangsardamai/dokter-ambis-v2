@@ -34,9 +34,7 @@ export async function createMentorFolderAction(
     slug: "",
     description,
     folder_order: folderOrder,
-    publication_status: String(
-      formData.get("publication_status") ?? "draft",
-    ),
+    publication_status: "published",
   });
 
   redirect(
