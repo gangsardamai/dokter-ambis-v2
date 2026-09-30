@@ -16,10 +16,6 @@ export async function createMentorFolderAction(
   const description = String(
     formData.get("description") ?? "",
   ).trim();
-  const folderOrder = Number(
-    formData.get("folder_order") ?? 1,
-  );
-
   if (!courseId) {
     throw new Error("Course tidak ditemukan.");
   }
@@ -33,7 +29,6 @@ export async function createMentorFolderAction(
     title,
     slug: "",
     description,
-    folder_order: folderOrder,
     publication_status: "published",
   });
 
