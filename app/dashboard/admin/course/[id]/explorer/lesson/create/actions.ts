@@ -19,10 +19,6 @@ export async function createLessonFormAction(
   const description = String(
     formData.get("description") ?? "",
   ).trim();
-  const publicationStatus = String(
-    formData.get("publication_status") ?? "draft",
-  );
-
   if (!courseId) {
     throw new Error("Course tidak ditemukan.");
   }
@@ -45,7 +41,7 @@ export async function createLessonFormAction(
     is_free: formData.get("is_free") === "on",
     is_required:
       formData.get("is_required") === "on",
-    publication_status: publicationStatus,
+    publication_status: "published",
   });
 
   redirect(
