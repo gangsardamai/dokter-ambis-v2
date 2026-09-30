@@ -38,16 +38,14 @@ export default async function EditFilePage({
     notFound();
   }
 
-  const lessons =
-    await lessonService.getLessons();
-
-  const currentLesson = lessons.find(
-    (lesson) => lesson.id === file.lesson_id
-  );
+  const currentLesson =
+    await lessonService.getLessonById(file.lesson_id);
 
   if (!currentLesson) {
     notFound();
   }
+
+  const lessons = [currentLesson];
 
   const updateCurrentFileAction =
     updateFileAction.bind(null, file.id);
