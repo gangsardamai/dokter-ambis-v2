@@ -4,7 +4,6 @@ import {
   FormCard,
   TextInput,
   TextAreaInput,
-  NumberInput,
   PrimaryButton,
 } from "@/components/admin";
 
@@ -49,15 +48,6 @@ export function FolderForm({
           label="Deskripsi"
           name="description"
           defaultValue={defaultValues?.description ?? ""}
-        />
-
-        <NumberInput
-          label="Urutan"
-          name="folder_order"
-          required
-          defaultValue={Number(
-            defaultValues?.folder_order ?? 1,
-          )}
         />
 
         <PrimaryButton type="submit">
