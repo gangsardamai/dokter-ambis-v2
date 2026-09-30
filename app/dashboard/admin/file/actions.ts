@@ -31,7 +31,6 @@ export interface FileActionResult {
 const VALIDATION_MESSAGES = new Set([
   "Lesson dan judul file wajib diisi.",
   "Tipe file tidak diizinkan.",
-  "Status publikasi tidak valid.",
   "Mode akses file tidak valid.",
   "File Locked hanya mendukung PDF dari Google Drive.",
   "URL Google Drive tidak valid. Gunakan URL file drive.google.com, bukan URL folder.",
@@ -75,13 +74,6 @@ function normalizeFilePayload(
 
   if (!isSupportedCourseFileType(data.file_type)) {
     throw new Error("Tipe file tidak diizinkan.");
-  }
-
-  if (
-    data.publication_status !== "draft" &&
-    data.publication_status !== "published"
-  ) {
-    throw new Error("Status publikasi tidak valid.");
   }
 
   if (
@@ -142,7 +134,7 @@ function normalizeFilePayload(
     file_type: data.file_type,
     file_path: normalizedFilePath,
     access_mode: data.access_mode,
-    publication_status: data.publication_status,
+    publication_status: "published",
     is_required: data.is_required,
   };
 }
@@ -175,8 +167,7 @@ export async function updateFileAction(
       file_type: normalized.file_type,
       file_path: normalized.file_path,
       access_mode: normalized.access_mode,
-      publication_status:
-        normalized.publication_status,
+      publication_status: "published",
       is_required: normalized.is_required,
     };
 
