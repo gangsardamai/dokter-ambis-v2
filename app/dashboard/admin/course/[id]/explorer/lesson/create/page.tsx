@@ -6,6 +6,7 @@ import {
 
 import {
   courseService,
+  folderService,
 } from "@/services";
 
 import {
@@ -35,11 +36,14 @@ export default async function Page({
   const course =
     await courseService.getCourseById(id);
 
-  if (!course) {
+  if (!course || !folderId) {
     notFound();
   }
 
-  if (!folderId) {
+  const folder =
+    await folderService.getFolderById(folderId);
+
+  if (!folder || folder.course_id !== course.id) {
     notFound();
   }
 
@@ -67,7 +71,7 @@ export default async function Page({
           duration: 10,
           is_free: false,
           is_required: true,
-          publication_status: "draft",
+          publication_status: "published",
         }}
 
         submitLabel="Simpan Lesson"
