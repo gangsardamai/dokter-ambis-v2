@@ -25,7 +25,6 @@ export function LessonForm({
   defaultValues,
   submitLabel,
   action,
-  showOrder = true,
 }: LessonFormProps) {
   return (
     <form
@@ -67,25 +66,6 @@ export function LessonForm({
           className={`${inputClass} resize-y`}
         />
       </label>
-
-      <div className="grid gap-4 sm:grid-cols-1">
-        {showOrder ? (
-          <label className="block">
-            <span className="mb-2 block text-sm font-bold text-slate-700">
-              Urutan
-            </span>
-            <input
-              type="number"
-              name="lesson_order"
-              min={1}
-              required
-              defaultValue={defaultValues.lesson_order ?? 1}
-              className={inputClass}
-            />
-          </label>
-        ) : null}
-
-      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
