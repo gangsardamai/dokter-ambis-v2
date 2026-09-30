@@ -10,10 +10,10 @@ export default async function MentorEditFolderPage({
 }: {
   params: Promise<{ id: string; folderId: string }>;
 }) {
-  const { folderId } = await params;
+  const { id: courseId, folderId } = await params;
   const folder = await folderService.getFolderById(folderId);
 
-  if (!folder) notFound();
+  if (!folder || folder.course_id !== courseId) notFound();
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
