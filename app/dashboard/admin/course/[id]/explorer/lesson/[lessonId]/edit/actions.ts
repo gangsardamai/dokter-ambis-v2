@@ -17,10 +17,6 @@ export async function updateLessonFormAction(
   const title = String(
     formData.get("title") ?? "",
   ).trim();
-  const lessonOrder = Number(
-    formData.get("lesson_order") ?? 1,
-  );
-
   if (!courseId) {
     throw new Error("Course tidak ditemukan.");
   }
@@ -35,7 +31,6 @@ export async function updateLessonFormAction(
     description: String(
       formData.get("description") ?? "",
     ).trim(),
-    lesson_order: lessonOrder,
     is_free: formData.get("is_free") === "on",
     is_required:
       formData.get("is_required") === "on",
