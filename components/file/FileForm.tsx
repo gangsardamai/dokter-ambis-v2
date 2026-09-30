@@ -103,10 +103,6 @@ export default function FileForm({
     );
   const [sourceUrl, setSourceUrl] =
     useState(initialSourceUrl);
-  const [publicationStatus, setPublicationStatus] =
-    useState(
-      initialData?.publication_status ?? "draft",
-    );
   const [isRequired, setIsRequired] = useState(
     initialData?.is_required ?? true,
   );
@@ -191,7 +187,7 @@ export default function FileForm({
         source_provider: isLocked ? "google_drive" : sourceProvider,
         file_path: sourceUrl.trim(),
         access_mode: accessMode,
-        publication_status: publicationStatus,
+        publication_status: "published",
         is_required: isRequired,
       });
 
@@ -220,18 +216,29 @@ export default function FileForm({
         </div>
       )}
 
-      <SelectField
-        label="Lesson"
-        value={lessonId}
-        options={[
-          {
-            value: "",
-            label: "Pilih Lesson",
-          },
-          ...lessonOptions,
-        ]}
-        onChange={setLessonId}
-      />
+      {initialLessonId && !initialData ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            Lesson
+          </p>
+          <p className="mt-1 text-sm font-bold text-slate-800">
+            {lessonOptions.find((option) => option.value === lessonId)?.label ?? "Lesson terpilih"}
+          </p>
+        </div>
+      ) : (
+        <SelectField
+          label="Lesson"
+          value={lessonId}
+          options={[
+            {
+              value: "",
+              label: "Pilih Lesson",
+            },
+            ...lessonOptions,
+          ]}
+          onChange={setLessonId}
+        />
+      )}
 
       <TextInput
         label="Judul File"
@@ -326,19 +333,6 @@ export default function FileForm({
           </p>
         )}
       </div>
-
-      <SelectField
-        label="Status Publikasi"
-        value={publicationStatus}
-        onChange={setPublicationStatus}
-        options={[
-          { value: "draft", label: "Draft" },
-          {
-            value: "published",
-            label: "Published",
-          },
-        ]}
-      />
 
       <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
         <input
