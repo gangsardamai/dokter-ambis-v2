@@ -16,7 +16,11 @@ export default async function MentorNewFilePage({
   }>;
 }) {
   const { lessonId, accessMode } = await searchParams;
-  const lessons = await lessonService.getLessons();
+  const lessons = lessonId
+    ? [await lessonService.getLessonById(lessonId)].filter(
+        (lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson),
+      )
+    : await lessonService.getLessons();
 
   return (
     <Container>
