@@ -24,6 +24,7 @@ export default async function EditFolderPage({
 }: PageProps) {
 
   const {
+    id: courseId,
     folderId,
   } = await params;
 
@@ -32,7 +33,7 @@ export default async function EditFolderPage({
       folderId,
     );
 
-  if (!folder) {
+  if (!folder || folder.course_id !== courseId) {
     notFound();
   }
 
