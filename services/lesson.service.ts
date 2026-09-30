@@ -1,6 +1,7 @@
 import { deleteStoredCourseFile } from "@/lib/file/delete-stored-course-file";
 import { createUniqueSlug } from "@/lib/slug";
 import {
+  folderRepository,
   lessonFileRepository,
   lessonRepository,
 } from "@/repositories";
@@ -56,10 +57,18 @@ export class LessonService {
   async createLesson(data: LessonInsert) {
     const slug = await this.generateUniqueSlug(data.title);
 
+    if (data.folder_id) {
+      const folder = await folderRepository.getById(data.folder_id);
+      if (!folder || folder.course_id !== data.course_id) {
+        throw new Error("Folder tidak termasuk dalam course yang dipilih.");
+      }
+    }
+
     return await lessonRepository.create({
       ...data,
       slug,
       duration: getInternalDuration(data.duration),
+      publication_status: "published",
     });
   }
 
@@ -68,10 +77,18 @@ export class LessonService {
   ) {
     const slug = await this.generateUniqueSlug(data.title);
 
+    if (data.folder_id) {
+      const folder = await folderRepository.getById(data.folder_id);
+      if (!folder || folder.course_id !== data.course_id) {
+        throw new Error("Folder tidak termasuk dalam course yang dipilih.");
+      }
+    }
+
     return await lessonRepository.createWithNextOrder({
       ...data,
       slug,
       duration: getInternalDuration(data.duration),
+      publication_status: "published",
     });
   }
 
@@ -82,10 +99,25 @@ export class LessonService {
       throw new Error("Lesson tidak ditemukan.");
     }
 
+    const targetFolderId =
+      data.folder_id === undefined
+        ? existing.folder_id
+        : data.folder_id;
+
+    if (targetFolderId) {
+      const folder = await folderRepository.getById(targetFolderId);
+      if (!folder || folder.course_id !== existing.course_id) {
+        throw new Error("Folder tidak termasuk dalam course lesson ini.");
+      }
+    }
+
     return await lessonRepository.update(id, {
       ...data,
+      course_id: existing.course_id,
+      folder_id: targetFolderId,
       slug: existing.slug,
       duration: data.duration ?? existing.duration,
+      publication_status: "published",
     });
   }
 
