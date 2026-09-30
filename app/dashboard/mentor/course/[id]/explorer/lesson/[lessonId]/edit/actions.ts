@@ -45,9 +45,7 @@ export async function updateMentorLessonAction(
     is_free: formData.get("is_free") === "on",
     is_required:
       formData.get("is_required") === "on",
-    publication_status: String(
-      formData.get("publication_status") ?? "draft",
-    ),
+    publication_status: "published",
   });
 
   const explorerPath =
