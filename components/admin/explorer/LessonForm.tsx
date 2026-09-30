@@ -68,11 +68,7 @@ export function LessonForm({
         />
       </label>
 
-      <div
-        className={`grid gap-4 ${
-          showOrder ? "sm:grid-cols-2" : "sm:grid-cols-1"
-        }`}
-      >
+      <div className="grid gap-4 sm:grid-cols-1">
         {showOrder ? (
           <label className="block">
             <span className="mb-2 block text-sm font-bold text-slate-700">
@@ -89,21 +85,6 @@ export function LessonForm({
           </label>
         ) : null}
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-bold text-slate-700">
-            Status Publikasi
-          </span>
-          <select
-            name="publication_status"
-            defaultValue={
-              defaultValues.publication_status ?? "draft"
-            }
-            className={inputClass}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-        </label>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
