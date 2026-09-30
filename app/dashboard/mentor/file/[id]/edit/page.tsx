@@ -21,12 +21,16 @@ export default async function MentorEditFilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [file, lessons] = await Promise.all([
-    lessonFileService.getFileById(id),
-    lessonService.getLessons(),
-  ]);
+  const file = await lessonFileService.getFileById(id);
 
   if (!file) notFound();
+
+  const currentLesson =
+    await lessonService.getLessonById(file.lesson_id);
+
+  if (!currentLesson) notFound();
+
+  const lessons = [currentLesson];
 
   const updateCurrentFileAction =
     updateFileAction.bind(null, file.id);
