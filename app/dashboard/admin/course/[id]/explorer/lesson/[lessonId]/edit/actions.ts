@@ -25,16 +25,12 @@ export async function updateLessonFormAction(
     throw new Error("Course tidak ditemukan.");
   }
 
-  if (!folderId) {
-    throw new Error("Folder tidak ditemukan.");
-  }
-
   if (!title) {
     throw new Error("Judul Lesson wajib diisi.");
   }
 
   await lessonService.updateLesson(lessonId, {
-    folder_id: folderId,
+    folder_id: folderId || null,
     title,
     description: String(
       formData.get("description") ?? "",
