@@ -39,9 +39,6 @@ export async function updateMentorLessonAction(
     description: String(
       formData.get("description") ?? "",
     ).trim(),
-    lesson_order: Number(
-      formData.get("lesson_order") ?? 1,
-    ),
     is_free: formData.get("is_free") === "on",
     is_required:
       formData.get("is_required") === "on",
