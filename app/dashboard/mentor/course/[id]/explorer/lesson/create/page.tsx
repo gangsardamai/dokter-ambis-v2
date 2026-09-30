@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { LessonForm } from "@/components/admin/explorer";
-import { courseService } from "@/services";
+import { courseService, folderService } from "@/services";
 
 import { createMentorLessonAction } from "./actions";
 
@@ -17,6 +17,9 @@ export default async function MentorCreateLessonPage({
   const course = await courseService.getCourseById(id);
 
   if (!course || !folderId) notFound();
+
+  const folder = await folderService.getFolderById(folderId);
+  if (!folder || folder.course_id !== course.id) notFound();
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
@@ -37,7 +40,7 @@ export default async function MentorCreateLessonPage({
           duration: 10,
           is_free: false,
           is_required: true,
-          publication_status: "draft",
+          publication_status: "published",
         }}
         submitLabel="Simpan Lesson"
         action={createMentorLessonAction}
