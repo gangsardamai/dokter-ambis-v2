@@ -24,6 +24,7 @@ export default async function EditLessonPage({
 }: PageProps) {
 
   const {
+    id: courseId,
     lessonId,
   } = await params;
 
@@ -32,11 +33,7 @@ export default async function EditLessonPage({
       lessonId,
     );
 
-  if (!lesson) {
-    notFound();
-  }
-
-  if (!lesson.folder_id) {
+  if (!lesson || lesson.course_id !== courseId) {
     notFound();
   }
 
