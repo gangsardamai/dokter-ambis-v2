@@ -51,6 +51,15 @@ export class FolderService {
     const usedSlugs = new Set(
       existingFolders.map((folder) => folder.slug),
     );
+    const siblingFolders = existingFolders.filter(
+      (folder) =>
+        folder.parent_folder_id === (data.parent_folder_id ?? null),
+    );
+    const nextFolderOrder =
+      siblingFolders.reduce(
+        (highest, folder) => Math.max(highest, folder.folder_order),
+        0,
+      ) + 1;
     const slug = await createUniqueSlug(
       data.title,
       async (candidate) => !usedSlugs.has(candidate),
@@ -59,6 +68,7 @@ export class FolderService {
     return await folderRepository.create({
       ...data,
       slug,
+      folder_order: nextFolderOrder,
       publication_status: "published",
     });
   }
