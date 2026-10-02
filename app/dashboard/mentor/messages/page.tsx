@@ -192,7 +192,7 @@ export default async function MentorMessagesPage({
                     >
                       {statusLabel(thread.status)}
                     </span>
-                    {thread.unreadCount > 0 && (
+                    {thread.status === "open" && thread.unreadCount > 0 && (
                       <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-amber-400 px-2 py-1 text-[11px] font-black text-amber-950">
                         {thread.unreadCount > 99 ? "99+" : thread.unreadCount}
                       </span>
