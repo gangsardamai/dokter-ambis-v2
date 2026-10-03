@@ -110,10 +110,6 @@ export default function VideoForm({
   const [videoOrder, setVideoOrder] = useState(
     initialData?.video_order ?? 1,
   );
-  const [publicationStatus, setPublicationStatus] =
-    useState(
-      initialData?.publication_status ?? "draft",
-    );
   const [isRequired, setIsRequired] = useState(
     initialData?.is_required ?? true,
   );
@@ -357,7 +353,7 @@ export default function VideoForm({
         provider_video_id: sourceInput.trim(),
         duration: durationToSave,
         video_order: videoOrder,
-        publication_status: publicationStatus,
+        publication_status: "published",
         is_required: isRequired,
       });
     } catch (error) {
@@ -508,19 +504,6 @@ export default function VideoForm({
           }
         />
       )}
-
-      <SelectField
-        label="Status Publikasi"
-        value={publicationStatus}
-        onChange={setPublicationStatus}
-        options={[
-          { value: "draft", label: "Draft" },
-          {
-            value: "published",
-            label: "Published",
-          },
-        ]}
-      />
 
       <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700">
         <input
