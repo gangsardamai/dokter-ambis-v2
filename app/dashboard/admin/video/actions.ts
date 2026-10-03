@@ -70,7 +70,7 @@ function normalizeVideoPayload(
     provider_video_id: source.providerVideoId,
     duration: data.duration,
     video_order: data.video_order,
-    publication_status: data.publication_status,
+    publication_status: "published",
     is_required: data.is_required,
   };
 }
@@ -110,8 +110,7 @@ export async function updateVideoAction(
       normalized.provider_video_id,
     duration: normalized.duration,
     video_order: normalized.video_order,
-    publication_status:
-      normalized.publication_status,
+    publication_status: "published",
     is_required: normalized.is_required,
   };
 
