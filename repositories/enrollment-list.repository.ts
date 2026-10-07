@@ -45,6 +45,9 @@ const COURSE_RELATION_SELECT = `
   programs!fk_courses_program (
     id,
     title
+  ),
+  course_community_links (
+    whatsapp_group_url
   )
 `;
 
@@ -99,10 +102,25 @@ export class EnrollmentListRepository extends BaseRepository {
       query = query.eq("payment_timing", filters.paymentTiming);
     }
 
-    if (filters.whatsappJoined === "joined") {
-      query = query.not("whatsapp_joined_at", "is", null);
-    } else if (filters.whatsappJoined === "not_joined") {
-      query = query.is("whatsapp_joined_at", null);
+    if (filters.whatsappJoined) {
+      const { data: whatsappCourses, error: whatsappCoursesError } = await supabase
+        .from("course_community_links")
+        .select("course_id");
+
+      if (whatsappCoursesError) this.handleError(whatsappCoursesError);
+
+      const whatsappCourseIds = (whatsappCourses ?? []).map((item) => item.course_id);
+      if (whatsappCourseIds.length === 0) {
+        return { data: [], total: 0, page, perPage };
+      }
+
+      query = query.in("course_id", whatsappCourseIds);
+
+      if (filters.whatsappJoined === "joined") {
+        query = query.not("whatsapp_joined_at", "is", null);
+      } else {
+        query = query.is("whatsapp_joined_at", null);
+      }
     }
 
     if (filters.courseId) {
