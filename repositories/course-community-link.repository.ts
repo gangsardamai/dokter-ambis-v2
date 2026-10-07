@@ -6,6 +6,17 @@ type CourseCommunityLink =
   Database["public"]["Tables"]["course_community_links"]["Row"];
 
 export class CourseCommunityLinkRepository extends BaseRepository {
+  async getAllCourseIds(): Promise<string[]> {
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("course_community_links")
+      .select("course_id");
+
+    if (error) this.handleError(error);
+
+    return (data ?? []).map((item) => item.course_id);
+  }
+
   async getByCourseId(courseId: string): Promise<CourseCommunityLink | null> {
     const supabase = await this.db();
     const { data, error } = await supabase
