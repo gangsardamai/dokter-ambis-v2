@@ -162,6 +162,7 @@ export default async function EnrollmentPage({
   const enrollmentStatusValue = getStringParam(params.enrollmentStatus);
   const paymentStatusValue = getStringParam(params.paymentStatus);
   const paymentTimingValue = getStringParam(params.paymentTiming);
+  const whatsappJoinedValue = getStringParam(params.whatsappJoined);
   const selectedCourseId = getStringParam(params.courseId);
   const selectedProgramId = getStringParam(params.programId);
   const sortValue = getStringParam(params.sort);
@@ -185,6 +186,10 @@ export default async function EnrollmentPage({
   )
     ? (paymentTimingValue as PaymentTiming)
     : "all";
+  const selectedWhatsappJoined =
+    whatsappJoinedValue === "joined" || whatsappJoinedValue === "not_joined"
+      ? whatsappJoinedValue
+      : "all";
 
   const [enrollmentResult, courses, programs] = await Promise.all([
     enrollmentListRepository.getList({
@@ -199,6 +204,8 @@ export default async function EnrollmentPage({
           : (selectedPaymentStatus as PaymentStatus | "none"),
       paymentTiming:
         selectedPaymentTiming === "all" ? undefined : selectedPaymentTiming,
+      whatsappJoined:
+        selectedWhatsappJoined === "all" ? undefined : selectedWhatsappJoined,
       courseId: selectedCourseId || undefined,
       programId: selectedProgramId || undefined,
       sort: selectedSort,
@@ -228,6 +235,7 @@ export default async function EnrollmentPage({
     selectedEnrollmentStatus !== "all" ||
     selectedPaymentStatus !== "all" ||
     selectedPaymentTiming !== "all" ||
+    selectedWhatsappJoined !== "all" ||
     Boolean(selectedCourseId) ||
     Boolean(selectedProgramId) ||
     selectedSort !== "date_desc";
@@ -322,6 +330,19 @@ export default async function EnrollmentPage({
               <option value="all">Semua kategori</option>
               <option value="upfront">Bayar di Awal</option>
               <option value="deferred">Bayar di Akhir</option>
+            </select>
+          </label>
+
+          <label>
+            <span className="mb-1 block text-sm font-bold text-slate-700">Status Grup WhatsApp</span>
+            <select
+              name="whatsappJoined"
+              defaultValue={selectedWhatsappJoined}
+              className={selectClass}
+            >
+              <option value="all">Semua status WhatsApp</option>
+              <option value="joined">Sudah gabung</option>
+              <option value="not_joined">Belum gabung</option>
             </select>
           </label>
 
@@ -450,6 +471,15 @@ export default async function EnrollmentPage({
                   </StatusPill>
                   <StatusPill className={getStatusClassName(enrollment.status)}>
                     Enrollment: {getStatusLabel(enrollment.status)}
+                  </StatusPill>
+                  <StatusPill
+                    className={
+                      enrollment.whatsapp_joined_at
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-orange-100 text-orange-700"
+                    }
+                  >
+                    WhatsApp: {enrollment.whatsapp_joined_at ? "Sudah Gabung" : "Belum Gabung"}
                   </StatusPill>
                 </div>
 
