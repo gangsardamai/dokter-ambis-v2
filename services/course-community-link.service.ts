@@ -46,6 +46,10 @@ export class CourseCommunityLinkService {
     return courseCommunityLinkRepository.getByCourseId(courseId);
   }
 
+  async getCourseIdsWithWhatsAppGroup(): Promise<string[]> {
+    return courseCommunityLinkRepository.getAllCourseIds();
+  }
+
   async getWhatsAppGroupUrl(courseId: string): Promise<string | null> {
     const link = await this.getCourseLink(courseId);
     return link?.whatsapp_group_url ?? null;
