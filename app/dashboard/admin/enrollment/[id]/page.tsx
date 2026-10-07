@@ -221,27 +221,31 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
             <Field label="Tanggal aktif">{formatDate(enrollment.activated_at)}</Field>
             <Field label="Kedaluwarsa">{formatDate(enrollment.expired_at)}</Field>
             <Field label="Status Grup WhatsApp">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone={enrollment.whatsapp_joined_at ? "green" : "yellow"}>
-                  {enrollment.whatsapp_joined_at ? "Sudah Gabung" : "Belum Gabung"}
-                </StatusBadge>
-                <form
-                  action={setEnrollmentWhatsAppJoinedAction.bind(
-                    null,
-                    enrollment.id,
-                    !enrollment.whatsapp_joined_at,
-                  )}
-                >
-                  <button
-                    type="submit"
-                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+              {!enrollment.courses?.course_community_links ? (
+                <StatusBadge tone="gray">Grup Belum Diatur</StatusBadge>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge tone={enrollment.whatsapp_joined_at ? "green" : "yellow"}>
+                    {enrollment.whatsapp_joined_at ? "Sudah Gabung" : "Belum Gabung"}
+                  </StatusBadge>
+                  <form
+                    action={setEnrollmentWhatsAppJoinedAction.bind(
+                      null,
+                      enrollment.id,
+                      !enrollment.whatsapp_joined_at,
+                    )}
                   >
-                    {enrollment.whatsapp_joined_at
-                      ? "Tandai Belum Gabung"
-                      : "Tandai Sudah Gabung"}
-                  </button>
-                </form>
-              </div>
+                    <button
+                      type="submit"
+                      className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+                    >
+                      {enrollment.whatsapp_joined_at
+                        ? "Tandai Belum Gabung"
+                        : "Tandai Sudah Gabung"}
+                    </button>
+                  </form>
+                </div>
+              )}
             </Field>
             <Field label="Promo">{enrollment.promotion_name_snapshot ?? "-"}</Field>
           </dl>
