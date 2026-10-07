@@ -7,6 +7,7 @@ import { PageHeader, PrimaryButton } from "@/components/admin";
 import { BulkApprovalButtons } from "@/components/admin/enrollment/BulkApprovalButtons";
 import { enrollmentListRepository } from "@/repositories/enrollment-list.repository";
 import {
+  courseCommunityLinkService,
   courseService,
   leaderAccessService,
   programService,
@@ -191,7 +192,7 @@ export default async function EnrollmentPage({
       ? whatsappJoinedValue
       : "all";
 
-  const [enrollmentResult, courses, programs] = await Promise.all([
+  const [enrollmentResult, courses, programs, whatsappCourseIdsList] = await Promise.all([
     enrollmentListRepository.getList({
       q: searchQuery || undefined,
       enrollmentStatus:
@@ -213,8 +214,10 @@ export default async function EnrollmentPage({
     }),
     courseService.getCourses(),
     programService.getPrograms(),
+    courseCommunityLinkService.getCourseIdsWithWhatsAppGroup(),
   ]);
 
+  const whatsappCourseIds = new Set(whatsappCourseIdsList);
   const enrollments = enrollmentResult.data;
   const totalEnrollments = enrollmentResult.total;
   const currentPage = enrollmentResult.page;
@@ -474,7 +477,7 @@ export default async function EnrollmentPage({
                   </StatusPill>
                   <StatusPill
                     className={
-                      !course?.course_community_links
+                      !whatsappCourseIds.has(enrollment.course_id)
                         ? "bg-slate-100 text-slate-600"
                         : enrollment.whatsapp_joined_at
                           ? "bg-emerald-100 text-emerald-700"
@@ -482,7 +485,7 @@ export default async function EnrollmentPage({
                     }
                   >
                     WhatsApp:{" "}
-                    {!course?.course_community_links
+                    {!whatsappCourseIds.has(enrollment.course_id)
                       ? "Grup Belum Diatur"
                       : enrollment.whatsapp_joined_at
                         ? "Sudah Gabung"
