@@ -17,6 +17,7 @@ export interface EnrollmentListFilters {
   enrollmentStatus?: Database["public"]["Enums"]["enrollment_status"];
   paymentStatus?: PaymentStatus | "none";
   paymentTiming?: Database["public"]["Enums"]["payment_timing"];
+  whatsappJoined?: "joined" | "not_joined";
   courseId?: string;
   programId?: string;
   sort?: EnrollmentListSort;
@@ -96,6 +97,12 @@ export class EnrollmentListRepository extends BaseRepository {
 
     if (filters.paymentTiming) {
       query = query.eq("payment_timing", filters.paymentTiming);
+    }
+
+    if (filters.whatsappJoined === "joined") {
+      query = query.not("whatsapp_joined_at", "is", null);
+    } else if (filters.whatsappJoined === "not_joined") {
+      query = query.is("whatsapp_joined_at", null);
     }
 
     if (filters.courseId) {
