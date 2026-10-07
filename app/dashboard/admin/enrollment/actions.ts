@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import type { Database } from "@/supabase/types/database.extended.types";
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
+import { createClient } from "@/lib/supabase/server";
 import {
   courseService,
   enrollmentService,
@@ -308,4 +310,27 @@ export async function createEnrollmentAction(formData: FormData) {
       enrollmentId: null,
     };
   }
+}
+
+
+export async function setEnrollmentWhatsAppJoinedAction(
+  enrollmentId: string,
+  joined: boolean,
+): Promise<void> {
+  await getEnrollmentStaffProfileId();
+
+  const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
+  if (!enrollment) throw new Error("Enrollment tidak ditemukan.");
+
+  const supabase = await createClient();
+  await callDynamicRpc<string | null>(
+    supabase,
+    "staff_set_enrollment_whatsapp_joined",
+    {
+      target_enrollment_id: enrollmentId,
+      target_joined: joined,
+    },
+  );
+
+  revalidateEnrollment(enrollmentId, enrollment.course_id);
 }
