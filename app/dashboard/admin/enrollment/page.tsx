@@ -474,12 +474,19 @@ export default async function EnrollmentPage({
                   </StatusPill>
                   <StatusPill
                     className={
-                      enrollment.whatsapp_joined_at
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-orange-100 text-orange-700"
+                      !course?.course_community_links
+                        ? "bg-slate-100 text-slate-600"
+                        : enrollment.whatsapp_joined_at
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-orange-100 text-orange-700"
                     }
                   >
-                    WhatsApp: {enrollment.whatsapp_joined_at ? "Sudah Gabung" : "Belum Gabung"}
+                    WhatsApp:{" "}
+                    {!course?.course_community_links
+                      ? "Grup Belum Diatur"
+                      : enrollment.whatsapp_joined_at
+                        ? "Sudah Gabung"
+                        : "Belum Gabung"}
                   </StatusPill>
                 </div>
 
