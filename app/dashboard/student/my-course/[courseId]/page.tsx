@@ -9,7 +9,7 @@ import StudentCourseInsights from "@/components/student/course/StudentCourseStat
 import StudentTryoutList from "@/components/tryout/StudentTryoutList";
 import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import { createClient } from "@/lib/supabase/server";
-import { confirmWhatsAppJoinedAction } from "./actions";
+import { joinWhatsAppGroupAction } from "./actions";
 import {
   courseCommunityLinkService,
   courseExplorerService,
@@ -192,8 +192,8 @@ export default async function StudentMyCoursePage({
                   </p>
                   <p className="mt-1 text-sm leading-5 text-blue-100">
                     {enrollment.whatsapp_joined_at
-                      ? "Status Anda sudah dikonfirmasi bergabung."
-                      : "Gabung ke grup, lalu konfirmasi agar status tercatat."}
+                      ? "Anda sudah tercatat bergabung di grup WhatsApp."
+                      : "Silahkan Gabung Group WhatsApp dengan Klik Tombol dibawah"}
                   </p>
                 </div>
 
@@ -208,53 +208,44 @@ export default async function StudentMyCoursePage({
                 </span>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:flex-col xl:flex-row">
-                <a
-                  href={whatsappGroupUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-black text-white shadow-md shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:bg-[#20bd5a] xl:w-auto"
-                  aria-label={`Gabung Grup WhatsApp ${course.title}`}
+              <div className="mt-4">
+                <form
+                  action={joinWhatsAppGroupAction.bind(
+                    null,
+                    enrollment.id,
+                    courseId,
+                  )}
+                  className="w-full sm:w-auto"
                 >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5 shrink-0"
-                    fill="none"
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-black text-white shadow-md shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:bg-[#20bd5a] sm:w-auto"
+                    aria-label={`Gabung Grup WhatsApp ${course.title}`}
                   >
-                    <path
-                      d="M20 11.6a8 8 0 0 1-11.9 7l-4.1 1.1 1.1-4A8 8 0 1 1 20 11.6Z"
-                      fill="currentColor"
-                      fillOpacity="0.18"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M8.7 7.7c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.5.9 1.2 1.6 2.1 2.1.2.1.4.2.6 0l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .3-.1 1.3-.7 1.8-.5.5-1.2.8-2 .8-.6 0-1.4-.2-2.4-.6-1.4-.6-2.5-1.5-3.4-2.5-.8-.9-1.5-1.9-1.9-2.9-.4-.9-.5-1.6-.5-2.2 0-.8.3-1.4.6-1.8Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  Buka Grup WhatsApp
-                </a>
-
-                {!enrollment.whatsapp_joined_at && (
-                  <form
-                    action={confirmWhatsAppJoinedAction.bind(
-                      null,
-                      enrollment.id,
-                      courseId,
-                    )}
-                    className="w-full xl:w-auto"
-                  >
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-black text-blue-800 shadow-sm ring-1 ring-white/50 transition hover:bg-blue-50 xl:w-auto"
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5 shrink-0"
+                      fill="none"
                     >
-                      Saya Sudah Bergabung
-                    </button>
-                  </form>
-                )}
+                      <path
+                        d="M20 11.6a8 8 0 0 1-11.9 7l-4.1 1.1 1.1-4A8 8 0 1 1 20 11.6Z"
+                        fill="currentColor"
+                        fillOpacity="0.18"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8.7 7.7c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.5.9 1.2 1.6 2.1 2.1.2.1.4.2.6 0l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .3-.1 1.3-.7 1.8-.5.5-1.2.8-2 .8-.6 0-1.4-.2-2.4-.6-1.4-.6-2.5-1.5-3.4-2.5-.8-.9-1.5-1.9-1.9-2.9-.4-.9-.5-1.6-.5-2.2 0-.8.3-1.4.6-1.8Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {enrollment.whatsapp_joined_at
+                      ? "Buka Grup WhatsApp"
+                      : "Gabung Group WhatsApp"}
+                  </button>
+                </form>
               </div>
             </div>
           )}
