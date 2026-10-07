@@ -67,12 +67,15 @@ export type PaymentAccountTables = {
   enrollments: {
     Row: GeneratedEnrollments["Row"] & {
       payment_timing: PaymentTiming;
+      whatsapp_joined_at: string | null;
     };
     Insert: GeneratedEnrollments["Insert"] & {
       payment_timing?: PaymentTiming;
+      whatsapp_joined_at?: string | null;
     };
     Update: GeneratedEnrollments["Update"] & {
       payment_timing?: PaymentTiming;
+      whatsapp_joined_at?: string | null;
     };
     Relationships: GeneratedEnrollments["Relationships"];
   };
