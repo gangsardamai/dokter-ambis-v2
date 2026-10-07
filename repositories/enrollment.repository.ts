@@ -49,7 +49,6 @@ export type EnrollmentCourse = {
   payment_policy: PaymentPolicy;
   organizations: EnrollmentOrganization | null;
   programs: EnrollmentProgram | null;
-  course_community_links: { whatsapp_group_url: string } | null;
 };
 
 export type EnrollmentPayment = {
@@ -90,9 +89,6 @@ const COURSE_RELATION_SELECT = `
   programs!fk_courses_program (
     id,
     title
-  ),
-  course_community_links (
-    whatsapp_group_url
   )
 `;
 
