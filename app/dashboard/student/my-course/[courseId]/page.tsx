@@ -43,7 +43,7 @@ function getPaymentStatusClass(status: string | null): string {
   if (status === "approved") return "bg-emerald-100 text-emerald-700";
   if (status === "pending") return "bg-yellow-100 text-yellow-700";
   if (status === "rejected") return "bg-red-100 text-red-700";
-  return "bg-slate-100 text-slate-700";
+  return "bg-red-100 text-red-700";
 }
 
 export default async function StudentMyCoursePage({
