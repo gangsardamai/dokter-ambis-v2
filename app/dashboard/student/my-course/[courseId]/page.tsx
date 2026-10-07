@@ -5,9 +5,7 @@ import CourseContentAccordion from "@/components/course-explorer/CourseContentAc
 import MentorRatingSection, {
   type MentorRatingItem,
 } from "@/components/mentor/MentorRatingSection";
-import StudentCourseInsights, {
-  CourseProgressSummaryCards,
-} from "@/components/student/course/StudentCourseStatistics";
+import StudentCourseInsights from "@/components/student/course/StudentCourseStatistics";
 import StudentTryoutList from "@/components/tryout/StudentTryoutList";
 import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import { createClient } from "@/lib/supabase/server";
@@ -247,7 +245,7 @@ export default async function StudentMyCoursePage({
             )}
           </div>
 
-          <CourseProgressSummaryCards summary={progressSummary} />
+          {/* Progress summary cards temporarily hidden to keep the course page cleaner. */}
         </div>
       </section>
 
