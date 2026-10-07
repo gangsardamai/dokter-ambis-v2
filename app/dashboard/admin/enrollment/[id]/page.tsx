@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin";
 import { EnrollmentActionButtons } from "@/components/admin/enrollment/EnrollmentActionButtons";
 import { setEnrollmentWhatsAppJoinedAction } from "../actions";
 import {
+  courseCommunityLinkService,
   enrollmentService,
   leaderAccessService,
   paymentProofService,
@@ -125,6 +126,9 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
   if (!enrollment) notFound();
 
   const payment = enrollment.payments ?? null;
+  const hasWhatsAppGroup = Boolean(
+    await courseCommunityLinkService.getWhatsAppGroupUrl(enrollment.course_id),
+  );
   let paymentProofUrl: string | null = null;
   let paymentProofError: string | null = null;
 
@@ -221,7 +225,7 @@ export default async function EnrollmentDetailPage({ params }: PageProps) {
             <Field label="Tanggal aktif">{formatDate(enrollment.activated_at)}</Field>
             <Field label="Kedaluwarsa">{formatDate(enrollment.expired_at)}</Field>
             <Field label="Status Grup WhatsApp">
-              {!enrollment.courses?.course_community_links ? (
+              {!hasWhatsAppGroup ? (
                 <StatusBadge tone="gray">Grup Belum Diatur</StatusBadge>
               ) : (
                 <div className="flex flex-wrap items-center gap-2">
