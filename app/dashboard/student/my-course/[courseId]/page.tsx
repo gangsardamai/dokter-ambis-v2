@@ -165,7 +165,7 @@ export default async function StudentMyCoursePage({
       </section>
 
       <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
-        <div className="grid min-w-0 gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="grid min-w-0 gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-center">
           <div className="min-w-0">
             <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
               Blok Aktif
@@ -181,85 +181,83 @@ export default async function StudentMyCoursePage({
               </span>
               <span>{course.programs?.title ?? "Program belum tersedia"}</span>
             </div>
-
-            {whatsappGroupUrl && (
-              <div className="mt-6 max-w-2xl rounded-2xl border border-white/15 bg-white/10 p-4 shadow-inner shadow-black/5 backdrop-blur-sm sm:p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm font-black text-white">
-                      Grup WhatsApp Course
-                    </p>
-                    <p className="mt-1 text-sm leading-5 text-blue-100">
-                      {enrollment.whatsapp_joined_at
-                        ? "Status Anda sudah dikonfirmasi bergabung."
-                        : "Gabung ke grup, lalu konfirmasi agar status tercatat."}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`inline-flex w-fit shrink-0 rounded-full px-3 py-1 text-xs font-black ring-1 ${
-                      enrollment.whatsapp_joined_at
-                        ? "bg-emerald-400/15 text-emerald-100 ring-emerald-300/30"
-                        : "bg-amber-300/15 text-amber-100 ring-amber-200/30"
-                    }`}
-                  >
-                    {enrollment.whatsapp_joined_at ? "✓ Sudah Gabung" : "Belum Gabung"}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <a
-                    href={whatsappGroupUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-black text-white shadow-md shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:bg-[#20bd5a] sm:w-auto"
-                    aria-label={`Gabung Grup WhatsApp ${course.title}`}
-                  >
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 24 24"
-                      className="h-5 w-5 shrink-0"
-                      fill="none"
-                    >
-                      <path
-                        d="M20 11.6a8 8 0 0 1-11.9 7l-4.1 1.1 1.1-4A8 8 0 1 1 20 11.6Z"
-                        fill="currentColor"
-                        fillOpacity="0.18"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8.7 7.7c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.5.9 1.2 1.6 2.1 2.1.2.1.4.2.6 0l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .3-.1 1.3-.7 1.8-.5.5-1.2.8-2 .8-.6 0-1.4-.2-2.4-.6-1.4-.6-2.5-1.5-3.4-2.5-.8-.9-1.5-1.9-1.9-2.9-.4-.9-.5-1.6-.5-2.2 0-.8.3-1.4.6-1.8Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    Buka Grup WhatsApp
-                  </a>
-
-                  {!enrollment.whatsapp_joined_at && (
-                    <form
-                      action={confirmWhatsAppJoinedAction.bind(
-                        null,
-                        enrollment.id,
-                        courseId,
-                      )}
-                      className="w-full sm:w-auto"
-                    >
-                      <button
-                        type="submit"
-                        className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-black text-blue-800 shadow-sm ring-1 ring-white/50 transition hover:bg-blue-50 sm:w-auto"
-                      >
-                        Saya Sudah Bergabung
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Progress summary cards temporarily hidden to keep the course page cleaner. */}
+          {whatsappGroupUrl && (
+            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 shadow-inner shadow-black/5 backdrop-blur-sm sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-white">
+                    Grup WhatsApp Course
+                  </p>
+                  <p className="mt-1 text-sm leading-5 text-blue-100">
+                    {enrollment.whatsapp_joined_at
+                      ? "Status Anda sudah dikonfirmasi bergabung."
+                      : "Gabung ke grup, lalu konfirmasi agar status tercatat."}
+                  </p>
+                </div>
+
+                <span
+                  className={`inline-flex w-fit shrink-0 rounded-full px-3 py-1 text-xs font-black ring-1 ${
+                    enrollment.whatsapp_joined_at
+                      ? "bg-emerald-400/15 text-emerald-100 ring-emerald-300/30"
+                      : "bg-amber-300/15 text-amber-100 ring-amber-200/30"
+                  }`}
+                >
+                  {enrollment.whatsapp_joined_at ? "✓ Sudah Gabung" : "Belum Gabung"}
+                </span>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:flex-col xl:flex-row">
+                <a
+                  href={whatsappGroupUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-black text-white shadow-md shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:bg-[#20bd5a] xl:w-auto"
+                  aria-label={`Gabung Grup WhatsApp ${course.title}`}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 shrink-0"
+                    fill="none"
+                  >
+                    <path
+                      d="M20 11.6a8 8 0 0 1-11.9 7l-4.1 1.1 1.1-4A8 8 0 1 1 20 11.6Z"
+                      fill="currentColor"
+                      fillOpacity="0.18"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8.7 7.7c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.5.9 1.2 1.6 2.1 2.1.2.1.4.2.6 0l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .3-.1 1.3-.7 1.8-.5.5-1.2.8-2 .8-.6 0-1.4-.2-2.4-.6-1.4-.6-2.5-1.5-3.4-2.5-.8-.9-1.5-1.9-1.9-2.9-.4-.9-.5-1.6-.5-2.2 0-.8.3-1.4.6-1.8Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Buka Grup WhatsApp
+                </a>
+
+                {!enrollment.whatsapp_joined_at && (
+                  <form
+                    action={confirmWhatsAppJoinedAction.bind(
+                      null,
+                      enrollment.id,
+                      courseId,
+                    )}
+                    className="w-full xl:w-auto"
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-black text-blue-800 shadow-sm ring-1 ring-white/50 transition hover:bg-blue-50 xl:w-auto"
+                    >
+                      Saya Sudah Bergabung
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
