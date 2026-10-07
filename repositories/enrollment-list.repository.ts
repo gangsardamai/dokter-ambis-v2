@@ -45,9 +45,6 @@ const COURSE_RELATION_SELECT = `
   programs!fk_courses_program (
     id,
     title
-  ),
-  course_community_links (
-    whatsapp_group_url
   )
 `;
 
