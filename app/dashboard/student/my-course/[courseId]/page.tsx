@@ -177,18 +177,18 @@ export default async function StudentMyCoursePage({
         )}
       </section>
 
-      <section className="rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-6 text-white shadow-xl shadow-blue-950/10 sm:p-8">
-        <div className="grid min-w-0 gap-4 lg:grid-cols-3 lg:items-stretch">
+      <section className="rounded-[2rem] bg-gradient-to-br from-blue-700 via-[#07528a] to-[#062d4d] p-4 text-white shadow-xl shadow-blue-950/10 sm:p-5">
+        <div className="grid min-w-0 gap-3 lg:grid-cols-3 lg:items-stretch">
           <div className="min-w-0">
             <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-50 ring-1 ring-white/20">
               Blok Aktif
             </span>
 
-            <h1 className="mt-5 break-words text-2xl font-black tracking-tight sm:text-3xl">
+            <h1 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-3xl">
               {course.title}
             </h1>
 
-            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
+            <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-blue-100">
               <span>
                 {course.organizations?.title ?? "Universitas belum tersedia"}
               </span>
@@ -206,7 +206,7 @@ export default async function StudentMyCoursePage({
           />
 
           {whatsappGroupUrl && (
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 shadow-inner shadow-black/5 backdrop-blur-sm sm:p-5">
+            <div className="rounded-2xl border border-white/15 bg-white/10 p-3 shadow-inner shadow-black/5 backdrop-blur-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-black text-white">
@@ -215,7 +215,7 @@ export default async function StudentMyCoursePage({
                   <p className="mt-1 text-sm leading-5 text-blue-100">
                     {enrollment.whatsapp_joined_at
                       ? "Anda sudah tercatat bergabung di grup WhatsApp."
-                      : "Silahkan Gabung Group WhatsApp dengan Klik Tombol dibawah"}
+                      : "Klik tombol di bawah untuk bergabung."}
                   </p>
                 </div>
 
@@ -230,7 +230,7 @@ export default async function StudentMyCoursePage({
                 </span>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-2">
                 <form
                   action={joinWhatsAppGroupAction.bind(
                     null,
