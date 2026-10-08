@@ -11,9 +11,10 @@ type Props = {
   lessons: Lesson[];
   completedLessonIds: string[];
   initialFolderIds: string[] | null;
+  compact?: boolean;
 };
 
-export default function StudentLearningMonitor({ courseId, folders, lessons, completedLessonIds, initialFolderIds }: Props) {
+export default function StudentLearningMonitor({ courseId, folders, lessons, completedLessonIds, initialFolderIds, compact = false }: Props) {
   const defaults = folders.filter(f => /rangkuman\s*ppt/i.test(f.title) && /2026/.test(f.title)).map(f => f.id);
   const [selected, setSelected] = useState<string[]>(initialFolderIds ?? (defaults.length ? defaults : folders.length ? [folders[0].id] : []));
   const [expanded, setExpanded] = useState(false);
@@ -54,14 +55,14 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
   }
 
   return (
-    <section aria-label="Monitoring Belajar" className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section aria-label="Monitoring Belajar" className={compact ? "min-w-0 rounded-2xl border border-white/15 bg-white/10 p-4 text-white shadow-inner shadow-black/5 backdrop-blur-sm" : "rounded-3xl border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5 sm:p-6"}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Monitoring Belajar</p>
+          <p className={compact ? "text-sm font-black text-white" : "text-xs font-black uppercase tracking-[0.18em] text-blue-700"}>Monitoring Belajar</p>
           
-          <p className="mt-1 text-sm text-slate-500">Pilih folder yang menjadi target belajarmu. Setelah mempelajari materi, klik "Selesai Dipelajari" agar progres belajarmu tercatat.</p>
+          <p className={compact ? "mt-1 text-xs leading-5 text-blue-100" : "mt-1 text-sm text-slate-500"}>Pilih folder yang menjadi target belajarmu. Setelah mempelajari materi, klik "Selesai Dipelajari" agar progres belajarmu tercatat.</p>
         </div>
-        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="min-h-10 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">
+        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className={compact ? "min-h-9 shrink-0 rounded-xl border border-white/20 bg-white/15 px-3 py-2 text-xs font-bold text-white hover:bg-white/25" : "min-h-10 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"}>
           Atur Target {expanded ? "▴" : "▾"} {selected.length ? "(" + selected.length + ")" : ""}
         </button>
       </div>
@@ -87,14 +88,14 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
           {error && <p role="alert" className="text-sm font-semibold text-red-600 sm:col-span-2">{error}</p>}
         </fieldset>
       )}
-      <div className="mt-5 flex items-end justify-between gap-4">
-        <div><p className="text-sm font-semibold text-slate-500">Lesson selesai</p><p className="text-3xl font-black text-slate-950">{done} <span className="text-lg text-slate-400">/ {total}</span></p></div>
-        <p className="text-2xl font-black text-blue-700">{percentage}%</p>
+      <div className={compact ? "mt-3 flex items-end justify-between gap-3" : "mt-5 flex items-end justify-between gap-4"}>
+        <div><p className={compact ? "text-xs font-semibold text-blue-100" : "text-sm font-semibold text-slate-500"}>Lesson selesai</p><p className={compact ? "text-2xl font-black text-white" : "text-3xl font-black text-slate-950"}>{done} <span className={compact ? "text-base text-blue-100" : "text-lg text-slate-400"}>/ {total}</span></p></div>
+        <p className={compact ? "text-xl font-black text-white" : "text-2xl font-black text-blue-700"}>{percentage}%</p>
       </div>
-      <div role="progressbar" aria-label="Progres lesson target" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} className="mt-3 h-3 overflow-hidden rounded-full bg-blue-100">
+      <div role="progressbar" aria-label="Progres lesson target" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} className={compact ? "mt-2 h-2 overflow-hidden rounded-full bg-white/25" : "mt-3 h-3 overflow-hidden rounded-full bg-blue-100"}>
         <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-emerald-400 transition-all" style={{ width: percentage + "%" }} />
       </div>
-      <p className="mt-2 text-xs font-semibold text-slate-500">{total === 0 ? "Belum ada lesson dalam target folder ini." : (total - done) + " lesson belum selesai"}</p>
+      <p className={compact ? "mt-2 text-xs font-semibold text-blue-100" : "mt-2 text-xs font-semibold text-slate-500"}>{total === 0 ? "Belum ada lesson dalam target folder ini." : (total - done) + " lesson belum selesai"}</p>
     </section>
   );
 }
