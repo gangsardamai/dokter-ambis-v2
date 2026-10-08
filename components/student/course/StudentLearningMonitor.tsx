@@ -67,16 +67,16 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
         </button>
       </div>
       {expanded && (
-        <fieldset className="mt-3 space-y-1 rounded-xl border border-blue-100 bg-slate-50 p-3">
-          <legend className="px-1 text-xs font-bold text-slate-700">Pilih satu atau beberapa folder</legend>
+        <div className="mt-3 min-w-0 max-w-full space-y-1 rounded-xl border border-blue-100 bg-slate-50 p-3 text-slate-700">
+          <p className="mb-2 text-[11px] font-bold leading-4 text-slate-700">Pilih satu atau beberapa folder</p>
           {folders.map(folder => (
-            <label key={folder.id} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-xs font-medium leading-4 text-slate-700 hover:bg-white">
+            <label key={folder.id} className="flex w-full min-w-0 cursor-pointer items-start gap-2 rounded-md px-1 py-1.5 text-[11px] font-medium leading-4 text-slate-700 hover:bg-white">
               <input type="checkbox" checked={selected.includes(folder.id)} disabled={pending} onChange={() => changeFolder(folder.id)} className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-blue-600" />
-              <span className="min-w-0 break-words">{folder.title}</span>
+              <span className="block min-w-0 flex-1 whitespace-normal break-words [overflow-wrap:anywhere]">{folder.title}</span>
             </label>
           ))}
           {folders.length === 0 && <p className="text-sm text-slate-500">Folder belum tersedia.</p>}
-          <div role="status" aria-live="polite" className="flex min-h-6 items-center gap-2 text-xs font-semibold ">
+          <div role="status" aria-live="polite" className="flex min-w-0 min-h-6 items-center gap-2 text-[11px] leading-4 font-semibold [overflow-wrap:anywhere]">
             {pending ? (
               <><svg aria-hidden="true" className="h-4 w-4 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><span className="text-blue-700">Menyimpan pilihan target...</span></>
             ) : saved && !error ? (
@@ -86,7 +86,7 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
             )}
           </div>
           {error && <p role="alert" className="text-sm font-semibold text-red-600 ">{error}</p>}
-        </fieldset>
+        </div>
       )}
       <div className={compact ? "mt-2 flex items-end justify-between gap-3" : "mt-5 flex items-end justify-between gap-4"}>
         <div><p className={compact ? "text-xs font-semibold text-blue-100" : "text-sm font-semibold text-slate-500"}>Lesson selesai</p><p className={compact ? "text-2xl font-black text-white" : "text-3xl font-black text-slate-950"}>{done} <span className={compact ? "text-base text-blue-100" : "text-lg text-slate-400"}>/ {total}</span></p></div>
