@@ -19,6 +19,7 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
   const [expanded, setExpanded] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
   const completed = new Set(completedLessonIds);
   const targetIds = new Set(selected);
   let changed = true;
@@ -40,9 +41,11 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
     const next = selected.includes(id) ? selected.filter(value => value !== id) : [...selected, id];
     setSelected(next);
     setError("");
+    setSaved(false);
     startTransition(async () => {
       try {
         await saveLearningTargetsAction(courseId, next);
+        setSaved(true);
       } catch (err) {
         setSelected(selected);
         setError(err instanceof Error ? err.message : "Gagal menyimpan target. Silakan coba lagi.");
@@ -72,7 +75,15 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
             </label>
           ))}
           {folders.length === 0 && <p className="text-sm text-slate-500">Folder belum tersedia.</p>}
-          <p className="text-xs text-slate-500 sm:col-span-2">{pending ? "Menyimpan pilihan..." : "Pilihan otomatis tersimpan untuk akun Anda. Subfolder dari folder yang dipilih ikut dihitung."}</p>
+          <div role="status" aria-live="polite" className="flex min-h-6 items-center gap-2 text-xs font-semibold sm:col-span-2">
+            {pending ? (
+              <><svg aria-hidden="true" className="h-4 w-4 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><span className="text-blue-700">Menyimpan pilihan target...</span></>
+            ) : saved && !error ? (
+              <><span aria-hidden="true" className="text-emerald-600">✓</span><span className="text-emerald-700">Target berhasil disimpan</span></>
+            ) : (
+              <span className="text-slate-500">Pilihan otomatis tersimpan untuk akun Anda. Subfolder dari folder yang dipilih ikut dihitung.</span>
+            )}
+          </div>
           {error && <p role="alert" className="text-sm font-semibold text-red-600 sm:col-span-2">{error}</p>}
         </fieldset>
       )}
