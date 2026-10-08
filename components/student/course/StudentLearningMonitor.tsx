@@ -58,8 +58,8 @@ export default function StudentLearningMonitor({ courseId, folders, lessons, com
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Monitoring Belajar</p>
-          <h2 className="mt-1 text-xl font-black text-slate-950">Progres Lesson</h2>
-          <p className="mt-1 text-sm text-slate-500">Target berdasarkan folder pilihan Anda. Lesson dihitung selesai setelah ditandai “Selesai Dipelajari”.</p>
+          
+          <p className="mt-1 text-sm text-slate-500">Pilih Folder yang Jadi Target Belajarmu, Setelah Belajar Materi Klik "Selesai Dipelajari" Agar terhitung</p>
         </div>
         <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="min-h-10 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">
           Atur Target {expanded ? "▴" : "▾"} {selected.length ? "(" + selected.length + ")" : ""}
