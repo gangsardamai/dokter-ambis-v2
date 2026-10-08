@@ -5,7 +5,8 @@ import CourseContentAccordion from "@/components/course-explorer/CourseContentAc
 import MentorRatingSection, {
   type MentorRatingItem,
 } from "@/components/mentor/MentorRatingSection";
-import StudentCourseInsights from "@/components/student/course/StudentCourseStatistics";
+import StudentLearningMonitor from "@/components/student/course/StudentLearningMonitor";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import StudentTryoutList from "@/components/tryout/StudentTryoutList";
 import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import { createClient } from "@/lib/supabase/server";
@@ -87,6 +88,18 @@ export default async function StudentMyCoursePage({
       { target_course_id: courseId },
     ),
   ]);
+
+  const [monitorFoldersResult, monitorLessonsResult, monitorPreferenceResult] = await Promise.all([
+    supabase.from("lesson_folders").select("id,title,parent_folder_id,folder_order").eq("course_id", courseId).eq("publication_status","published").order("folder_order"),
+    supabase.from("lessons").select("id,folder_id").eq("course_id", courseId).eq("publication_status","published"),
+    (supabase as unknown as SupabaseClient).from("student_learning_targets").select("folder_ids").eq("course_id",courseId).eq("profile_id",profile.id).maybeSingle(),
+  ]);
+  if (monitorFoldersResult.error || monitorLessonsResult.error || monitorPreferenceResult.error) {
+    throw new Error("Gagal memuat target Monitoring Belajar.");
+  }
+  const monitorFolders = monitorFoldersResult.data ?? [];
+  const monitorLessons = monitorLessonsResult.data ?? [];
+  const savedFolderIds = (monitorPreferenceResult.data as {folder_ids?: string[]} | null)?.folder_ids ?? null;
 
   const course = enrollment.courses;
   const payment = enrollment.payments;
@@ -179,7 +192,7 @@ export default async function StudentMyCoursePage({
               <span>
                 {course.organizations?.title ?? "Universitas belum tersedia"}
               </span>
-              <span>{course.programs?.title ?? "Program belum tersedia"}</span>
+
             </div>
           </div>
 
@@ -252,33 +265,13 @@ export default async function StudentMyCoursePage({
         </div>
       </section>
 
-      <details className="group rounded-3xl border border-blue-100 bg-white shadow-sm shadow-blue-950/5">
-        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-200 sm:px-6">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
-              Statistik Belajar
-            </p>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Buka grafik nilai dan rekomendasi materi yang perlu dipelajari ulang.
-            </p>
-          </div>
-          <span className="rounded-xl bg-blue-50 p-2 text-blue-700 transition-transform group-open:rotate-180">
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-        </summary>
-        <div className="border-t border-blue-100 p-4 sm:p-5 [&>section>section:first-child]:hidden [&>section>div:nth-child(2)]:!mt-0">
-          <StudentCourseInsights summary={progressSummary} />
-        </div>
-      </details>
+      <StudentLearningMonitor
+        courseId={courseId}
+        folders={monitorFolders}
+        lessons={monitorLessons}
+        completedLessonIds={progressSummary.completedLessonIds}
+        initialFolderIds={savedFolderIds}
+      />
 
       <section>
         <div className="mb-5">
