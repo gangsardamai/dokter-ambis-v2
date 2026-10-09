@@ -6,15 +6,6 @@ interface StudentTryoutListProps {
   tryouts: StudentTryoutListItem[];
 }
 
-function formatDate(value: string | null): string {
-  if (!value) return "Tidak dibatasi";
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Jakarta",
-  }).format(new Date(value));
-}
-
 export default function StudentTryoutList({
   tryouts,
 }: StudentTryoutListProps) {
@@ -99,25 +90,13 @@ export default function StudentTryoutList({
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-100 p-4 text-xs leading-6 text-slate-600">
-              <p>
-                <span className="font-black text-slate-800">Buka:</span>{" "}
-                {formatDate(tryout.open_at)}
-              </p>
-              <p>
-                <span className="font-black text-slate-800">Tutup:</span>{" "}
-                {formatDate(tryout.close_at)}
-              </p>
-              {tryout.bestScore !== null && (
-                <p className="mt-1">
-                  <span className="font-black text-slate-800">
-                    Nilai terbaik:
-                  </span>{" "}
-                  {Math.round(tryout.bestScore)}
-                  {tryout.passed ? " · Lulus" : " · Belum lulus"}
-                </p>
-              )}
-            </div>
+            {tryout.bestScore !== null && (
+              <div className="mt-4 rounded-2xl border border-slate-100 p-4 text-xs leading-6 text-slate-600">
+                <span className="font-black text-slate-800">Nilai terbaik:</span>{" "}
+                {Math.round(tryout.bestScore)}
+                {tryout.passed ? " · Lulus" : " · Belum lulus"}
+              </div>
+            )}
 
             <Link
               prefetch={false}
