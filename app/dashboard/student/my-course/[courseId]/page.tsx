@@ -118,13 +118,13 @@ export default async function StudentMyCoursePage({
         ← Kembali ke dashboard
       </Link>
 
-      <section className="rounded-3xl border border-blue-100 bg-white px-5 py-4 shadow-sm shadow-blue-950/5 sm:px-6">
+      <section className="rounded-3xl border border-blue-100 bg-white px-3 py-4 shadow-sm shadow-blue-950/5 sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-2 lg:flex-wrap lg:justify-start lg:gap-x-4 lg:gap-y-2">
-            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.06em] text-blue-600 sm:text-xs sm:tracking-[0.18em]">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-1 lg:flex-wrap lg:justify-start lg:gap-x-4 lg:gap-y-2">
+            <p className="min-w-0 text-[9px] font-extrabold uppercase tracking-normal text-blue-600 sm:text-xs sm:tracking-[0.18em]">
               Kategori Pembayaran
             </p>
-            <p className="shrink-0 whitespace-nowrap text-xs font-black text-slate-950 sm:text-base">
+            <p className="shrink-0 whitespace-nowrap text-[11px] font-bold text-slate-950 sm:text-base">
               {enrollment.payment_timing === "deferred"
                 ? "Bayar di Akhir"
                 : "Bayar di Awal"}
@@ -136,12 +136,12 @@ export default async function StudentMyCoursePage({
             className="hidden h-10 w-px shrink-0 bg-slate-200 lg:block"
           />
 
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-2 lg:flex-wrap lg:justify-start lg:gap-x-4 lg:gap-y-2">
-            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.06em] text-blue-600 sm:text-xs sm:tracking-[0.18em]">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-1 lg:flex-wrap lg:justify-start lg:gap-x-4 lg:gap-y-2">
+            <p className="min-w-0 text-[9px] font-extrabold uppercase tracking-normal text-blue-600 sm:text-xs sm:tracking-[0.18em]">
               Status Pembayaran
             </p>
             <span
-              className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-black sm:px-3 sm:text-sm ${getPaymentStatusClass(
+              className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-1.5 py-1 text-[9px] font-bold sm:px-3 sm:text-sm ${getPaymentStatusClass(
                 payment?.status ?? null,
               )}`}
             >
