@@ -212,11 +212,6 @@ export default async function StudentMyCoursePage({
                   <p className="text-sm font-black text-white">
                     Grup WhatsApp Course
                   </p>
-                  <p className="mt-1 text-sm leading-5 text-blue-100">
-                    {enrollment.whatsapp_joined_at
-                      ? "Anda sudah tercatat bergabung di grup WhatsApp."
-                      : "Klik tombol di bawah untuk bergabung."}
-                  </p>
                 </div>
 
                 <span
@@ -229,6 +224,12 @@ export default async function StudentMyCoursePage({
                   {enrollment.whatsapp_joined_at ? "✓ Sudah Gabung" : "Belum Gabung"}
                 </span>
               </div>
+
+              <p className="mt-2 w-full text-sm leading-5 text-blue-100">
+                {enrollment.whatsapp_joined_at
+                  ? "Anda sudah tercatat bergabung di grup WhatsApp."
+                  : "Klik tombol di bawah untuk bergabung."}
+              </p>
 
               <div className="mt-2">
                 <form
