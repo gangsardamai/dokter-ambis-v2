@@ -132,7 +132,7 @@ export default async function StudentDashboardPage({
               Halo, {profile.full_name}
             </h1>
             <p className="mt-3 hidden max-w-2xl text-sm leading-7 text-blue-100 md:block md:text-base">
-              Akses course aktif dan pantau pendaftaran Bayar di Akhir yang masih menunggu persetujuan Admin.
+              Selamat belajar bersama Dokter Ambis! 🚀 Pahami materi, perbanyak latihan soal, dan terus semangat meraih impian menjadi dokter hebat! 💙
             </p>
 
             <div className="mt-6 hidden w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm md:inline-flex">
