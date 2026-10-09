@@ -305,9 +305,6 @@ export default async function StudentMyCoursePage({
           <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
             Try Out Course
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Kerjakan simulasi ujian dengan timer server, autosave jawaban, dan hasil sesuai kebijakan publikasi Admin.
-          </p>
         </div>
 
         <StudentTryoutList tryouts={tryouts} />
