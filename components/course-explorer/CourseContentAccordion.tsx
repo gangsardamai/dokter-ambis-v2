@@ -409,7 +409,7 @@ function LessonPanel({
   // Within the same section show the study PDF/video pair before questions
   // and then the explanation PDF/video pair.
   const sectionNumber = (title: string) => {
-    const match = title.trim().match(/^(\\d+)(?:[.,](\\d+))?(?=\\s|[.,]|$)/);
+    const match = title.trim().match(/^([0-9]+)(?:[.,]([0-9]+))?(?=[^0-9]|$)/);
     return match ? Number(match[1]) + Number(match[2] ?? 0) / 1000 : 999999;
   };
   const materialRank = (title: string, isVideo: boolean) => {
