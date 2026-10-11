@@ -405,6 +405,12 @@ function LessonPanel({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { lesson, files, videos, quizzes } = content;
+  // File and video order values share the same per-lesson sequence.
+  // Render them together rather than grouping all files before all videos.
+  const orderedMaterials = [
+    ...files.map((file) => ({ kind: "file" as const, id: file.id, order: file.file_order ?? 999999, file })),
+    ...videos.map((video) => ({ kind: "video" as const, id: video.id, order: video.video_order ?? 999999, video })),
+  ].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   const itemCount = files.length + videos.length + quizzes.length;
   const containsActiveVideo =
     activeVideoId !== null && videos.some((video) => video.id === activeVideoId);
@@ -505,24 +511,25 @@ function LessonPanel({
             </div>
           ) : (
             <div className="space-y-3">
-              {files.map((file) => (
-                <FileItem
-                  key={file.id}
-                  courseId={courseId}
-                  file={file}
-                  mode={mode}
-                  managerRole={managerRole}
-                />
-              ))}
-              {videos.map((video) => (
-                <VideoItem
-                  key={video.id}
-                  video={video}
-                  mode={mode}
-                  isActive={activeVideoId === video.id}
-                  onActiveVideoChange={onActiveVideoChange}
-                />
-              ))}
+              {orderedMaterials.map((item) =>
+                item.kind === "file" ? (
+                  <FileItem
+                    key={item.id}
+                    courseId={courseId}
+                    file={item.file}
+                    mode={mode}
+                    managerRole={managerRole}
+                  />
+                ) : (
+                  <VideoItem
+                    key={item.id}
+                    video={item.video}
+                    mode={mode}
+                    isActive={activeVideoId === item.id}
+                    onActiveVideoChange={onActiveVideoChange}
+                  />
+                ),
+              )}
               {quizzes.map((quiz) => (
                 <QuizItem key={quiz.id} quiz={quiz} mode={mode} />
               ))}
