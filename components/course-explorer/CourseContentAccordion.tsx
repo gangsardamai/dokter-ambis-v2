@@ -405,12 +405,28 @@ function LessonPanel({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { lesson, files, videos, quizzes } = content;
-  // File and video order values share the same per-lesson sequence.
-  // Render them together rather than grouping all files before all videos.
+  // Match file and video titles by their leading section number (1., 1.0, 2., etc).
+  // Within the same section show the study PDF/video pair before questions
+  // and then the explanation PDF/video pair.
+  const sectionNumber = (title: string) => {
+    const match = title.trim().match(/^(\\d+)(?:[.,](\\d+))?(?=\\s|[.,]|$)/);
+    return match ? Number(match[1]) + Number(match[2] ?? 0) / 1000 : 999999;
+  };
+  const materialRank = (title: string, isVideo: boolean) => {
+    const label = title.toLowerCase();
+    if (/pembahasan|bahas soal/.test(label)) return isVideo ? 4 : 3;
+    if (/soal|latihan|quiz/.test(label)) return isVideo ? 2 : 1;
+    return isVideo ? 1 : 0;
+  };
   const orderedMaterials = [
-    ...files.map((file) => ({ kind: "file" as const, id: file.id, order: file.file_order ?? 999999, file })),
-    ...videos.map((video) => ({ kind: "video" as const, id: video.id, order: video.video_order ?? 999999, video })),
-  ].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+    ...files.map((file) => ({ kind: "file" as const, id: file.id, title: file.title, order: file.file_order ?? 999999, file })),
+    ...videos.map((video) => ({ kind: "video" as const, id: video.id, title: video.title, order: video.video_order ?? 999999, video })),
+  ].sort((a, b) =>
+    sectionNumber(a.title) - sectionNumber(b.title) ||
+    materialRank(a.title, a.kind === "video") - materialRank(b.title, b.kind === "video") ||
+    a.order - b.order ||
+    a.id.localeCompare(b.id)
+  );
   const itemCount = files.length + videos.length + quizzes.length;
   const containsActiveVideo =
     activeVideoId !== null && videos.some((video) => video.id === activeVideoId);
