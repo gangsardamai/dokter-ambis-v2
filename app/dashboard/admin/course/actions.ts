@@ -183,7 +183,11 @@ export async function deleteCourseAction(
 ): Promise<ActionResult> {
 
   await leaderAccessService.requireAdmin();
-  await courseService.deleteCourse(id);
+  try {
+    await courseService.deleteCourse(id);
+  } catch (error) {
+    return failure(error instanceof Error ? error.message : "Course gagal dihapus.");
+  }
 
   revalidatePath("/dashboard/admin/course");
 
