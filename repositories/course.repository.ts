@@ -300,8 +300,27 @@ export class CourseRepository extends BaseRepository {
 
   async delete(id: string): Promise<void> {
     const supabase = await this.db();
-    const { error } = await supabase.from("courses").delete().eq("id", id);
+    const { data: existing, error: lookupError } = await supabase
+      .from("courses").select("id").eq("id", id).maybeSingle();
+    if (lookupError) this.handleError(lookupError);
+    if (!existing) throw new Error("Course tidak ditemukan atau sudah dihapus.");
+
+    const { count, error: enrollmentError } = await supabase
+      .from("enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("course_id", id);
+    if (enrollmentError) this.handleError(enrollmentError);
+    if ((count ?? 0) > 0) {
+      throw new Error(`Course memiliki ${count} pendaftaran peserta. Untuk melindungi data peserta dan pembayaran, course tidak dapat dihapus. Ubah status menjadi Archived melalui menu Edit bila ingin menonaktifkannya.`);
+    }
+
+    const { data: deleted, error } = await supabase
+      .from("courses").delete().eq("id", id).select("id");
+    if (error?.code === "23503") {
+      throw new Error("Course masih memiliki data peserta yang terkait. Refresh halaman dan periksa pendaftaran peserta sebelum menghapus.");
+    }
     if (error) this.handleError(error);
+    if (!deleted?.length) throw new Error("Course tidak terhapus. Periksa izin admin lalu coba lagi.");
   }
 }
 
