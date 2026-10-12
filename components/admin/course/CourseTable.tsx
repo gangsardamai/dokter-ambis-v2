@@ -6,7 +6,8 @@ import {
   setCourseRatingMentorsAction,
   setMentorRatingEnabledAction,
 } from "@/app/actions/mentor-rating.actions";
-import { deleteCourseFormAction } from "@/app/dashboard/admin/course/actions";
+import { deleteCourseAction } from "@/app/dashboard/admin/course/actions";
+import DeleteCourseButton from "./DeleteCourseButton";
 import PendingSubmitButton from "@/components/mentor/PendingSubmitButton";
 import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
 import { createClient } from "@/lib/supabase/server";
@@ -268,15 +269,8 @@ export default async function CourseTable({
                 Edit
               </Link>
               {isAdmin && (
-                              <form action={deleteCourseFormAction}>
-                                <input type="hidden" name="id" value={course.id} />
-                                <button
-                                  type="submit"
-                                  className="inline-flex min-h-10 items-center rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100"
-                                >
-                                  Hapus
-                                </button>
-                              </form>              )}
+                <DeleteCourseButton id={course.id} title={course.title} onDelete={deleteCourseAction} />
+              )}
             </div>
           </article>
         );
