@@ -147,7 +147,7 @@ export default async function TryoutReviewPage({
                     width={1000}
                     height={650}
                     unoptimized
-                    className="mt-4 max-h-[32rem] w-auto rounded-2xl border border-blue-100 object-contain"
+                    className="mt-4 h-auto w-full max-w-[1000px] rounded-2xl border border-blue-100 object-contain"
                   />
                 )}
               </div>
