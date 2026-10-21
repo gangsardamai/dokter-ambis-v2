@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PdfViewport {
   width: number;
@@ -46,7 +46,6 @@ declare global {
 interface LockedPdfViewerProps {
   fileId: string;
   title: string;
-  watermarkText: string;
 }
 
 const PDFJS_VERSION = "3.11.174";
@@ -107,34 +106,6 @@ function loadPdfJs(): Promise<PdfJsLib> {
   return pdfJsLoader;
 }
 
-function drawPrintWatermark(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  text: string,
-) {
-  context.save();
-  context.globalAlpha = 0.1;
-  context.fillStyle = "#334155";
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.font = `600 ${Math.max(16, Math.round(width / 46))}px Arial, sans-serif`;
-
-  context.translate(width / 2, height / 2);
-  context.rotate(-Math.PI / 7);
-
-  const stepX = Math.max(280, width * 0.58);
-  const stepY = Math.max(170, height * 0.2);
-
-  for (let y = -height; y <= height; y += stepY) {
-    for (let x = -width; x <= width; x += stepX) {
-      context.fillText(text, x, y);
-    }
-  }
-
-  context.restore();
-}
-
 async function waitForImage(image: HTMLImageElement) {
   if (image.complete) return;
 
@@ -147,7 +118,6 @@ async function waitForImage(image: HTMLImageElement) {
 export default function LockedPdfViewer({
   fileId,
   title,
-  watermarkText,
 }: LockedPdfViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [documentProxy, setDocumentProxy] =
@@ -157,29 +127,10 @@ export default function LockedPdfViewer({
   const [loading, setLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
 
   const totalPages = documentProxy?.numPages ?? 0;
-
-  const watermarkCopies = useMemo(
-    () => Array.from({ length: 12 }, (_, index) => index),
-    [],
-  );
-
-  useEffect(() => {
-    function blockSaveShortcut(event: KeyboardEvent) {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === "s"
-      ) {
-        event.preventDefault();
-      }
-    }
-
-    window.addEventListener("keydown", blockSaveShortcut);
-    return () =>
-      window.removeEventListener("keydown", blockSaveShortcut);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -300,6 +251,34 @@ export default function LockedPdfViewer({
     };
   }, [documentProxy, pageNumber, zoom]);
 
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/locked-materials/${encodeURIComponent(fileId)}?download=1`, {
+        cache: "no-store", credentials: "same-origin",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || "Unduhan gagal diproses.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title.replace(/[\\/:*?"<>|]/g, "-").replace(/\.pdf$/i, "")}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (downloadError) {
+      setError(downloadError instanceof Error ? downloadError.message : "Unduhan gagal diproses.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   async function handlePrint() {
     if (!documentProxy || printing) return;
 
@@ -334,13 +313,6 @@ export default function LockedPdfViewer({
           canvasContext: context,
           viewport,
         }).promise;
-
-        drawPrintWatermark(
-          context,
-          canvas.width,
-          canvas.height,
-          watermarkText,
-        );
 
         pageImages.push(canvas.toDataURL("image/jpeg", 0.94));
       }
@@ -429,11 +401,21 @@ export default function LockedPdfViewer({
               {title}
             </p>
             <p className="text-xs font-semibold text-slate-500">
-              🔒 File Locked · Download dinonaktifkan
+              🔒 File Locked · Unduh PDF dengan watermark
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={loading || !documentProxy || downloading}
+              aria-busy={downloading}
+              onClick={() => void handleDownload()}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
+            >
+              {downloading && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
+              {downloading ? "Menyiapkan unduhan..." : "Unduh PDF"}
+            </button>
             <button
               type="button"
               disabled={!documentProxy || pageNumber <= 1}
@@ -534,22 +516,6 @@ export default function LockedPdfViewer({
                     aria-label={`Halaman ${pageNumber} dari ${totalPages}`}
                   />
 
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 grid grid-cols-2 grid-rows-6 overflow-hidden select-none"
-                  >
-                    {watermarkCopies.map((copy) => (
-                      <div
-                        key={copy}
-                        className="flex items-center justify-center px-3"
-                      >
-                        <span className="-rotate-[24deg] whitespace-nowrap text-[11px] font-semibold tracking-wide text-slate-700/10 sm:text-sm">
-                          {watermarkText}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
                   {pageLoading && (
                     <div className="absolute inset-0 grid place-items-center bg-white/65 backdrop-blur-[1px]">
                       <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-slate-700 shadow">
@@ -563,9 +529,8 @@ export default function LockedPdfViewer({
           ) : null}
 
           <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-5 text-slate-500">
-            Watermark transparan ditampilkan pada viewer dan dibubuhkan langsung
-            ke setiap halaman saat print. File Locked tidak menyediakan tombol
-            download atau buka di tab baru.
+            PDF yang diunduh memuat watermark nama pengguna dan DokterAmbis
+            pada setiap halaman.
           </p>
         </div>
       </main>

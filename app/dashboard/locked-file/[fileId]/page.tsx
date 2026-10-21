@@ -34,7 +34,6 @@ export default async function LockedFilePage({
     <LockedPdfViewer
       fileId={file.id}
       title={file.title}
-      watermarkText={`${profile.full_name || "Pengguna"} • DokterAmbis`}
     />
   );
 }
