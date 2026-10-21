@@ -1,3 +1,5 @@
+import { profileService } from "@/services/profile.service";
+import { watermarkPdf } from "@/lib/file/watermark-pdf";
 import {
   getGoogleDriveDownloadUrl,
   parseGoogleDriveFilePath,
@@ -182,9 +184,12 @@ async function fetchDrivePdf(
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: LockedMaterialRouteContext,
 ) {
+  const profile = await profileService.getCurrentProfile();
+  if (!profile) return errorResponse(401, "Silakan login terlebih dahulu.");
+
   const { fileId } = await context.params;
   const supabase = await createClient();
 
@@ -231,12 +236,16 @@ export async function GET(
       );
     }
 
-    return new Response(drivePdf.bytes, {
+    const bytes = await watermarkPdf(drivePdf.bytes, profile.full_name || "Pengguna");
+    const download = new URL(request.url).searchParams.get("download") === "1";
+    const filename = encodeURIComponent((file.title || "dokterambis-locked").replace(/\.pdf$/i, "") + ".pdf");
+
+    return new Response(new Uint8Array(bytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'inline; filename="dokterambis-locked.pdf"',
-        "Content-Length": String(drivePdf.bytes.byteLength),
+        "Content-Disposition": `${download ? "attachment" : "inline"}; filename="dokterambis-locked.pdf"; filename*=UTF-8''${filename}`,
+        "Content-Length": String(bytes.byteLength),
         "Cache-Control": "private, no-store, max-age=0",
         "X-Content-Type-Options": "nosniff",
         "X-Robots-Tag": "noindex, nofollow, noarchive",
