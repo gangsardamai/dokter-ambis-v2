@@ -106,15 +106,6 @@ function loadPdfJs(): Promise<PdfJsLib> {
   return pdfJsLoader;
 }
 
-async function waitForImage(image: HTMLImageElement) {
-  if (image.complete) return;
-
-  await new Promise<void>((resolve) => {
-    image.addEventListener("load", () => resolve(), { once: true });
-    image.addEventListener("error", () => resolve(), { once: true });
-  });
-}
-
 export default function LockedPdfViewer({
   fileId,
   title,
@@ -126,7 +117,6 @@ export default function LockedPdfViewer({
   const [zoom, setZoom] = useState(1.15);
   const [loading, setLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(false);
-  const [printing, setPrinting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
 
@@ -279,107 +269,6 @@ export default function LockedPdfViewer({
     }
   }
 
-  async function handlePrint() {
-    if (!documentProxy || printing) return;
-
-    setPrinting(true);
-    setError("");
-
-    try {
-      const pageImages: string[] = [];
-
-      for (
-        let currentPage = 1;
-        currentPage <= documentProxy.numPages;
-        currentPage += 1
-      ) {
-        const page = await documentProxy.getPage(currentPage);
-        const viewport = page.getViewport({ scale: 1.35 });
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d", {
-          alpha: false,
-        });
-
-        if (!context) {
-          throw new Error("Canvas print tidak tersedia.");
-        }
-
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        await page.render({
-          canvasContext: context,
-          viewport,
-        }).promise;
-
-        pageImages.push(canvas.toDataURL("image/jpeg", 0.94));
-      }
-
-      const printFrame = document.createElement("iframe");
-      printFrame.setAttribute("aria-hidden", "true");
-      printFrame.style.position = "fixed";
-      printFrame.style.right = "0";
-      printFrame.style.bottom = "0";
-      printFrame.style.width = "0";
-      printFrame.style.height = "0";
-      printFrame.style.border = "0";
-      document.body.appendChild(printFrame);
-
-      const printDocument = printFrame.contentDocument;
-
-      if (!printDocument) {
-        printFrame.remove();
-        throw new Error("Halaman print tidak dapat dibuat.");
-      }
-
-      printDocument.open();
-      printDocument.write(`<!doctype html>
-<html lang="id">
-  <head>
-    <meta charset="utf-8" />
-    <title>${title.replace(/[<>&"]/g, "")}</title>
-    <style>
-      @page { margin: 0; }
-      html, body { margin: 0; padding: 0; background: white; }
-      .page { break-after: page; page-break-after: always; width: 100%; }
-      .page:last-child { break-after: auto; page-break-after: auto; }
-      img { display: block; width: 100%; height: auto; }
-    </style>
-  </head>
-  <body>
-    ${pageImages
-      .map(
-        (src) =>
-          `<div class="page"><img src="${src}" alt="" /></div>`,
-      )
-      .join("")}
-  </body>
-</html>`);
-      printDocument.close();
-
-      const images = Array.from(
-        printDocument.querySelectorAll("img"),
-      );
-      await Promise.all(images.map(waitForImage));
-
-      printFrame.contentWindow?.focus();
-      printFrame.contentWindow?.print();
-
-      window.setTimeout(() => {
-        printFrame.remove();
-      }, 1500);
-    } catch (printError) {
-      setError(
-        printError instanceof Error
-          ? printError.message
-          : "Print gagal diproses.",
-      );
-    } finally {
-      setPrinting(false);
-    }
-  }
 
   return (
     <div
@@ -406,16 +295,7 @@ export default function LockedPdfViewer({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={loading || !documentProxy || downloading}
-              aria-busy={downloading}
-              onClick={() => void handleDownload()}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
-            >
-              {downloading && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
-              {downloading ? "Menyiapkan unduhan..." : "Unduh PDF"}
-            </button>
+
             <button
               type="button"
               disabled={!documentProxy || pageNumber <= 1}
@@ -479,11 +359,13 @@ export default function LockedPdfViewer({
 
             <button
               type="button"
-              disabled={!documentProxy || printing}
-              onClick={() => void handlePrint()}
-              className="inline-flex min-h-10 items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loading || !documentProxy || downloading}
+              aria-busy={downloading}
+              onClick={() => void handleDownload()}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
             >
-              {printing ? "Menyiapkan Print..." : "Print"}
+              {downloading && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
+              {downloading ? "Menyiapkan unduhan..." : "Download"}
             </button>
           </div>
         </div>
