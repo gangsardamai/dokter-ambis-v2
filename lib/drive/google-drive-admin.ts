@@ -75,9 +75,34 @@ async function getAccessToken(): Promise<string> {
     }),
     cache: "no-store",
   });
-  if (!response.ok) throw new Error("Otorisasi Google Drive tidak tersedia. Periksa koneksi OAuth.");
-  const token = (await response.json()) as { access_token?: string };
-  if (!token.access_token) throw new Error("Token OAuth Google Drive kosong.");
+  // Return only a well-known OAuth error category, never the response's
+  // error_description (which may contain sensitive request context).
+  const payload = (await response.json().catch(() => ({}))) as {
+    access_token?: string;
+    error?: unknown;
+  };
+  if (!response.ok) {
+    const knownErrors = new Set([
+      "invalid_client", "invalid_grant", "unauthorized_client",
+      "invalid_request", "unsupported_grant_type", "access_denied",
+    ]);
+    const category =
+      typeof payload.error === "string" && knownErrors.has(payload.error)
+        ? payload.error
+        : "unknown_error";
+    const descriptions: Record<string, string> = {
+      invalid_client: "Client ID atau Client Secret tidak cocok.",
+      invalid_grant: "Refresh Token tidak valid, sudah dicabut, atau kedaluwarsa.",
+      unauthorized_client: "OAuth Client tidak diizinkan menggunakan alur ini.",
+      invalid_request: "Konfigurasi permintaan OAuth belum benar.",
+      unsupported_grant_type: "Tipe permintaan pembaruan token tidak didukung.",
+      access_denied: "Akun Google menolak pemberian akses.",
+      unknown_error: "Google menolak permintaan token. Periksa konfigurasi OAuth.",
+    };
+    throw new Error(`Google OAuth (${category}, HTTP ${response.status}): ${descriptions[category]}`);
+  }
+  const token = payload;
+  if (!token.access_token) throw new Error("Respons Google OAuth tidak mengandung Access Token.");
   return token.access_token;
 }
 
