@@ -33,6 +33,11 @@ const quickActions = [
     description: "Susun course baru dan hubungkan dengan program.",
     href: "/dashboard/admin/course/create",
   },
+  {
+    title: "Migrasi Kepemilikan Drive",
+    description: "Uji migrasi file Google Drive 2026 untuk Blok 2, 8, dan 14 UNEJ.",
+    href: "/dashboard/admin/drive-ownership",
+  },
 ];
 
 export default async function AdminDashboardPage() {
