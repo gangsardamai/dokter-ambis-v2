@@ -46,6 +46,17 @@ Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tento
 - File asli **masih ada**, tetap dimiliki tentor; penghapusan gagal karena Google Drive menolak `FORBIDDEN`. Sesuai protokol baru, jangan coba menghapus lagi.
 - Audit dan perintah pilot: https://github.com/gangsardamai/dokter-ambis-v2/issues/55 dan https://github.com/gangsardamai/dokter-ambis-v2/issues/56
 
+## Uji lanjutan — keseluruhan folder 4. Fisiologi Kardiovaskular (27 Oktober 2026)
+- Cakupan: 4 materi aktif dalam satu lesson FK UNEJ Blok 8 2026: 2 dokumen dan 2 video.
+- 1 PDF sudah dimigrasi pada pilot awal; 3 file lainnya (PPTX + 2 MP4) berhasil disalin langsung ke folder yang sama, dinamai dengan tanda `(Akun Utama)`, dan kepemilikannya terverifikasi.
+- Pratinjau dan mirroring tiga referensi berhasil memakai GitHub Actions → Supabase Edge Function dengan OIDC dan transaksi database atomik.
+- Audit pascamigrasi: **0 referensi ID sumber**, **4 referensi ID salinan** secara keseluruhan pada tabel `lesson_files` dan `videos`. Kedua lesson file tetap `published` dengan urutan yang sama.
+- Isi PPTX asli dan salinan diverifikasi sama secara byte demi byte; PDF pilot sebelumnya juga diverifikasi identik. Kedua MP4 terverifikasi melalui ukuran, jenis, folder, izin, dan owner Drive, **belum diuji kesamaan byte atau pemutaran video aktual**.
+- Folder kini memiliki delapan file: **empat asli + empat salinan**. Semua sumber tetap ada; tidak ada operasi penghapusan.
+- Pratinjau: https://github.com/gangsardamai/dokter-ambis-v2/issues/57
+- Migrasi: https://github.com/gangsardamai/dokter-ambis-v2/issues/58
+- Kode workflow khusus pilot folder: `.github/workflows/drive-migration-fisio-folder.yml` pada `main`. Ini masih scoped, **bukan migrasi massal untuk semua folder**.
+
 ## Batasan saat ini
 - GitHub Actions dan Supabase Edge Function yang terpasang **baru berlaku untuk satu pilot PDF UNEJ Blok 8**, bukan mesin migrasi massal yang siap untuk semua course.
 - Untuk perluasan, bangun mekanisme batch yang terotorisasi, terukur, mengaudit semua referensi dan memberi laporan per file. Jangan menganggap pilot sebagai izin mengganti seluruh course secara otomatis.
