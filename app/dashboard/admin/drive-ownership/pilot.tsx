@@ -32,6 +32,7 @@ const PILOT_COURSES: Course[] = [
 export default function DriveOwnershipPilot() {
   const [courseId, setCourseId] = useState(PILOT_COURSES[0].id);
   const [oldDriveId, setOldDriveId] = useState("");
+  const [existingCopyId, setExistingCopyId] = useState("");
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [busy, setBusy] = useState<"preview" | "migrate" | null>(null);
   const [preview, setPreview] = useState<ActionResult | null>(null);
@@ -65,7 +66,7 @@ export default function DriveOwnershipPilot() {
       const response = await fetch("/api/admin/drive-ownership", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, courseId, oldDriveId: oldDriveId.trim() }),
+        body: JSON.stringify({ action, courseId, oldDriveId: oldDriveId.trim(), existingCopyId: existingCopyId.trim() || undefined }),
       });
       const payload = (await response.json()) as ActionResult;
       if (!response.ok || !payload.ok) {
@@ -84,7 +85,8 @@ export default function DriveOwnershipPilot() {
   }
 
   const inputValid = /^[A-Za-z0-9_-]{10,}$/.test(oldDriveId.trim());
-  const canStart = configured === true && !busy && inputValid;
+  const newIdValid = !existingCopyId.trim() || (/^[A-Za-z0-9_-]{10,}$/.test(existingCopyId.trim()) && existingCopyId.trim() !== oldDriveId.trim());
+  const canStart = configured === true && !busy && inputValid && newIdValid;
   const canMigrate = canStart && preview?.sourceId === oldDriveId.trim() && !preview.skipped;
 
   return (
@@ -93,8 +95,8 @@ export default function DriveOwnershipPilot() {
         <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Admin / Pilot UNEJ</p>
         <h1 className="mt-2 text-2xl font-extrabold text-slate-900">Migrasi Kepemilikan Google Drive</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Uji satu file materi 2026. Salin sebagai akun utama, cek izin,
-          ganti seluruh referensi website dalam satu transaksi, lalu coba hapus file lama.
+          Pilih salinan Drive yang sudah ada untuk menghindari duplikat, periksa izin,
+          lalu ganti referensi website. File sumber dipertahankan untuk audit.
         </p>
       </header>
 
@@ -127,6 +129,14 @@ export default function DriveOwnershipPilot() {
             autoComplete="off" spellCheck={false}
             className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm" />
         </label>
+        <label className="block text-sm font-semibold text-slate-800">
+          ID salinan Google Drive (opsional, jika sudah ada)
+          <input value={existingCopyId}
+            onChange={(e) => { setExistingCopyId(e.target.value); setPreview(null); }}
+            placeholder="Masukkan ID salinan yang dimiliki akun utama"
+            autoComplete="off" spellCheck={false}
+            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm" />
+        </label>
         <div className="flex flex-wrap gap-3">
           <button type="submit" disabled={!canStart} aria-busy={busy === "preview"}
             className="rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
@@ -135,7 +145,7 @@ export default function DriveOwnershipPilot() {
           <button type="button" disabled={!canMigrate} aria-busy={busy === "migrate"}
             onClick={() => { if (canMigrate) void run("migrate"); }}
             className="rounded-xl bg-slate-800 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
-            {busy === "migrate" ? "Memigrasikan..." : "Salin, Sinkronkan, Hapus Sumber"}
+            {busy === "migrate" ? "Memigrasikan..." : "Gunakan Salinan & Sinkronkan"}
           </button>
         </div>
       </form>
@@ -155,13 +165,12 @@ export default function DriveOwnershipPilot() {
           <p>{result.message}</p>
           {result.newId && <p className="break-all">ID baru: <code>{result.newId}</code></p>}
           <p>Referensi file: {result.filesUpdated ?? 0} · Referensi video: {result.videosUpdated ?? 0}</p>
-          <p>File sumber dihapus: {result.deletedOriginal ? "Ya" : "Tidak"}</p>
+          <p>File sumber dipertahankan untuk audit akses mahasiswa.</p>
         </section>
       )}
       <p className="text-xs leading-6 text-slate-500">
         Uji manual pemutaran video/PDF dinonaktifkan sesuai instruksi. Sistem tetap mengharuskan
-        pemeriksaan izin Drive dan keberhasilan transaksi database sebelum menghapus file lama.
-        File milik akun tentor dapat gagal dihapus karena izin Google.
+        pemeriksaan izin Drive dan keberhasilan transaksi database. File asli tidak dihapus otomatis.
       </p>
     </main>
   );
