@@ -70,7 +70,7 @@ Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tento
 ## Jadwal otomatisasi ownership (disetujui 27 Oktober 2026)
 - Otomatisasi **Migrasi Ownership Dokter Ambis — 2 Sesi** dengan ID `6adef9fb599c81919bf1c7f305ce60f5`.
 - **04.30 dan 16.30 WIB (Asia/Jakarta)** setiap hari; pada **Minggu kedua sesi hanya audit** dan tidak melakukan penyalinan/mirroring.
-- Per sesi maksimal **1.000.000.000 byte (1 GB desimal)** yang disalin, **empat file**, **satu course**, durasi kerja **45 menit**, proses serial bukan paralel. Berhenti pada batas pertama yang tercapai; maksimal teoritis dua sesi 2 GB/8 file per hari, bukan jaminan throughput.
+- Per sesi maksimal **1.000.000.000 byte (1 GB desimal)** yang disalin, **maksimal 10 file**, **satu course**, durasi kerja **45 menit**, proses serial bukan paralel. Berhenti pada batas pertama yang tercapai; maksimal teoritis dua sesi 2 GB/20 file per hari, bukan jaminan throughput.
 - Rotasi 14 target: FK UNEJ Blok 8, Blok 2, Blok 14; UHT URO, DMS, Commed; UNRI Blok 9, Masalah Sistem Indera; UNRAM Endokrin, Kedokteran Keluarga; UMS Tropical Medicine, Endokrin; UMY Blok 14, KKLP/Blok 20.
 - Hanya materi yang tervalidasi sebagai periode 2026. Lewati 2025, "Untuk Admin", folder ambigu, file/course kosong, dan materi Try Out. Folder UNRAM Kedokteran Keluarga tanpa tahun perlu verifikasi materi 2026.
 - Jangan restart antrean secara buta. Gunakan checkpoint jika tersedia, atau lakukan rekonsiliasi baca-saja Drive+database sebelum operasi.
