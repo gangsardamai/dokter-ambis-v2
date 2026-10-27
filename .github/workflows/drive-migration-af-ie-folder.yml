@@ -1,0 +1,55 @@
+name: Dokter Ambis UNEJ8 Atrial Fibrilasi Endokarditis Ownership Migration
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  migrate-folder:
+    if: >-
+      github.repository_id == 1286701837 &&
+      github.event.issue.user.id == 296064762 &&
+      (github.event.issue.title == '[drive-migrate] UNEJ8 AF IE Folder: preview' ||
+       github.event.issue.title == '[drive-migrate] UNEJ8 AF IE Folder: migrate')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      issues: write
+    steps:
+      - name: Run scoped OIDC-authorized audit or migration
+        id: run
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          action=preview
+          if [[ "$ISSUE_TITLE" == "[drive-migrate] UNEJ8 AF IE Folder: migrate" ]]; then
+            action=migrate
+          fi
+
+          token_request="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=dokterambis-drive-unej8-af-ie-folder-v1"
+          oidc="$(curl --fail-with-body -sS             -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}"             "$token_request" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+
+          response="$(curl --fail-with-body -sS             -X POST             -H "Authorization: Bearer ${oidc}"             -H "Content-Type: application/json"             --data "{\"action\":\"${action}\"}"             "https://irpqxfpjqpiyqlzqoxdf.supabase.co/functions/v1/drive-migration-af-ie-folder-oidc")"
+
+          printf "### UNEJ8 Folder Ownership: %s\n" "$action" >> "$GITHUB_STEP_SUMMARY"
+          printf "%s\n" "$response" | python3 -c 'import json,sys; j=json.load(sys.stdin); assert j.get("ok") is True, "migration audit returned failure"; print("Ready:",j.get("ready"),"Migrated:",j.get("migrated"),"Source deleted:",j.get("sourceDeleted")); [print(x) for x in j.get("results",[])]' | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+
+      - name: Record outcome in GitHub issue
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          STEP_STATUS: ${{ steps.run.outcome }}
+          ACTION: ${{ steps.run.outputs.action }}
+        run: |
+          if [[ "$STEP_STATUS" == "success" ]]; then
+            gh issue comment "$ISSUE_NUMBER" --repo gangsardamai/dokter-ambis-v2               --body "✅ Audit ${ACTION} sukses untuk folder Atrial Fibrilasi dan Infektif Endokarditis UNEJ8. Lihat ringkasan GitHub Actions. **Tidak ada file sumber yang dihapus.**"
+          else
+            gh issue comment "$ISSUE_NUMBER" --repo gangsardamai/dokter-ambis-v2               --body "⚠️ Audit/migrasi berhenti. File sumber tidak dihapus. Periksa log GitHub Actions sebelum mencoba lagi."
+          fi
