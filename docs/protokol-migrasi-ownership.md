@@ -5,20 +5,22 @@ Status: Disetujui pengguna, 27 Oktober 2026
 Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tentor/pihak lain ke salinan yang dimiliki akun utama `ambitious.premium@gmail.com`. Semua dikerjakan melalui koneksi yang terotorisasi dari ChatGPT, tanpa keharusan login dashboard website berulang kali.
 
 ## Protokol resmi (tanpa penghapusan sumber)
-**Copy ke folder sumber yang sama → Rename → Mirroring ulang → Audit → Selesai.**
+**Copy ke folder sumber yang sama → Normalisasi nama (hanya jika diperlukan) → Mirroring ulang → Audit → Selesai.**
 
 **TIDAK BOLEH menghapus, men-trash, atau memindahkan file sumber milik siapa pun dalam protokol saat ini.** File asli dipertahankan meskipun seluruh audit berhasil. Penghapusan di masa depan merupakan prosedur terpisah yang memerlukan izin serta persetujuan baru.
 
 ### 1. Copy
 - Salin ke **folder yang sama persis** dengan sumber, bukan root/My Drive.
-- Pemilik salinan harus akun utama; pastikan melalui metadata, bukan dugaan.
+- Pemilik salinan harus akun utama; pastikan melalui metadata/kolom Pemilik, bukan dugaan. Nama tidak perlu menandakan kepemilikan.
 - Jika salinan yang tepat sudah ada dan terverifikasi, **gunakan yang ada**, jangan copy ulang.
 - Tidak mengubah/menghapus sumber.
 
-### 2. Rename
-- Rapikan prefiks `Copy of` / `Salinan`.
-- Nama harus jelas membedakan sumber dan salinan bila kedua file berada dalam folder yang sama; contoh `Judul (Akun Utama).pdf`.
-- Jangan mengganti nama yang mengganggu penomoran materi atau folder.
+### 2. Nama file — tanpa penanda kepemilikan
+- **Gunakan nama file yang sama persis dengan sumber.** Jangan menambahkan `(Akun Utama)`, `(Milik Saya)`, atau label pemilik lain pada nama salinan.
+- Bila Google Drive menambahkan prefiks `Copy of` / `Salinan`, hapus prefiks itu **saja** sehingga nama, nomor urut, dan ekstensi sama dengan file sumber. Paling sederhana, tentukan `new_title` sesuai nama sumber langsung saat membuat salinan.
+- Dua file dengan nama sama dalam folder yang sama **diperbolehkan**: bedakan berdasarkan kolom **Pemilik** di Google Drive, sesuai preferensi pengguna.
+- Untuk migrasi website, **jangan pernah mencocokkan/mengganti file hanya berdasarkan nama**. Gunakan ID file sumber, ID salinan, folder yang sama, dan pemeriksaan pemilik akun utama. Jika tidak yakin, hentikan migrasi.
+- Jangan mengganti nama sumber atau menyentuh konten/urutan materi hanya untuk membedakan kepemilikan.
 
 ### 3. Mirroring ulang website
 - Untuk materi yang **sudah ada**, ubah referensi ID Google Drive pada `lesson_files.file_path` (atau `videos.provider_video_id` bila relevan) melalui mekanisme migrasi backend **terotorisasi**.
@@ -48,7 +50,7 @@ Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tento
 
 ## Uji lanjutan — keseluruhan folder 4. Fisiologi Kardiovaskular (27 Oktober 2026)
 - Cakupan: 4 materi aktif dalam satu lesson FK UNEJ Blok 8 2026: 2 dokumen dan 2 video.
-- 1 PDF sudah dimigrasi pada pilot awal; 3 file lainnya (PPTX + 2 MP4) berhasil disalin langsung ke folder yang sama, dinamai dengan tanda `(Akun Utama)`, dan kepemilikannya terverifikasi.
+- 1 PDF sudah dimigrasi pada pilot awal; 3 file lainnya (PPTX + 2 MP4) berhasil disalin langsung ke folder yang sama dan kepemilikannya terverifikasi. **Secara historis** salinan pilot diberi tanda `(Akun Utama)`, tetapi mulai revisi ini penanda tersebut tidak lagi dipakai. Nama kepemilikan dilihat di kolom Pemilik Drive.
 - Pratinjau dan mirroring tiga referensi berhasil memakai GitHub Actions → Supabase Edge Function dengan OIDC dan transaksi database atomik.
 - Audit pascamigrasi: **0 referensi ID sumber**, **4 referensi ID salinan** secara keseluruhan pada tabel `lesson_files` dan `videos`. Kedua lesson file tetap `published` dengan urutan yang sama.
 - Isi PPTX asli dan salinan diverifikasi sama secara byte demi byte; PDF pilot sebelumnya juga diverifikasi identik. Kedua MP4 terverifikasi melalui ukuran, jenis, folder, izin, dan owner Drive, **belum diuji kesamaan byte atau pemutaran video aktual**.
@@ -58,7 +60,7 @@ Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tento
 - Kode workflow khusus pilot folder: `.github/workflows/drive-migration-fisio-folder.yml` pada `main`. Ini masih scoped, **bukan migrasi massal untuk semua folder**.
 
 ## Batasan saat ini
-- GitHub Actions dan Supabase Edge Function yang terpasang **baru berlaku untuk satu pilot PDF UNEJ Blok 8**, bukan mesin migrasi massal yang siap untuk semua course.
+- GitHub Actions dan Supabase Edge Function yang terpasang **baru teruji untuk satu folder Fisiologi Kardiovaskular UNEJ Blok 8 (4 materi)**, bukan mesin migrasi massal siap untuk semua course.
 - Untuk perluasan, bangun mekanisme batch yang terotorisasi, terukur, mengaudit semua referensi dan memberi laporan per file. Jangan menganggap pilot sebagai izin mengganti seluruh course secara otomatis.
 - Akses `anyone: writer` pada sejumlah file/folder Drive adalah risiko terpisah. Perubahan izin harus melalui keputusan tersendiri agar tidak memutus akses siswa atau staf.
 
