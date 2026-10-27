@@ -59,8 +59,27 @@ Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tento
 - Migrasi: https://github.com/gangsardamai/dokter-ambis-v2/issues/58
 - Kode workflow khusus pilot folder: `.github/workflows/drive-migration-fisio-folder.yml` pada `main`. Ini masih scoped, **bukan migrasi massal untuk semua folder**.
 
+## Uji kedua — folder 7. Atrial Fibrilasi dan Infektif Endokarditis (27 Oktober 2026)
+- Course FK UNEJ Blok 8 2026; empat file (dua PDF dan dua MP4).
+- Seluruh file tersalin dengan **nama asli tanpa penanda kepemilikan**, langsung di folder sumber; pemilik salinan akun utama terverifikasi.
+- Dua PDF diverifikasi identik byte demi byte. Video diaudit ukuran, MIME, permission, folder, pemilik; tidak diuji kesamaan byte atau pemutaran.
+- Migrasi referensi dilakukan dalam transaksi atomik, 0 referensi lama dan 4 referensi salinan di database `lesson_files` dan `videos`. Judul dan urutan dipertahankan.
+- Semua empat sumber tetap disimpan, sehingga kini terdapat empat asli + empat salinan dalam folder tersebut.
+- Audit pratinjau https://github.com/gangsardamai/dokter-ambis-v2/issues/59 dan eksekusi https://github.com/gangsardamai/dokter-ambis-v2/issues/60.
+
+## Jadwal otomatisasi ownership (disetujui 27 Oktober 2026)
+- Otomatisasi **Migrasi Ownership Dokter Ambis — 2 Sesi** dengan ID `6adef9fb599c81919bf1c7f305ce60f5`.
+- **04.30 dan 16.30 WIB (Asia/Jakarta)** setiap hari; pada **Minggu kedua sesi hanya audit** dan tidak melakukan penyalinan/mirroring.
+- Per sesi maksimal **1.000.000.000 byte (1 GB desimal)** yang disalin, **empat file**, **satu course**, durasi kerja **45 menit**, proses serial bukan paralel. Berhenti pada batas pertama yang tercapai; maksimal teoritis dua sesi 2 GB/8 file per hari, bukan jaminan throughput.
+- Rotasi 14 target: FK UNEJ Blok 8, Blok 2, Blok 14; UHT URO, DMS, Commed; UNRI Blok 9, Masalah Sistem Indera; UNRAM Endokrin, Kedokteran Keluarga; UMS Tropical Medicine, Endokrin; UMY Blok 14, KKLP/Blok 20.
+- Hanya materi yang tervalidasi sebagai periode 2026. Lewati 2025, "Untuk Admin", folder ambigu, file/course kosong, dan materi Try Out. Folder UNRAM Kedokteran Keluarga tanpa tahun perlu verifikasi materi 2026.
+- Jangan restart antrean secara buta. Gunakan checkpoint jika tersedia, atau lakukan rekonsiliasi baca-saja Drive+database sebelum operasi.
+- **MUST NOT DELETE sumber.** Migrasi hanya jika ada jalur otorisasi dan transaksi atomik yang **telah diuji untuk file/course target**. Jika backend umum belum mendukung, **audit saja** dan laporkan blocker. JANGAN membuat salinan yatim hanya karena jadwal aktif.
+- Periksa referensi lintas-course, ID salinan, kepemilikan, izin mahasiswa, MIME, ukuran, checksum jika ada, dan old/new reference count. Gagal/ragu → hentikan batch, pertahankan sumber dan salinan, laporkan.
+- Jadwal ini adalah **pengaturan task yang sudah diaktifkan**, sementara kemampuan backend migrasi lintas 14 course masih perlu perluasan dan uji bertahap.
+
 ## Batasan saat ini
-- GitHub Actions dan Supabase Edge Function yang terpasang **baru teruji untuk satu folder Fisiologi Kardiovaskular UNEJ Blok 8 (4 materi)**, bukan mesin migrasi massal siap untuk semua course.
+- GitHub Actions dan Supabase Edge Function OIDC yang terpasang **baru teruji untuk dua folder FK UNEJ Blok 8 (total 8 materi)**, bukan mesin migrasi massal siap untuk semua course.
 - Untuk perluasan, bangun mekanisme batch yang terotorisasi, terukur, mengaudit semua referensi dan memberi laporan per file. Jangan menganggap pilot sebagai izin mengganti seluruh course secara otomatis.
 - Akses `anyone: writer` pada sejumlah file/folder Drive adalah risiko terpisah. Perubahan izin harus melalui keputusan tersendiri agar tidak memutus akses siswa atau staf.
 
