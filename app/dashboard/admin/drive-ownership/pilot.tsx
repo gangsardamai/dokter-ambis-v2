@@ -17,6 +17,7 @@ type ActionResult = {
   name?: string;
   files?: number;
   videos?: number;
+  existingCopyId?: string;
   filesUpdated?: number;
   videosUpdated?: number;
   deletedOriginal?: boolean;
@@ -87,7 +88,7 @@ export default function DriveOwnershipPilot() {
   const inputValid = /^[A-Za-z0-9_-]{10,}$/.test(oldDriveId.trim());
   const newIdValid = !existingCopyId.trim() || (/^[A-Za-z0-9_-]{10,}$/.test(existingCopyId.trim()) && existingCopyId.trim() !== oldDriveId.trim());
   const canStart = configured === true && !busy && inputValid && newIdValid;
-  const canMigrate = canStart && preview?.sourceId === oldDriveId.trim() && !preview.skipped;
+  const canMigrate = canStart && preview?.sourceId === oldDriveId.trim() && preview?.existingCopyId === existingCopyId.trim() && !preview.skipped;
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6">
