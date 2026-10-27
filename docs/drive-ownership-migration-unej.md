@@ -1,3 +1,7 @@
+# Catatan pembaruan: protokol aktif tidak menghapus file sumber
+
+Referensi implementasi teknis awal ini tunduk pada [Protokol Migrasi Ownership](./protokol-migrasi-ownership.md), yang merupakan keputusan terbaru. Instruksi lama untuk menghapus file sumber dinonaktifkan.
+
 # Migrasi Kepemilikan Google Drive — Pilot UNEJ 2026
 
 Fitur **Admin → Migrasi Kepemilikan Drive** dibuat sebagai jalur aman ketika SQL langsung dari ChatGPT tidak tersedia. Endpoint menggunakan sesi login Admin aktif, bukan service-role key di browser.
@@ -8,7 +12,7 @@ Fitur **Admin → Migrasi Kepemilikan Drive** dibuat sebagai jalur aman ketika S
 - File sumber harus direferensikan oleh setidaknya satu lesson pada course yang dipilih. Seluruh referensi ID yang dipakai bersama di course lain ikut diganti atomik.
 - Salinan dibuat **dengan OAuth Google Drive akun `ambitious.premium@gmail.com`**, di folder sumber yang sama. Nama depan `Salinan`/`Copy of` dihapus.
 - Pembandingan MIME, ukuran, checksum (jika ada), owner, folder, dan audience Google Drive dilakukan otomatis **sebelum** perubahan database. File sumber yang tidak bisa dipastikan aksesnya dilewati.
-- Setelah migrasi referensi berhasil secara atomik dan jumlah ID lama yang tersisa nol, sistem langsung mencoba menghapus sumber (sesuai keputusan pengguna, tanpa karantina 14 hari). **Google sering menolak delete file yang dimiliki akun tentor**; keadaan ini dilaporkan dan salinan tetap menjadi acuan website.
+- **Keputusan terbaru (27 Oktober 2026): Tidak ada penghapusan file sumber.** Setelah mirroring dan audit berhasil, file sumber tetap dipertahankan. Lihat [Protokol Migrasi Ownership](./protokol-migrasi-ownership.md).
 - Uji manual PDF/video dinonaktifkan. Pemeriksaan database dan izin Drive **tetap wajib**.
 - Jangan pakai untuk file di luar tiga course UNEJ sampai scope, auth, dan izin Drive berhasil diuji.
 
@@ -37,4 +41,4 @@ Fitur **Admin → Migrasi Kepemilikan Drive** dibuat sebagai jalur aman ketika S
 
 ## Pemulihan jika terjadi kendala
 
-Jika langkah copy sukses tetapi panggilan RPC gagal/tidak pasti, sistem **tidak menghapus file sumber maupun salinan**. Catat ID salinan dari respons, periksa log dan status database; jangan memulai copy duplikat secara buta. Jika penghapusan sumber gagal setelah transaksi, ID website baru tetap benar dan sumber lama boleh ditangani kemudian oleh pemiliknya.
+Jika langkah copy sukses tetapi panggilan RPC gagal/tidak pasti, sistem **tidak menghapus file sumber maupun salinan**. Catat ID salinan dari respons, periksa log dan status database; jangan memulai copy duplikat secara buta. File sumber tidak dihapus dalam protokol aktif; materi tetap merujuk ke salinan setelah berhasil diaudit.
