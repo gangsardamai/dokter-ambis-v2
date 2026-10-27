@@ -78,6 +78,14 @@ Mengalihkan acuan materi website Dokter Ambis dari file Google Drive milik tento
 - Periksa referensi lintas-course, ID salinan, kepemilikan, izin mahasiswa, MIME, ukuran, checksum jika ada, dan old/new reference count. Gagal/ragu → hentikan batch, pertahankan sumber dan salinan, laporkan.
 - Jadwal ini adalah **pengaturan task yang sudah diaktifkan**, sementara kemampuan backend migrasi lintas 14 course masih perlu perluasan dan uji bertahap.
 
+## Validasi folder dan izin (audit 27 Oktober 2026)
+- Folder target 2026 untuk **14 course/6 universitas** telah diverifikasi terhadap Google Drive dan Supabase. Ringkasan tanpa ID Drive publik: [Target folder Migrasi Ownership 2026](./ownership-migration-target-folders-2026.md). Daftar ID lengkap untuk otomatisasi disimpan pada instruksi tugas otomatisasi yang terotorisasi, tidak pada repo publik.
+- Proses hanya boleh membaca folder utama yang masuk allowlist atau subfolder ber-parent sah. Nama folder mirip, course lama, dan folder 2025 dilarang ikut.
+- **13/14 folder utama** masih memiliki izin `anyone:writer`, termasuk dua subfolder pilot FK UNEJ Blok 8; satu folder (UMS Endokrin 2026) sudah `anyone:reader`.
+- Target izin tautan mahasiswa adalah `reader` dengan akses editor per orang untuk admin/tentor. Koneksi Drive saat ini **tidak memiliki aksi untuk mengubah izin publik pada folder**, sehingga **perubahan izin belum dilakukan**. Jangan menyatakan selesai sebelum metadata menunjukkan `reader` dan izin editor eksplisit tetap benar.
+- Folder yang `anyone:writer` diberi status `needs_permission_hardening`. Jika audit permission tidak lolos, jalankan audit saja, tanpa copy/mirroring; file asli tetap aman.
+- Dua workflow OIDC per-folder yang pernah berhasil **bukan** bukti bahwa jalur migrasi sudah diperluas ke 14 course. Perlu perluasan yang aman dan diuji.
+
 ## Batasan saat ini
 - GitHub Actions dan Supabase Edge Function OIDC yang terpasang **baru teruji untuk dua folder FK UNEJ Blok 8 (total 8 materi)**, bukan mesin migrasi massal siap untuk semua course.
 - Untuk perluasan, bangun mekanisme batch yang terotorisasi, terukur, mengaudit semua referensi dan memberi laporan per file. Jangan menganggap pilot sebagai izin mengganti seluruh course secara otomatis.
