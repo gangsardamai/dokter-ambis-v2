@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     }
     if (body.action === "preview") {
       return NextResponse.json({
-        ok: true, sourceId: oldDriveId, name: source.name,
+        ok: true, sourceId: oldDriveId, existingCopyId, name: source.name,
         files: previous.files.length, videos: previous.videos.length,
         message: "File sumber dan seluruh referensi yang terlihat sudah cocok. Belum ada perubahan.",
       });
