@@ -1,0 +1,55 @@
+name: Dokter Ambis Drive Migration Pilot
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  run-pilot:
+    if: >-
+      github.repository_id == 1286701837 &&
+      github.event.issue.user.id == 296064762 &&
+      (github.event.issue.title == '[drive-migrate] UNEJ8 Fisio: preview' ||
+       github.event.issue.title == '[drive-migrate] UNEJ8 Fisio: migrate')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      issues: write
+    steps:
+      - name: Invoke authenticated migration
+        id: migrate
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          action="preview"
+          if [[ "$ISSUE_TITLE" == "[drive-migrate] UNEJ8 Fisio: migrate" ]]; then action="migrate"; fi
+
+          # GitHub provides a short-lived OIDC identity for this exact workflow.
+          request_url="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=dokterambis-drive-pilot-v1"
+          oidc="$(curl -fsS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "$request_url"             | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+
+          # No source/destination Drive IDs are written to this public repository.
+          response="$(curl -fsS --retry 1 --retry-delay 1             -X POST             -H "Authorization: Bearer ${oidc}"             -H "Content-Type: application/json"             --data "{\"action\":\"${action}\"}"             "https://irpqxfpjqpiyqlzqoxdf.supabase.co/functions/v1/drive-migration-pilot-oidc")"
+
+          printf '### Drive migration: %s\n' "$action" >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x["ok"] is True; print("Verified:", {k:x.get(k) for k in ["ready","migrated","oldRefs","newRefs","filesUpdated","originalDeleted"]})'             | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+
+      - name: Report status to the request
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          STEP_RESULT: ${{ steps.migrate.outcome }}
+          OPERATION: ${{ steps.migrate.outputs.action }}
+        shell: bash
+        run: |
+          if [[ "$STEP_RESULT" == "success" ]]; then
+            gh issue comment "$ISSUE_NUMBER" --repo "gangsardamai/dokter-ambis-v2"               --body "✅ Pilot ${OPERATION} selesai. Rincian audit tersedia di GitHub Actions. File asli **tidak dihapus otomatis**."
+          else
+            gh issue comment "$ISSUE_NUMBER" --repo "gangsardamai/dokter-ambis-v2"               --body "⚠️ Pemeriksaan pilot gagal atau dihentikan. Jangan hapus file sumber. Periksa log GitHub Actions."
+          fi
