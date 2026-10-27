@@ -26,7 +26,7 @@ Status audit: 27 Oktober 2026. **Dokumen publik ini sengaja tidak memuat ID fold
 - Pada saat audit 27 Oktober, empat folder sasaran UNRI/UNRAM belum berisi item pada subfolder materi yang dituju. Materi lain di course lama tidak otomatis menjadi target periode 2026.
 - Folder 2025, `Untuk Admin`, Try Out, serta folder yang tidak bisa divalidasi sebagai materi 2026 harus dilewati.
 - Sudah ada dua folder pilot berhasil termigrasi pada FK UNEJ Blok 8. Hindari menyalin ulang sumber yang telah selesai.
-- Target akses siswa: `reader`; hak `writer` hanya untuk admin/tentor yang diberi izin eksplisit. Audit menemukan 13 dari 14 folder utama masih memiliki akses tautan `writer`, termasuk induk dua folder pilot. Satu folder sudah `reader`.
+- Temuan audit: 13 dari 14 folder utama memiliki akses tautan `writer`, termasuk induk dua folder pilot; satu folder sudah `reader`. Ini dicatat sebagai informasi saja; **tidak boleh mengubah permission tanpa instruksi baru pengguna**.
 - **Perubahan izin publik folder belum dilakukan**. Koneksi Drive yang tersedia untuk task ini tidak memiliki operasi `permissions.update` pada folder. Jangan menandai `permission_fixed` sebelum dapat diverifikasi ulang oleh Google Drive.
-- Karena itu, workflow harus berstatus `needs_permission_hardening` atau `audit_only` untuk folder dengan `anyone:writer`, sampai pengetatan izin yang terotorisasi dan pemeriksaan akses peserta/kolaborator berhasil.
+- **Keputusan terbaru pengguna (27 Oktober 2026): pertahankan izin Editor/Writer atau Viewer/Reader sebagaimana saat ini.** Folder `anyone:writer` tidak otomatis menghalangi migrasi; verifikasi kesetaraan akses sumber dan salinan tanpa mengubah izin. Hentikan hanya file yang aksesnya tidak ekuivalen atau gagal pemeriksaan lainnya.
 - **Dilarang menghapus file sumber milik orang lain.**
