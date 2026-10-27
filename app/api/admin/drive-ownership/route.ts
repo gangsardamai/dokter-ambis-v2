@@ -11,6 +11,7 @@ interface Payload {
   action?: "preview" | "migrate";
   courseId?: string;
   oldDriveId?: string;
+  existingCopyId?: string;
 }
 
 interface ReferenceFile {
@@ -130,6 +131,11 @@ export async function POST(request: Request) {
   }
   try {
     validateDriveId(oldDriveId);
+    const existingCopyId = typeof body.existingCopyId === "string" ? body.existingCopyId.trim() : "";
+    if (existingCopyId) {
+      validateDriveId(existingCopyId);
+      if (existingCopyId === oldDriveId) throw new Error("ID salinan harus berbeda dari sumber.");
+    }
     const drive = await DriveAdminClient.create();
     const source = await drive.getFile(oldDriveId);
     await drive.assertInUneJ2026(source, courseId);
@@ -146,6 +152,10 @@ export async function POST(request: Request) {
     const previous = await getReferences(auth.supabase, oldDriveId);
     const lessonIds = [...new Set([...previous.files, ...previous.videos].map((ref) => ref.lesson_id))];
     await assertConnectedToCourse(auth.supabase, courseId, lessonIds);
+    if (existingCopyId) {
+      const copy = await drive.getFile(existingCopyId);
+      await drive.assertEquivalentCopy(source, copy);
+    }
     if (body.action === "preview") {
       return NextResponse.json({
         ok: true, sourceId: oldDriveId, name: source.name,
@@ -154,17 +164,12 @@ export async function POST(request: Request) {
       });
     }
 
-    // 1. Copy as the verified main Google account into the original 2026 folder.
-    const preliminaryCopy = await drive.copyFile(source);
-    // 2. Re-fetch owner/permissions from Google rather than trusting POST /copy response.
-    const copy = await drive.getFile(preliminaryCopy.id);
-    try {
-      await drive.assertEquivalentCopy(source, copy);
-    } catch (error) {
-      // No database mutations have occurred, and the copy is owned by main account.
-      try { await drive.deleteFile(copy.id); } catch { /* leave copy if cleanup fails */ }
-      throw error;
-    }
+    // Reuse an existing verified copy when supplied; never create an unnecessary duplicate.
+    // A newly created copy is not deleted on verification failure: preserve it for audit.
+    const copy = existingCopyId
+      ? await drive.getFile(existingCopyId)
+      : await drive.copyFile(source);
+    await drive.assertEquivalentCopy(source, await drive.getFile(copy.id));
 
     // 3. Use ONE PostgreSQL function so all reused lesson/video refs swap atomically.
     // If RPC fails ambiguously, retain both files for recovery: NEVER delete source.
@@ -198,17 +203,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. The original is generally owned by a tutor, so Google may reject deletion.
-    let deletedOriginal = false;
-    let deletionMessage = "File sumber belum dihapus.";
-    try {
-      await drive.deleteFile(oldDriveId);
-      deletedOriginal = true;
-      deletionMessage = "File sumber berhasil dihapus.";
-    } catch {
-      deletionMessage =
-        "ID website sudah diganti; Google menolak penghapusan sumber atau hak hapus tidak tersedia.";
-    }
+    // Keep the source for independent student-access audit and explicit deletion later.
+    const deletedOriginal = false;
+    const deletionMessage = "Referensi diperbarui; file sumber dipertahankan sampai audit akses mahasiswa selesai.";
     return NextResponse.json({
       ok: true,
       sourceId: oldDriveId,
