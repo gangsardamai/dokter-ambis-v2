@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin";
+import BulkTryoutExplanationImageUploader from "@/components/tryout/BulkTryoutExplanationImageUploader";
 import TryoutQuestionForm from "@/components/tryout/TryoutQuestionForm";
 import { tryoutService } from "@/services";
 
@@ -88,6 +89,8 @@ export default async function TryoutQuestionsPage({
           {getParam(query.error)}
         </div>
       )}
+
+      <BulkTryoutExplanationImageUploader tryoutId={tryoutId} questions={payload.questions} />
 
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-6">
