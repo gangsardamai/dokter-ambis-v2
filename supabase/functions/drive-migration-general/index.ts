@@ -1,5 +1,6 @@
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5.10.0";
 import { Pool } from "jsr:@db/postgres@0.19.5";
+import { copyAllowedByParent, effectiveAccessEquivalent } from "./access-policy.mjs";
 
 /**
  * Generalized, fail-closed DB reference migration.
@@ -124,8 +125,7 @@ async function acl(token:string,id:string){
     "/files/"+encodeURIComponent(id)+"/permissions?fields="+encodeURIComponent("nextPageToken,permissions(id,type,role,emailAddress,domain,allowFileDiscovery,deleted)")+"&pageSize=1000");
   if(x.nextPageToken)throw Error("permission_pagination_not_supported");
   if(!x.permissions?.length)throw Error("permissions_not_verifiable");
-  return x.permissions.filter(p=>p.role!=="owner"&&!p.deleted)
-    .map(p=>[p.type,p.role,p.emailAddress||"",p.domain||"",String(p.allowFileDiscovery??"")].join("|")).sort();
+  return x.permissions;
 }
 async function lineage(token:string,id:string,root:string){
   const seen=new Set<string>();
@@ -187,7 +187,7 @@ async function trustedDriveBatch(m:Manifest){
        cp.owners?.length!==1||cp.owners[0]?.emailAddress?.toLowerCase()!==MAIN_OWNER)
       throw Error("copy_integrity_or_owner_mismatch");
     const [a,b]=await Promise.all([acl(token,src.id),acl(token,cp.id)]);
-    if(JSON.stringify(a)!==JSON.stringify(b))throw Error("copy_acl_mismatch");
+    if(!effectiveAccessEquivalent(a,b))throw Error("copy_effective_access_mismatch");
     copies.set(src.id,cp);
   }
   for(const e of m.entries)if(e.next!=="AUTO"&&copies.get(e.old)?.id!==e.next)throw Error("manifest_copy_id_mismatch");
