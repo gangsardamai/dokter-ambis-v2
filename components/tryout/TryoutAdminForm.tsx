@@ -210,9 +210,15 @@ export default function TryoutAdminForm({
       </div>
 
       <div className="grid gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold text-slate-700">
-          Urutan soal mengikuti nomor soal/file sumber dan tidak diacak.
-        </div>
+        <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-slate-700">
+          <input
+            name="shuffleQuestions"
+            type="checkbox"
+            defaultChecked={tryout?.shuffle_questions ?? false}
+            className="h-4 w-4 rounded border-slate-300 text-blue-600"
+          />
+          Acak urutan soal
+        </label>
         <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-slate-700">
           <input
             name="shuffleOptions"
@@ -220,8 +226,13 @@ export default function TryoutAdminForm({
             defaultChecked={tryout?.shuffle_options ?? true}
             className="h-4 w-4 rounded border-slate-300 text-blue-600"
           />
-          Acak urutan pilihan
+          Acak pilihan jawaban
         </label>
+        <p className="text-sm text-slate-600 sm:col-span-2">
+          Jika dinonaktifkan, soal mengikuti nomor sumber dan pilihan jawaban
+          tetap urut A–E. Perubahan berlaku untuk percobaan baru; urutan pada
+          percobaan yang sudah dimulai tetap tersimpan.
+        </p>
       </div>
 
       <div className="flex justify-end">
