@@ -172,6 +172,8 @@ async function trustedDriveBatch(m:Manifest){
     if(commonParent!==src.parents[0])throw Error("one_folder_per_session");
     if(!src.size)throw Error("unknown_size");
     bytes+=Number(src.size);if(!Number.isSafeInteger(bytes)||bytes>1000000000)throw Error("batch_over_1gb");
+    const sourceAcl=await acl(token,src.id);
+    // Prevent orphan copies when the source has individualized shares that\n    // Google Drive files.copy does not reliably preserve, and ACL edits are forbidden.\n    if(sourceAcl.some(x=>x.startsWith("user|")||x.startsWith("group|")||x.startsWith("domain|")))\n      throw Error("source_individual_acl_cannot_be_preserved_without_permission_changes");
     sourceFiles.set(id,src);
   }
   // Reuse of an old ID is permitted only if the supplied manifest covers all DB rows.
