@@ -58,7 +58,7 @@ function validate(m:Manifest){
   const keys=new Set<string>(), sources=new Map<string,string>();
   for(const e of m.entries){
     if(!e||!["file","video"].includes(e.kind)||!UUID.test(e.row)||!UUID.test(e.lesson)||
-       !DRIVE_ID.test(e.old)||!DRIVE_ID.test(e.next)||e.old===e.next) throw Error("Invalid entry");
+       !DRIVE_ID.test(e.old)||(e.next!=="AUTO"&&!DRIVE_ID.test(e.next))||e.old===e.next) throw Error("Invalid entry");
     const key=e.kind+":"+e.row;
     if(keys.has(key)) throw Error("Duplicate row");
     keys.add(key);
@@ -186,8 +186,8 @@ async function trustedDriveBatch(m:Manifest){
     if(JSON.stringify(a)!==JSON.stringify(b))throw Error("copy_acl_mismatch");
     copies.set(src.id,cp);
   }
-  for(const e of m.entries)if(copies.get(e.old)?.id!==e.next)throw Error("manifest_copy_id_mismatch");
-  return {sources:unique.length,bytes,permissionsUnchanged:true};
+  for(const e of m.entries)if(e.next!=="AUTO"&&copies.get(e.old)?.id!==e.next)throw Error("manifest_copy_id_mismatch");
+  return {sources:unique.length,bytes,permissionsUnchanged:true,copyIds:Object.fromEntries([...copies].map(([k,v])=>[k,v.id]))};
 }
 async function completeAudit(db:Db,m:Manifest){
   for(const sourceId of new Set(m.entries.map(e=>e.old))){
@@ -220,24 +220,26 @@ Deno.serve(async(req)=>{
     await completeAudit(db,body.manifest);
     if(!before.ready)return respond({ok:false,error:"preflight_not_ready"},409);
     const verified=await trustedDriveBatch(body.manifest);
+    const actual:Manifest={...body.manifest,entries:body.manifest.entries.map(e=>({...e,next:verified.copyIds[e.old]}))};
+    validate(actual);
     await db.queryArray("BEGIN");
     try{
       await db.queryArray("select pg_advisory_xact_lock(hashtext($1))",["drive-migration-"+body.manifest.course]);
-      await completeAudit(db,body.manifest);
-      const locked=await audit(db,body.manifest);
+      await completeAudit(db,actual);
+      const locked=await audit(db,actual);
       if(!locked.ready)throw Error("preflight_changed");
       let changed=0;
-      for(const e of body.manifest.entries){
+      for(const e of actual.entries){
         const result=e.kind==="file"?
           await db.queryObject<{id:string}>({text:"update public.lesson_files set file_path=$1 where id=$2::uuid and lesson_id=$3::uuid and file_path=$4 returning id::text",args:["google-drive://"+e.next,e.row,e.lesson,"google-drive://"+e.old]}):
           await db.queryObject<{id:string}>({text:"update public.videos set provider_video_id=$1 where id=$2::uuid and lesson_id=$3::uuid and provider='google_drive' and provider_video_id=$4 returning id::text",args:[e.next,e.row,e.lesson,e.old]});
         if(result.rows.length!==1)throw Error("unexpected_update_count");
         changed++;
       }
-      const after=await audit(db,body.manifest);
+      const after=await audit(db,actual);
       if(!after.migrated)throw Error("postflight_failed");
       await db.queryArray("COMMIT");
-      return respond({ok:true,migrated:true,changed,...verified,sourceDeleted:false,permissionsChanged:false});
+      return respond({ok:true,migrated:true,changed,sources:verified.sources,bytes:verified.bytes,permissionsUnchanged:true,sourceDeleted:false,permissionsChanged:false});
     }catch(e){await db.queryArray("ROLLBACK").catch(()=>undefined);throw e;}
   }catch(e){
     const message=e instanceof Error?e.message:"unknown";
