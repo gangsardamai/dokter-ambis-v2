@@ -1,3 +1,5 @@
+import VideoFullscreenFrame from "./VideoFullscreenFrame";
+
 interface YoutubePlayerProps {
   videoId: string;
 }
@@ -8,7 +10,7 @@ export default function YoutubePlayer({
 
   return (
 
-    <div className="aspect-video overflow-hidden rounded-xl border bg-black">
+    <VideoFullscreenFrame>
 
       <iframe
         className="h-full w-full"
@@ -18,7 +20,7 @@ export default function YoutubePlayer({
         allowFullScreen
       />
 
-    </div>
+    </VideoFullscreenFrame>
 
   );
 

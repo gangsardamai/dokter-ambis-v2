@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import VideoFullscreenFrame from "./VideoFullscreenFrame";
 
 interface GoogleDrivePlayerProps {
   fileId: string;
@@ -36,7 +37,7 @@ export default function GoogleDrivePlayer({
 
   return (
     <div className="space-y-2">
-      <div className="relative aspect-video rounded-xl border border-slate-700 bg-black">
+      <VideoFullscreenFrame>
         <iframe
           key={frameKey}
           className="h-full w-full rounded-xl"
@@ -67,7 +68,7 @@ export default function GoogleDrivePlayer({
             <path d="M8 10V7a4 4 0 0 1 8 0v3" />
           </svg>
         </div>
-      </div>
+      </VideoFullscreenFrame>
 
       <div className="flex flex-col gap-2 px-1 text-xs leading-5 text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <p>
