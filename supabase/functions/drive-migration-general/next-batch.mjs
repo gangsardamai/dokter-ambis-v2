@@ -34,9 +34,11 @@ export async function findNextBatch(db, deps) {
     if(parent&&source.parents[0]!==parent)continue;
     const size=Number(source.size);
     if(!Number.isSafeInteger(size)||size<=0||bytes+size>1000000000)continue;
-    if(!await lineage(token,source.parents[0],root))continue;
-    const [sourceACL,parentACL]=await Promise.all([acl(token,r.old),acl(token,source.parents[0])]);
-    if(!copyAllowedByParent(sourceACL,parentACL))continue;
+    try{
+      if(!await lineage(token,source.parents[0],root))continue;
+      const [sourceACL,parentACL]=await Promise.all([acl(token,r.old),acl(token,source.parents[0])]);
+      if(!copyAllowedByParent(sourceACL,parentACL))continue;
+    }catch{continue;}
     const matches=await refs(db,r.old);
     const all=[...matches.files.map(x=>({...x,kind:"file"})),...matches.videos.map(x=>({...x,kind:"video"}))];
     if(!all.length||all.length+entries.length>10)continue;
