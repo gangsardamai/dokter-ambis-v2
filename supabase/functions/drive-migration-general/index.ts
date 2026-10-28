@@ -135,6 +135,8 @@ async function lineage(token:string,id:string,root:string){
     if(seen.has(cursor))throw Error("cyclic_parent");
     seen.add(cursor);
     const m=await getFile(token,cursor);
+    const folderName=(m.name||"").toLowerCase();
+    if(folderName.includes("2025")||folderName.includes("untuk admin")||folderName.includes("try out"))return false;
     if(m.trashed||!m.parents||m.parents.length!==1)return false;
     cursor=m.parents[0];
   }
@@ -203,6 +205,8 @@ async function completeAudit(db:Db,m:Manifest){
   }
 }
 Deno.serve(async(req)=>{
+  if(req.method==="GET" && new URL(req.url).pathname.endsWith("/health"))
+    return respond({ok:true,service:"ownership-migration",mode:"authenticated-oidc-only"});
   if(req.method!=="POST")return respond({ok:false,error:"method_not_allowed"},405);
   if(!await authenticate(req))return respond({ok:false,error:"unauthorized"},403);
   let body:{action:string;manifest:Manifest};
@@ -219,8 +223,11 @@ Deno.serve(async(req)=>{
       return respond({ok:false,error:"migration_not_enabled"},409);
     // Network calls to Drive occur BEFORE the DB transaction, which remains atomic.
     // A copied file may remain if the subsequent DB stage fails; appProperties makes retries idempotent.
+    // AUTO is a placeholder, not a real Drive ID. Full exact-target auditing
+    // happens after trusted Drive verification resolves the copy IDs.
     const before=await audit(db,body.manifest);
-    if(before.migrated)return respond({ok:true,alreadyMigrated:true,sourceDeleted:false});
+    if(body.manifest.entries.every(e=>e.next!=="AUTO") && before.migrated)
+      return respond({ok:true,alreadyMigrated:true,sourceDeleted:false});
     await completeAudit(db,body.manifest);
     if(!before.ready)return respond({ok:false,error:"preflight_not_ready"},409);
     const verified=await trustedDriveBatch(body.manifest);
