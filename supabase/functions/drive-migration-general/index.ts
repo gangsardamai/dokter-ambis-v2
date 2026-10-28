@@ -150,6 +150,21 @@ async function resolveCopy(token:string,source:DriveFile){
     "/files?q="+encodeURIComponent(q)+"&fields="+encodeURIComponent("nextPageToken,files("+fileFields+")")+"&pageSize=100");
   if(found.nextPageToken||found.files.length>1)throw Error("ambiguous_existing_copy");
   if(found.files.length===1)return found.files[0];
+  // Existing untagged, same-name copies from older workflows are not blindly
+  // duplicated: require unique, fully matching main-account-owned candidate.
+  const qName="'"+parent.replaceAll("'","\\'")+"' in parents and trashed = false and name='"+source.name.replaceAll("'","\\'")+"'";
+  const named=await drive<{files:DriveFile[];nextPageToken?:string}>(token,
+    "/files?q="+encodeURIComponent(qName)+"&fields="+encodeURIComponent("nextPageToken,files("+fileFields+")")+"&pageSize=100");
+  if(named.nextPageToken)throw Error("ambiguous_same_name_copies");
+  const mainCopies=named.files.filter(x=>x.id!==source.id&&x.owners?.[0]?.emailAddress?.toLowerCase()===MAIN_OWNER);
+  if(mainCopies.length>1)throw Error("ambiguous_same_name_copies");
+  if(mainCopies.length===1){
+    const cp=mainCopies[0];
+    if(cp.mimeType!==source.mimeType||cp.size!==source.size||
+      (source.md5Checksum&&cp.md5Checksum!==source.md5Checksum))
+      throw Error("existing_same_name_copy_not_identical");
+    return cp;
+  }
   return drive<DriveFile>(token,"/files/"+encodeURIComponent(source.id)+"/copy?fields="+encodeURIComponent(fileFields),{
     method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({name:source.name,parents:[parent],appProperties:{ownership_source_id:source.id}})
