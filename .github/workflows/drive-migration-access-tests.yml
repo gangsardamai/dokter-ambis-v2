@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - "supabase/functions/drive-migration-general/**"
-      - "tests/drive-ownership-access.test.mjs"
+      - "tests/drive-ownership-*.test.mjs"
       - ".github/workflows/drive-migration-access-tests.yml"
   workflow_dispatch:
 permissions:
@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: "22"
       - name: Run access policy tests
-        run: node --test tests/drive-ownership-access.test.mjs
+        run: node --test tests/drive-ownership-*.test.mjs
