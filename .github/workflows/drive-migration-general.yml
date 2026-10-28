@@ -6,6 +6,13 @@ on:
         description: 'JSON manifest: allowlisted course, root, and 1-10 explicit source/copy/lesson row mappings'
         required: true
         type: string
+      action:
+        description: 'preview or migrate (requires backend verification and enablement)'
+        required: true
+        type: choice
+        options:
+          - preview
+          - migrate
 permissions: {}
 concurrency:
   group: dokterambis-drive-ownership-general
@@ -20,6 +27,7 @@ jobs:
       - name: Validate and run read-only preflight
         env:
           MANIFEST: ${{ inputs.manifest }}
+          ACTION: ${{ inputs.action }}
         shell: bash
         run: |
           set -euo pipefail
@@ -31,7 +39,7 @@ jobs:
           if not 1<=len(manifest["entries"])<=10:
               raise SystemExit("Batch must contain 1-10 rows")
           with open("/tmp/drive-migration-request.json","w") as f:
-              json.dump({"action":"preview","manifest":manifest},f)
+              json.dump({"action":os.environ["ACTION"],"manifest":manifest},f)
           PY
           url="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=dokterambis-drive-migration-v2"
           oidc="$(curl --fail-with-body --silent --show-error \
