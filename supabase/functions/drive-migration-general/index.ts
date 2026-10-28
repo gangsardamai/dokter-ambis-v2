@@ -156,6 +156,8 @@ async function trustedDriveBatch(m:Manifest){
   const token=await driveToken();
   const about=await drive<{user?:{emailAddress?:string}}>(token,"/about?fields=user(emailAddress)");
   if(about.user?.emailAddress?.toLowerCase()!==MAIN_OWNER)throw Error("wrong_drive_identity");
+  // This root has no year label: hold until 2026 classification is verified separately.
+  if(m.course==="d0a91908-d159-4aa8-a0ce-1f190144eb61")throw Error("unram_family_2026_scope_not_verified");
   const unique=[...new Set(m.entries.map(e=>e.old))];
   if(unique.length>10)throw Error("too_many_sources");
   const sourceFiles=new Map<string,DriveFile>();
