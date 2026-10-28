@@ -1,0 +1,45 @@
+name: Dokter Ambis General Ownership Migration Audit
+on:
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: 'JSON manifest: allowlisted course, root, and 1-10 explicit source/copy/lesson row mappings'
+        required: true
+        type: string
+permissions: {}
+concurrency:
+  group: dokterambis-drive-ownership-general
+  cancel-in-progress: false
+jobs:
+  audit:
+    if: github.repository_id == 1286701837 && github.actor_id == '296064762'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Validate and run read-only preflight
+        env:
+          MANIFEST: ${{ inputs.manifest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os
+          manifest=json.loads(os.environ["MANIFEST"])
+          if not isinstance(manifest,dict) or not isinstance(manifest.get("entries"),list):
+              raise SystemExit("Invalid manifest")
+          if not 1<=len(manifest["entries"])<=10:
+              raise SystemExit("Batch must contain 1-10 rows")
+          with open("/tmp/drive-migration-request.json","w") as f:
+              json.dump({"action":"preview","manifest":manifest},f)
+          PY
+          url="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=dokterambis-drive-migration-v2"
+          oidc="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "$url" | \
+            python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          curl --fail-with-body --silent --show-error \
+            -X POST -H "Authorization: Bearer ${oidc}" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/drive-migration-request.json \
+            "https://irpqxfpjqpiyqlzqoxdf.supabase.co/functions/v1/drive-migration-general" \
+            | python3 -c 'import json,sys; j=json.load(sys.stdin); print(json.dumps(j,indent=2)); assert j.get("ok") is True'
