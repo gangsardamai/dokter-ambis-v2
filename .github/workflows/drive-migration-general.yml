@@ -1,46 +1,56 @@
-name: Dokter Ambis General Ownership Migration Audit
+name: Dokter Ambis Ownership Migration — Scoped
 on:
+  schedule:
+    # 04:30, 08:30, 12:30, 16:30 and 20:30 Asia/Jakarta (UTC+7)
+    - cron: "30 1,5,9,13,21 * * *"
   workflow_dispatch:
     inputs:
-      manifest:
-        description: 'JSON manifest: allowlisted course, root, and 1-10 explicit source/copy/lesson row mappings'
-        required: true
-        type: string
       action:
-        description: 'preview or migrate (requires backend verification and enablement)'
+        description: "Preview or one-off verified migrate"
         required: true
         type: choice
-        options:
-          - preview
-          - migrate
+        options: [preview, migrate]
+      manifest:
+        description: "JSON manifest (owner use only, never include secrets)"
+        required: true
+        type: string
 permissions: {}
 concurrency:
-  group: dokterambis-drive-ownership-general
+  group: dokterambis-ownership-migration-v2
   cancel-in-progress: false
 jobs:
-  audit:
-    if: github.repository_id == 1286701837 && github.actor_id == '296064762'
+  migrate-or-audit:
+    if: >-
+      github.repository_id == 1286701837 &&
+      (github.event_name == 'schedule' || github.actor_id == '296064762')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+    timeout-minutes: 45
     steps:
-      - name: Validate and run read-only preflight
+      - name: Build restricted request
+        shell: bash
         env:
           MANIFEST: ${{ inputs.manifest }}
           ACTION: ${{ inputs.action }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            echo '{"action":"next"}' > /tmp/request.json
+          else
+            python3 - <<'PY'
+          import json,os
+          manifest=json.loads(os.environ["MANIFEST"])
+          if not isinstance(manifest,dict) or not isinstance(manifest.get("entries"),list) or not 1<=len(manifest["entries"])<=10:
+              raise SystemExit("Invalid manifest")
+          with open("/tmp/request.json","w") as f:
+              json.dump({"action":os.environ["ACTION"],"manifest":manifest},f)
+          PY
+          fi
+      - name: Authenticated Edge Function invocation
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json,os
-          manifest=json.loads(os.environ["MANIFEST"])
-          if not isinstance(manifest,dict) or not isinstance(manifest.get("entries"),list):
-              raise SystemExit("Invalid manifest")
-          if not 1<=len(manifest["entries"])<=10:
-              raise SystemExit("Batch must contain 1-10 rows")
-          with open("/tmp/drive-migration-request.json","w") as f:
-              json.dump({"action":os.environ["ACTION"],"manifest":manifest},f)
-          PY
           url="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=dokterambis-drive-migration-v2"
           oidc="$(curl --fail-with-body --silent --show-error \
             -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "$url" | \
@@ -48,6 +58,15 @@ jobs:
           curl --fail-with-body --silent --show-error \
             -X POST -H "Authorization: Bearer ${oidc}" \
             -H "Content-Type: application/json" \
-            --data-binary @/tmp/drive-migration-request.json \
+            --data-binary @/tmp/request.json \
             "https://irpqxfpjqpiyqlzqoxdf.supabase.co/functions/v1/drive-migration-general" \
-            | python3 -c 'import json,sys; j=json.load(sys.stdin); print(json.dumps(j,indent=2)); assert j.get("ok") is True'
+            > /tmp/result.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open("/tmp/result.json"))
+          assert j.get("ok") is True, "Migration was safely stopped; inspect error log"
+          # No secrets or individual file IDs in public GitHub logs.
+          print("Mode:",j.get("mode","migrate"),"Migrated:",j.get("migrated",False),
+                "References updated:",j.get("changed",0),
+                "Source deleted:",j.get("sourceDeleted",False))
+          PY
