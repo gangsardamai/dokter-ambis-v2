@@ -221,14 +221,31 @@ async function findNextBatch(db:Db):Promise<Manifest|null>{
     return respond({ok:true,service:"ownership-migration",mode:"authenticated-oidc-only"});
   if(req.method!=="POST")return respond({ok:false,error:"method_not_allowed"},405);
   if(!await authenticate(req))return respond({ok:false,error:"unauthorized"},403);
-  let body:{action:string;manifest:Manifest};
-  try{body=await req.json();validate(body.manifest);}catch{return respond({ok:false,error:"invalid_manifest"},400);}
-  if(!["preview","migrate"].includes(body.action))return respond({ok:false,error:"invalid_action"},400);
+  let body:{action:string;manifest?:Manifest};
+  try{body=await req.json();if(body.action!=="next")validate(body.manifest!);}catch{return respond({ok:false,error:"invalid_manifest"},400);}
+  if(!["preview","migrate","next"].includes(body.action))return respond({ok:false,error:"invalid_action"},400);
   if(!pool)return respond({ok:false,error:"database_unavailable"},503);
   const db=await pool.connect();
+  let hasLock=false;
   try{
+    if(body.action!=="preview"){
+      const row=await db.queryObject<{locked:boolean}>({
+        text:"select pg_try_advisory_lock(hashtext('ownership-v2-global')) as locked"
+      });
+      if(!row.rows[0]?.locked)return respond({ok:false,error:"migration_already_running"},409);
+      hasLock=true;
+    }
+    if(body.action==="next"){
+      const day=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Jakarta",weekday:"short"}).format(new Date());
+      if(day==="Sun")return respond({ok:true,action:"next",mode:"audit_only",reason:"sunday"});
+      if(Deno.env.get("DRIVE_MIGRATION_V2_ENABLED")!=="true")
+        return respond({ok:true,action:"next",mode:"audit_only",reason:"migration_not_enabled"});
+      const next=await findNextBatch(db);
+      if(!next)return respond({ok:true,action:"next",mode:"audit_only",reason:"no_verified_candidates"});
+      body={action:"migrate",manifest:next};
+    }
     if(body.action==="preview"){
-      const state=await audit(db,body.manifest);
+      const state=await audit(db,body.manifest!);
       return respond({ok:true,action:"preview",...state,sourceDeleted:false,permissionsChanged:false});
     }
     if(Deno.env.get("DRIVE_MIGRATION_V2_ENABLED")!=="true")
@@ -237,17 +254,18 @@ async function findNextBatch(db:Db):Promise<Manifest|null>{
     // A copied file may remain if the subsequent DB stage fails; appProperties makes retries idempotent.
     // AUTO is a placeholder, not a real Drive ID. Full exact-target auditing
     // happens after trusted Drive verification resolves the copy IDs.
-    const before=await audit(db,body.manifest);
-    if(body.manifest.entries.every(e=>e.next!=="AUTO") && before.migrated)
+    const manifest=body.manifest!;
+    const before=await audit(db,manifest);
+    if(manifest.entries.every(e=>e.next!=="AUTO") && before.migrated)
       return respond({ok:true,alreadyMigrated:true,sourceDeleted:false});
-    await completeAudit(db,body.manifest);
+    await completeAudit(db,manifest);
     if(!before.ready)return respond({ok:false,error:"preflight_not_ready"},409);
-    const verified=await trustedDriveBatch(body.manifest);
-    const actual:Manifest={...body.manifest,entries:body.manifest.entries.map(e=>({...e,next:verified.copyIds[e.old]}))};
+    const verified=await trustedDriveBatch(manifest);
+    const actual:Manifest={...manifest,entries:manifest.entries.map(e=>({...e,next:verified.copyIds[e.old]}))};
     validate(actual);
     await db.queryArray("BEGIN");
     try{
-      await db.queryArray("select pg_advisory_xact_lock(hashtext($1))",["drive-migration-"+body.manifest.course]);
+      await db.queryArray("select pg_advisory_xact_lock(hashtext($1))",["drive-migration-"+manifest.course]);
       await completeAudit(db,actual);
       const locked=await audit(db,actual);
       if(!locked.ready)throw Error("preflight_changed");
@@ -268,7 +286,10 @@ async function findNextBatch(db:Db):Promise<Manifest|null>{
     const message=e instanceof Error?e.message:"unknown";
     console.error("Safe migration stopped",message);
     return respond({ok:false,error:message,sourceDeleted:false,permissionsChanged:false},409);
-  }finally{db.release();}
+  }finally{
+    if(hasLock)await db.queryArray("select pg_advisory_unlock(hashtext(\'ownership-v2-global\'))").catch(()=>undefined);
+    db.release();
+  }
 });
  "+
       "union all select 'file'::text as kind,lf.id::text as row,lf.lesson_id::text as lesson,substring(lf.file_path from 16)::text as old "+
