@@ -46,9 +46,9 @@ async function authenticate(req:Request){
     });
     return payload.repository_id==="1286701837" &&
       payload.repository==="gangsardamai/dokter-ambis-v2" &&
-      payload.actor_id==="296064762" &&
       payload.workflow_ref===WORKFLOW &&
-      payload.ref==="refs/heads/main" && payload.event_name==="workflow_dispatch";
+      payload.ref==="refs/heads/main" && (payload.event_name==="schedule" ||
+      (payload.event_name==="workflow_dispatch" && payload.actor_id==="296064762"));
   }catch{return false;}
 }
 function validate(m:Manifest){
@@ -204,6 +204,170 @@ async function completeAudit(db:Db,m:Manifest){
       throw Error("unmapped_source_references");
   }
 }
+
+type Candidate = {kind:"file"|"video";row:string;lesson:string;old:string};
+async function findNextBatch(db:Db):Promise<Manifest|null>{
+  const token=await driveToken();
+  const identity=await drive<{user?:{emailAddress?:string}}>(token,"/about?fields=user(emailAddress)");
+  if(identity.user?.emailAddress?.toLowerCase()!==MAIN_OWNER)throw Error("wrong_drive_identity");
+  const courses=Object.keys(ROOTS).filter(id=>id!=="d0a91908-d159-4aa8-a0ce-1f190144eb61");
+  const slot=Math.floor((Date.now()+7*60*60*1000)/(4*60*60*1000));
+  const course=courses[slot%courses.length],root=ROOTS[course];
+  const rows=(await db.queryObject<Candidate>({
+    text:"select 'video'::text as kind,v.id::text as row,v.lesson_id::text as lesson,v.provider_video_id::text as old "+
+      "from public.videos v join public.lessons l on l.id=v.lesson_id "+
+      "where l.course_id=$1::uuid and v.provider='google_drive' and v.provider_video_id ~ '^[A-Za-z0-9_-]{15,100}
+  if(req.method==="GET" && new URL(req.url).pathname.endsWith("/health"))
+    return respond({ok:true,service:"ownership-migration",mode:"authenticated-oidc-only"});
+  if(req.method!=="POST")return respond({ok:false,error:"method_not_allowed"},405);
+  if(!await authenticate(req))return respond({ok:false,error:"unauthorized"},403);
+  let body:{action:string;manifest:Manifest};
+  try{body=await req.json();validate(body.manifest);}catch{return respond({ok:false,error:"invalid_manifest"},400);}
+  if(!["preview","migrate"].includes(body.action))return respond({ok:false,error:"invalid_action"},400);
+  if(!pool)return respond({ok:false,error:"database_unavailable"},503);
+  const db=await pool.connect();
+  try{
+    if(body.action==="preview"){
+      const state=await audit(db,body.manifest);
+      return respond({ok:true,action:"preview",...state,sourceDeleted:false,permissionsChanged:false});
+    }
+    if(Deno.env.get("DRIVE_MIGRATION_V2_ENABLED")!=="true")
+      return respond({ok:false,error:"migration_not_enabled"},409);
+    // Network calls to Drive occur BEFORE the DB transaction, which remains atomic.
+    // A copied file may remain if the subsequent DB stage fails; appProperties makes retries idempotent.
+    // AUTO is a placeholder, not a real Drive ID. Full exact-target auditing
+    // happens after trusted Drive verification resolves the copy IDs.
+    const before=await audit(db,body.manifest);
+    if(body.manifest.entries.every(e=>e.next!=="AUTO") && before.migrated)
+      return respond({ok:true,alreadyMigrated:true,sourceDeleted:false});
+    await completeAudit(db,body.manifest);
+    if(!before.ready)return respond({ok:false,error:"preflight_not_ready"},409);
+    const verified=await trustedDriveBatch(body.manifest);
+    const actual:Manifest={...body.manifest,entries:body.manifest.entries.map(e=>({...e,next:verified.copyIds[e.old]}))};
+    validate(actual);
+    await db.queryArray("BEGIN");
+    try{
+      await db.queryArray("select pg_advisory_xact_lock(hashtext($1))",["drive-migration-"+body.manifest.course]);
+      await completeAudit(db,actual);
+      const locked=await audit(db,actual);
+      if(!locked.ready)throw Error("preflight_changed");
+      let changed=0;
+      for(const e of actual.entries){
+        const result=e.kind==="file"?
+          await db.queryObject<{id:string}>({text:"update public.lesson_files set file_path=$1 where id=$2::uuid and lesson_id=$3::uuid and file_path=$4 returning id::text",args:["google-drive://"+e.next,e.row,e.lesson,"google-drive://"+e.old]}):
+          await db.queryObject<{id:string}>({text:"update public.videos set provider_video_id=$1 where id=$2::uuid and lesson_id=$3::uuid and provider='google_drive' and provider_video_id=$4 returning id::text",args:[e.next,e.row,e.lesson,e.old]});
+        if(result.rows.length!==1)throw Error("unexpected_update_count");
+        changed++;
+      }
+      const after=await audit(db,actual);
+      if(!after.migrated)throw Error("postflight_failed");
+      await db.queryArray("COMMIT");
+      return respond({ok:true,migrated:true,changed,sources:verified.sources,bytes:verified.bytes,permissionsUnchanged:true,sourceDeleted:false,permissionsChanged:false});
+    }catch(e){await db.queryArray("ROLLBACK").catch(()=>undefined);throw e;}
+  }catch(e){
+    const message=e instanceof Error?e.message:"unknown";
+    console.error("Safe migration stopped",message);
+    return respond({ok:false,error:message,sourceDeleted:false,permissionsChanged:false},409);
+  }finally{db.release();}
+});
+ "+
+      "union all select 'file'::text as kind,lf.id::text as row,lf.lesson_id::text as lesson,substring(lf.file_path from 16)::text as old "+
+      "from public.lesson_files lf join public.lessons l on l.id=lf.lesson_id "+
+      "where l.course_id=$1::uuid and lf.file_path ~ '^google-drive://[A-Za-z0-9_-]{15,100}
+  if(req.method==="GET" && new URL(req.url).pathname.endsWith("/health"))
+    return respond({ok:true,service:"ownership-migration",mode:"authenticated-oidc-only"});
+  if(req.method!=="POST")return respond({ok:false,error:"method_not_allowed"},405);
+  if(!await authenticate(req))return respond({ok:false,error:"unauthorized"},403);
+  let body:{action:string;manifest:Manifest};
+  try{body=await req.json();validate(body.manifest);}catch{return respond({ok:false,error:"invalid_manifest"},400);}
+  if(!["preview","migrate"].includes(body.action))return respond({ok:false,error:"invalid_action"},400);
+  if(!pool)return respond({ok:false,error:"database_unavailable"},503);
+  const db=await pool.connect();
+  try{
+    if(body.action==="preview"){
+      const state=await audit(db,body.manifest);
+      return respond({ok:true,action:"preview",...state,sourceDeleted:false,permissionsChanged:false});
+    }
+    if(Deno.env.get("DRIVE_MIGRATION_V2_ENABLED")!=="true")
+      return respond({ok:false,error:"migration_not_enabled"},409);
+    // Network calls to Drive occur BEFORE the DB transaction, which remains atomic.
+    // A copied file may remain if the subsequent DB stage fails; appProperties makes retries idempotent.
+    // AUTO is a placeholder, not a real Drive ID. Full exact-target auditing
+    // happens after trusted Drive verification resolves the copy IDs.
+    const before=await audit(db,body.manifest);
+    if(body.manifest.entries.every(e=>e.next!=="AUTO") && before.migrated)
+      return respond({ok:true,alreadyMigrated:true,sourceDeleted:false});
+    await completeAudit(db,body.manifest);
+    if(!before.ready)return respond({ok:false,error:"preflight_not_ready"},409);
+    const verified=await trustedDriveBatch(body.manifest);
+    const actual:Manifest={...body.manifest,entries:body.manifest.entries.map(e=>({...e,next:verified.copyIds[e.old]}))};
+    validate(actual);
+    await db.queryArray("BEGIN");
+    try{
+      await db.queryArray("select pg_advisory_xact_lock(hashtext($1))",["drive-migration-"+body.manifest.course]);
+      await completeAudit(db,actual);
+      const locked=await audit(db,actual);
+      if(!locked.ready)throw Error("preflight_changed");
+      let changed=0;
+      for(const e of actual.entries){
+        const result=e.kind==="file"?
+          await db.queryObject<{id:string}>({text:"update public.lesson_files set file_path=$1 where id=$2::uuid and lesson_id=$3::uuid and file_path=$4 returning id::text",args:["google-drive://"+e.next,e.row,e.lesson,"google-drive://"+e.old]}):
+          await db.queryObject<{id:string}>({text:"update public.videos set provider_video_id=$1 where id=$2::uuid and lesson_id=$3::uuid and provider='google_drive' and provider_video_id=$4 returning id::text",args:[e.next,e.row,e.lesson,e.old]});
+        if(result.rows.length!==1)throw Error("unexpected_update_count");
+        changed++;
+      }
+      const after=await audit(db,actual);
+      if(!after.migrated)throw Error("postflight_failed");
+      await db.queryArray("COMMIT");
+      return respond({ok:true,migrated:true,changed,sources:verified.sources,bytes:verified.bytes,permissionsUnchanged:true,sourceDeleted:false,permissionsChanged:false});
+    }catch(e){await db.queryArray("ROLLBACK").catch(()=>undefined);throw e;}
+  }catch(e){
+    const message=e instanceof Error?e.message:"unknown";
+    console.error("Safe migration stopped",message);
+    return respond({ok:false,error:message,sourceDeleted:false,permissionsChanged:false},409);
+  }finally{db.release();}
+});
+ "+
+      "order by lesson,kind,row limit 100",
+    args:[course]
+  })).rows;
+  const considered=new Set<string>();
+  let parent:string|undefined,bytes=0;
+  const entries:Entry[]=[];
+  for(const r of rows){
+    if(considered.size>=35 || entries.length>=10)break;
+    if(!DRIVE_ID.test(r.old)||considered.has(r.old))continue;
+    considered.add(r.old);
+    let src:DriveFile;
+    try{src=await getFile(token,r.old);}catch{continue;}
+    if(src.trashed||src.mimeType==="application/vnd.google-apps.folder"||src.parents?.length!==1||
+       src.owners?.length!==1||!src.owners[0]?.emailAddress||
+       src.owners[0].emailAddress.toLowerCase()===MAIN_OWNER||!src.size||
+       /2025|untuk admin|try out/i.test(src.name))continue;
+    if(parent && src.parents[0]!==parent)continue;
+    const size=Number(src.size);
+    if(!Number.isSafeInteger(size)||size<=0||size+bytes>1_000_000_000)continue;
+    if(!await lineage(token,src.parents[0],root))continue;
+    const [srcACL,folderACL]=await Promise.all([acl(token,src.id),acl(token,src.parents[0])]);
+    if(!copyAllowedByParent(srcACL,folderACL))continue;
+    const references=await refs(db,r.old);
+    const all=[...references.files.map(x=>({kind:"file" as const,...x})),
+               ...references.videos.map(x=>({kind:"video" as const,...x}))];
+    if(all.length===0||all.length+entries.length>10)continue;
+    const sourceEntries:Entry[]=[];
+    let valid=true;
+    for(const x of all){
+      if(x.course_id!==course||(x.kind==="file"?
+         x.file_path!=="google-drive://"+r.old:
+         x.provider!=="google_drive"||x.provider_video_id!==r.old)){valid=false;break;}
+      sourceEntries.push({kind:x.kind,row:x.id,lesson:x.lesson_id,old:r.old,next:"AUTO"});
+    }
+    if(!valid)continue;
+    parent=src.parents[0];bytes+=size;entries.push(...sourceEntries);
+  }
+  return entries.length?{course,root,entries}:null;
+}
+
 Deno.serve(async(req)=>{
   if(req.method==="GET" && new URL(req.url).pathname.endsWith("/health"))
     return respond({ok:true,service:"ownership-migration",mode:"authenticated-oidc-only"});
