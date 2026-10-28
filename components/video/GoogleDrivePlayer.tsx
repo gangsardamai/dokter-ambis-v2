@@ -37,7 +37,32 @@ export default function GoogleDrivePlayer({
 
   return (
     <div className="space-y-2">
-      <VideoFullscreenFrame>
+      <VideoFullscreenFrame
+        actions={
+        <button
+          type="button"
+          onClick={reloadPlayer}
+          disabled={isReloading}
+          aria-busy={isReloading}
+          className="inline-flex min-h-10 min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-xs font-bold text-slate-100 sm:px-3 sm:text-sm transition hover:border-slate-500 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-wait disabled:opacity-60"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 shrink-0 ${isReloading ? "animate-spin" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 11a8.1 8.1 0 1 0 2 5" />
+            <path d="M20 4v7h-7" />
+          </svg>
+          {isReloading ? "Memuat ulang..." : "Muat ulang video"}
+        </button>
+        }
+      >
         <iframe
           key={frameKey}
           className="h-full w-full rounded-xl"
@@ -70,33 +95,11 @@ export default function GoogleDrivePlayer({
         </div>
       </VideoFullscreenFrame>
 
-      <div className="flex flex-col gap-2 px-1 text-xs leading-5 text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+      <div className="px-1 text-xs leading-5 text-slate-400">
         <p>
           Jika player gagal dimuat, coba muat ulang videonya. Progres lesson
           tidak akan terpengaruh.
         </p>
-
-        <button
-          type="button"
-          onClick={reloadPlayer}
-          disabled={isReloading}
-          className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-bold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-wait disabled:opacity-60"
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className={`h-4 w-4 ${isReloading ? "animate-spin" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20 11a8.1 8.1 0 1 0 2 5" />
-            <path d="M20 4v7h-7" />
-          </svg>
-          {isReloading ? "Memuat ulang..." : "Muat ulang video"}
-        </button>
       </div>
     </div>
   );

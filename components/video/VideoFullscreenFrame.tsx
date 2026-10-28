@@ -10,7 +10,13 @@ type FullscreenElement = HTMLDivElement & {
   webkitRequestFullscreen?: () => Promise<void> | void;
 };
 
-export default function VideoFullscreenFrame({ children }: { children: ReactNode }) {
+export default function VideoFullscreenFrame({
+  children,
+  actions,
+}: {
+  children: ReactNode;
+  actions?: ReactNode;
+}) {
   const frameRef = useRef<FullscreenElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasFullscreen = useRef(false);
@@ -100,7 +106,7 @@ export default function VideoFullscreenFrame({ children }: { children: ReactNode
       <div className={`relative w-full ${isOpen ? "min-h-0 flex-1" : "aspect-video"}`}>
         {children}
       </div>
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 bg-slate-950 px-3 py-2">
+      <div className="flex shrink-0 items-center justify-end gap-2 bg-slate-950 px-3 py-2">
         <button
           ref={buttonRef}
           type="button"
@@ -108,13 +114,14 @@ export default function VideoFullscreenFrame({ children }: { children: ReactNode
           disabled={isPending}
           aria-busy={isPending}
           aria-pressed={isOpen}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-wait disabled:opacity-60"
+          className="inline-flex min-h-10 min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-900 px-2 py-2 text-xs font-bold sm:px-3 sm:text-sm text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-wait disabled:opacity-60"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 ${isPending ? "animate-spin" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {isPending ? <path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7" /> : isOpen ? <path d="M8 3v5H3m18 0h-5V3M3 16h5v5m8 0v-5h5" /> : <path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5" />}
           </svg>
           {isPending ? "Memproses..." : isOpen ? "Keluar fullscreen" : "Fullscreen"}
         </button>
+        {actions}
       </div>
     </div>
   );
