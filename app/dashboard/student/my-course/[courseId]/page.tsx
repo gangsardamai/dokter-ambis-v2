@@ -316,6 +316,7 @@ export default async function StudentMyCoursePage({
           mentors={mentorRatingContext.mentors}
           title="Nilai Mentor Course"
           description="Pilih bintang 1–5 untuk setiap mentor. Saran bersifat opsional dan penilaian dapat diperbarui selama akses course masih aktif."
+          showAnonymousNotice
         />
       )}
     </main>
