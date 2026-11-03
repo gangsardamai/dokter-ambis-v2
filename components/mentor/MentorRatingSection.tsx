@@ -162,7 +162,7 @@ export default function MentorRatingSection({
   courseId,
   mentors,
   title = "Penilaian Mentor",
-  description = "Berikan bintang 1–5 dan saran opsional untuk mentor pada course ini.",
+  description = "Penilaian Anda ditampilkan anonim kepada mentor dan admin. Berikan bintang 1–5 serta saran tanpa mencantumkan identitas pribadi.",
 }: MentorRatingSectionProps) {
   const [ratedMentorIds, setRatedMentorIds] = useState(
     () => new Set(mentors.filter((mentor) => mentor.rating !== null).map((mentor) => mentor.mentorId)),
