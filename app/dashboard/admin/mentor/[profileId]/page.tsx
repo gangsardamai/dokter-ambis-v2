@@ -218,7 +218,7 @@ export default async function AdminMentorDetailPage({
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
         <div>
           <h2 className="text-xl font-black text-slate-950">Penilaian & Saran</h2>
-          <p className="mt-1 text-sm text-slate-500">Nama peserta ditampilkan. Penilaian dari admin ditampilkan sebagai “Admin”.</p>
+          <p className="mt-1 text-sm text-slate-500">Identitas peserta dirahasiakan. Review peserta tampil sebagai “Peserta Anonim”; evaluasi admin ditandai “Admin”.</p>
         </div>
         <div className="mt-5 space-y-3">
           {detail.reviews.length === 0 ? (
@@ -228,7 +228,7 @@ export default async function AdminMentorDetailPage({
               <article key={review.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="font-black text-slate-950">{review.reviewerName}</p>
+                    <p className="font-black text-slate-950">{review.reviewerType === "admin" ? "Admin" : "Peserta Anonim"}</p>
                     <p className="mt-1 text-sm font-semibold text-blue-700">{review.courseTitle}</p>
                   </div>
                   <div className="flex items-center gap-3">
