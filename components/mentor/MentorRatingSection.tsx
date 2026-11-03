@@ -162,7 +162,7 @@ export default function MentorRatingSection({
   courseId,
   mentors,
   title = "Penilaian Mentor",
-  description = "Penilaian Anda ditampilkan anonim kepada mentor dan admin. Berikan bintang 1–5 serta saran tanpa mencantumkan identitas pribadi.",
+  description = "Review yang diberikan bersifat ANONIM.",
 }: MentorRatingSectionProps) {
   const [ratedMentorIds, setRatedMentorIds] = useState(
     () => new Set(mentors.filter((mentor) => mentor.rating !== null).map((mentor) => mentor.mentorId)),
@@ -189,7 +189,7 @@ export default function MentorRatingSection({
           <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">
             {title}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+          <p className="mt-1.5 text-xs leading-5 text-slate-500">{description}</p>
           <p className="mt-3 text-xs font-bold text-blue-700">
             {mentors.length} mentor · {ratedMentorIds.size} sudah dinilai
           </p>
