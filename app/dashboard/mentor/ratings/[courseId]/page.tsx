@@ -23,7 +23,6 @@ interface MentorCourseReviewResult {
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
-    timeStyle: "short",
     timeZone: "Asia/Jakarta",
   }).format(new Date(value));
 }
@@ -65,7 +64,7 @@ export default async function MentorCourseRatingsPage({
         <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="break-words text-3xl font-black tracking-[-0.04em] sm:text-4xl">{result.courseTitle}</h1>
-            <p className="mt-2 text-sm text-blue-100">Daftar penilaian peserta dan evaluasi admin untuk course ini.</p>
+            <p className="mt-2 text-sm text-blue-100">Penilaian peserta ditampilkan secara anonim beserta evaluasi admin untuk course ini.</p>
           </div>
           <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
             <p className="text-2xl font-black">★ {Number(result.averageRating).toFixed(1)}</p>
@@ -85,7 +84,7 @@ export default async function MentorCourseRatingsPage({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-black text-slate-950">{review.reviewerName}</h2>
+                    <h2 className="font-black text-slate-950">{review.reviewerType === "admin" ? "Admin" : "Peserta Anonim"}</h2>
                     {review.reviewerType === "admin" && (
                       <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-black text-blue-700">Admin</span>
                     )}
