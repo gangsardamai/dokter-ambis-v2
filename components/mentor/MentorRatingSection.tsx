@@ -15,6 +15,7 @@ interface MentorRatingSectionProps {
   mentors: MentorRatingItem[];
   title?: string;
   description?: string;
+  showAnonymousNotice?: boolean;
 }
 
 function MentorReviewForm({
@@ -163,6 +164,7 @@ export default function MentorRatingSection({
   mentors,
   title = "Penilaian Mentor",
   description = "Review yang diberikan bersifat ANONIM.",
+  showAnonymousNotice = false,
 }: MentorRatingSectionProps) {
   const [ratedMentorIds, setRatedMentorIds] = useState(
     () => new Set(mentors.filter((mentor) => mentor.rating !== null).map((mentor) => mentor.mentorId)),
@@ -190,6 +192,11 @@ export default function MentorRatingSection({
             {title}
           </h2>
           <p className="mt-1.5 text-xs leading-5 text-slate-500">{description}</p>
+          {showAnonymousNotice && (
+            <p className="mt-1 text-[11px] font-medium leading-4 text-blue-700">
+              Semua review peserta ditampilkan secara <span className="font-extrabold">ANONIM</span>.
+            </p>
+          )}
           <p className="mt-3 text-xs font-bold text-blue-700">
             {mentors.length} mentor · {ratedMentorIds.size} sudah dinilai
           </p>
