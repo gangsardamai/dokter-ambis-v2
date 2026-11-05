@@ -1,9 +1,11 @@
+import CourseTryoutCards from "@/components/admin/explorer/CourseTryoutCards";
 import CourseContentAccordion from "@/components/course-explorer/CourseContentAccordion";
 import InlineCourseStructureDnd from "@/components/course-explorer/InlineCourseStructureDndV2";
 import MentorCourseContentAccordion from "@/components/course-explorer/MentorCourseContentAccordion";
 
 import type { Database } from "@/supabase/types/database.types";
 import type { CourseExplorerContent } from "@/types/course-explorer";
+import type { CourseTryoutCard } from "@/types/tryout";
 
 import {
   ExplorerHeader,
@@ -16,12 +18,16 @@ type Course =
 interface ExplorerPageProps {
   course: Course;
   content: CourseExplorerContent;
+  tryouts: CourseTryoutCard[];
+  currentProfileId: string;
   managerRole?: "admin" | "leader" | "mentor";
 }
 
 export function ExplorerPage({
   course,
   content,
+  tryouts,
+  currentProfileId,
   managerRole = "admin",
 }: ExplorerPageProps) {
   const folderCount = content.folders.length;
@@ -67,6 +73,12 @@ export function ExplorerPage({
       >
         {accordion}
       </InlineCourseStructureDnd>
+
+      <CourseTryoutCards
+        tryouts={tryouts}
+        managerRole={managerRole}
+        currentProfileId={currentProfileId}
+      />
     </main>
   );
 }

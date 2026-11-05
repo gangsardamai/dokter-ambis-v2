@@ -19,6 +19,17 @@ export interface TryoutCourseSummary {
   programTitle: string;
 }
 
+// Small, safe metadata payload used by the staff course explorer only.
+export type CourseTryoutCard = Pick<
+  Tryout,
+  | "id"
+  | "title"
+  | "publication_status"
+  | "duration_minutes"
+  | "max_attempts"
+  | "created_by"
+>;
+
 export interface AdminTryoutListItem extends Tryout {
   course: TryoutCourseSummary | null;
   questionCount: number;
