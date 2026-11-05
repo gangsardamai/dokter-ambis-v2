@@ -59,6 +59,10 @@ function getAvailabilityLabel(
 }
 
 export class TryoutService {
+  async getCourseTryoutCards(courseId: string) {
+    return tryoutRepository.getCourseCards(courseId);
+  }
+
   async getAdminTryouts(): Promise<AdminTryoutListItem[]> {
     const [tryouts, questionCounts, participantCounts] = await Promise.all([
       tryoutRepository.getAllWithCourses(),
