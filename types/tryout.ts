@@ -28,7 +28,10 @@ export type CourseTryoutCard = Pick<
   | "duration_minutes"
   | "max_attempts"
   | "created_by"
->;
+> & {
+  // One person counts once even after two or more submitted attempts.
+  completed_participants: number;
+};
 
 export interface AdminTryoutListItem extends Tryout {
   course: TryoutCourseSummary | null;
