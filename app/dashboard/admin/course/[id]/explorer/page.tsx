@@ -6,6 +6,7 @@ import {
   courseExplorerService,
   courseService,
   profileService,
+  tryoutService,
 } from "@/services";
 
 export default async function Page({
@@ -15,10 +16,11 @@ export default async function Page({
 }) {
   const { id } = await params;
 
-  const [course, content, profile] = await Promise.all([
+  const [course, content, profile, tryouts] = await Promise.all([
     courseService.getCourseById(id),
     courseExplorerService.getCourseContent(id),
     profileService.getCurrentProfile(),
+    tryoutService.getCourseTryoutCards(id),
   ]);
 
   if (!course || !profile) {
@@ -29,6 +31,8 @@ export default async function Page({
     <ExplorerPage
       course={course}
       content={content}
+      tryouts={tryouts}
+      currentProfileId={profile.id}
       managerRole={profile.role === "leader" ? "leader" : "admin"}
     />
   );
