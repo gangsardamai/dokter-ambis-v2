@@ -4,6 +4,7 @@ import type {
   AdminTryoutResultItem,
   CreateTryoutInput,
   CreateTryoutQuestionInput,
+  CourseTryoutCard,
   StartTryoutResult,
   Tryout,
   TryoutAttemptPayload,
@@ -26,6 +27,19 @@ interface TryoutWithCourseRow extends Tryout {
 
 
 export class TryoutRepository extends BaseRepository {
+  // Intentionally excludes question text, answers, explanations and media.
+  async getCourseCards(courseId: string): Promise<CourseTryoutCard[]> {
+    const supabase = await this.db();
+    const { data, error } = await supabase
+      .from("tryouts")
+      .select("id, title, publication_status, duration_minutes, max_attempts, created_by")
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: false });
+
+    if (error) this.handleError(error);
+    return data ?? [];
+  }
+
   async getAllWithCourses(): Promise<TryoutWithCourseRow[]> {
     const supabase = await this.db();
     const { data, error } = await supabase
