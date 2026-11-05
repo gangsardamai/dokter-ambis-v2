@@ -1,3 +1,5 @@
+import { callDynamicRpc } from "@/lib/supabase/dynamic-rpc";
+
 import { BaseRepository } from "./base.repository";
 
 import type {
@@ -30,14 +32,14 @@ export class TryoutRepository extends BaseRepository {
   // Intentionally excludes question text, answers, explanations and media.
   async getCourseCards(courseId: string): Promise<CourseTryoutCard[]> {
     const supabase = await this.db();
-    const { data, error } = await supabase
-      .from("tryouts")
-      .select("id, title, publication_status, duration_minutes, max_attempts, created_by")
-      .eq("course_id", courseId)
-      .order("created_at", { ascending: false });
-
-    if (error) this.handleError(error);
-    return data ?? [];
+    // One scoped aggregate query: no per-card requests, participant details,
+    // answer payloads, or duplicate attempts sent to the browser.
+    const cards = await callDynamicRpc<CourseTryoutCard[]>(
+      supabase,
+      "get_staff_course_tryout_cards",
+      { p_course_id: courseId },
+    );
+    return cards ?? [];
   }
 
   async getAllWithCourses(): Promise<TryoutWithCourseRow[]> {
