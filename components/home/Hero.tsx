@@ -44,7 +44,7 @@ export default function Hero() {
 
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start">
             <Link
-              href="/register"
+              href="/login"
               prefetch={false}
               className="rounded-xl bg-gradient-to-r from-[#1769cf] to-[#033b63] px-7 py-3.5 text-center text-sm font-bold text-white shadow-[0_10px_25px_rgba(23,105,207,0.22)] transition hover:-translate-y-0.5 hover:shadow-lg"
             >
