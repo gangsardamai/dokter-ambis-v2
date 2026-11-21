@@ -117,7 +117,6 @@ export default function LockedPdfViewer({
   const [zoom, setZoom] = useState(1.15);
   const [loading, setLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(false);
-  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
 
   const totalPages = documentProxy?.numPages ?? 0;
@@ -241,40 +240,13 @@ export default function LockedPdfViewer({
     };
   }, [documentProxy, pageNumber, zoom]);
 
-  async function handleDownload() {
-    if (downloading) return;
-    setDownloading(true);
-    setError("");
-    try {
-      const response = await fetch(`/api/locked-materials/${encodeURIComponent(fileId)}?download=1`, {
-        cache: "no-store", credentials: "same-origin",
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error || "Unduhan gagal diproses.");
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${title.replace(/[\\/:*?"<>|]/g, "-").replace(/\.pdf$/i, "")}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch (downloadError) {
-      setError(downloadError instanceof Error ? downloadError.message : "Unduhan gagal diproses.");
-    } finally {
-      setDownloading(false);
-    }
-  }
-
 
   return (
     <div
-      className="min-h-screen bg-slate-100"
+      className="locked-pdf-viewer min-h-screen bg-slate-100"
       onContextMenu={(event) => event.preventDefault()}
     >
+      <style>{`@media print { .locked-pdf-viewer { display: none !important; } }`}</style>
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3">
           <button
@@ -290,7 +262,7 @@ export default function LockedPdfViewer({
               {title}
             </p>
             <p className="text-xs font-semibold text-slate-500">
-              🔒 File Locked · Unduh PDF dengan watermark
+              🔒 File Locked · Hanya untuk dibaca
             </p>
           </div>
 
@@ -357,16 +329,7 @@ export default function LockedPdfViewer({
               +
             </button>
 
-            <button
-              type="button"
-              disabled={loading || !documentProxy || downloading}
-              aria-busy={downloading}
-              onClick={() => void handleDownload()}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
-            >
-              {downloading && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
-              {downloading ? "Menyiapkan unduhan..." : "Download"}
-            </button>
+
           </div>
         </div>
       </header>
@@ -411,8 +374,8 @@ export default function LockedPdfViewer({
           ) : null}
 
           <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-5 text-slate-500">
-            PDF yang diunduh memuat watermark nama pengguna dan DokterAmbis
-            pada setiap halaman.
+            Materi ini hanya untuk dibaca melalui viewer DokterAmbis.
+            Fitur unduh dan cetak tidak disediakan.
           </p>
         </div>
       </main>
