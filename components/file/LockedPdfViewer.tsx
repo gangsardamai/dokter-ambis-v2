@@ -34,6 +34,7 @@ interface PdfJsLib {
   };
   getDocument(options: {
     data: ArrayBuffer | Uint8Array;
+    password?: string;
   }): PdfLoadingTask;
 }
 
@@ -118,6 +119,9 @@ export default function LockedPdfViewer({
   const [loading, setLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(false);
   const [error, setError] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [activePassword, setActivePassword] = useState("");
+  const [passwordRequired, setPasswordRequired] = useState(false);
 
   const totalPages = documentProxy?.numPages ?? 0;
 
@@ -127,6 +131,7 @@ export default function LockedPdfViewer({
     async function loadDocument() {
       setLoading(true);
       setError("");
+      setPasswordRequired(false);
 
       try {
         const [pdfjs, response] = await Promise.all([
@@ -147,19 +152,32 @@ export default function LockedPdfViewer({
         }
 
         const data = await response.arrayBuffer();
-        const task = pdfjs.getDocument({ data });
+        const task = pdfjs.getDocument({
+          data,
+          ...(activePassword ? { password: activePassword } : {}),
+        });
         const pdf = await task.promise;
 
         if (!cancelled) {
           setDocumentProxy(pdf);
           setPageNumber(1);
+          setPasswordRequired(false);
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(
+          const message =
             loadError instanceof Error
               ? loadError.message
-              : "File Locked gagal dimuat.",
+              : "File Locked gagal dimuat.";
+          const needsPassword =
+            /password|encrypted/i.test(message) ||
+            (loadError instanceof Error &&
+              loadError.name === "PasswordException");
+          setPasswordRequired(needsPassword);
+          setError(
+            needsPassword
+              ? "PDF ini dilindungi password. Masukkan password materi untuk membacanya."
+              : message,
           );
         }
       } finally {
@@ -172,7 +190,7 @@ export default function LockedPdfViewer({
     return () => {
       cancelled = true;
     };
-  }, [fileId]);
+  }, [fileId, activePassword]);
 
   useEffect(() => {
     if (!documentProxy) return;
@@ -340,6 +358,38 @@ export default function LockedPdfViewer({
             <div className="mx-auto mb-4 max-w-3xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
               {error}
             </div>
+          )}
+
+          {passwordRequired && !loading && (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (passwordInput.trim()) {
+                  setActivePassword(passwordInput);
+                }
+              }}
+              className="mx-auto mb-4 flex max-w-xl flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <label htmlFor="locked-pdf-password" className="text-sm font-semibold text-slate-700">
+                Password PDF
+              </label>
+              <input
+                id="locked-pdf-password"
+                type="password"
+                value={passwordInput}
+                onChange={(event) => setPasswordInput(event.target.value)}
+                autoComplete="off"
+                className="rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Masukkan password materi"
+                required
+              />
+              <button
+                type="submit"
+                className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white"
+              >
+                Buka Materi
+              </button>
+            </form>
           )}
 
           {loading ? (
