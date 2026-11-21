@@ -258,7 +258,7 @@ export async function GET(
 
     const filename = encodeURIComponent((file.title || "dokterambis-locked").replace(/\.pdf$/i, "") + ".pdf");
 
-    return new Response(bytes, {
+    return new Response(new Uint8Array(bytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
