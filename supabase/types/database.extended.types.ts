@@ -1,3 +1,4 @@
+import type { LandingPageTables } from "./landing-page.types";
 import type { LeaderAuditTables } from "./leader-audit.types";
 import type { Database as ApplicationDatabase } from "./database.app.types";
 import type { AdminStudentManagementFunctions } from "./admin-student-management.types";
@@ -27,7 +28,7 @@ export type Database = Omit<ApplicationDatabase, "public"> & {
       PaymentAccountTables &
       CourseCommunityLinkTables &
       CoursePinTables &
-      AnnouncementTables & LeaderAuditTables;
+      AnnouncementTables & LeaderAuditTables & LandingPageTables;
     Functions: Omit<
       ApplicationDatabase["public"]["Functions"],
       | keyof TryoutFunctions

@@ -1,46 +1,43 @@
 import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/home/Hero";
 import Stats from "@/components/home/Stats";
-import Universities from "@/components/home/Universities";
+import FeaturedCourses from "@/components/home/FeaturedCourses";
 import Mentors from "@/components/home/Mentors";
 import Footer from "@/components/layout/Footer";
 
+import { defaultMentors } from "@/lib/landing-page";
 import { organizationService } from "@/services";
+import {
+  getFeaturedCourseIds,
+  getLandingPageSettings,
+  getPublicLandingCourses,
+} from "@/services/landing-page.service";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [activeOrganizations, activeUniversities] =
-    await Promise.all([
-      organizationService.getActiveOrganizations(),
-      organizationService.getActiveUniversities(),
-    ]);
-
-  const generalOrganization = activeOrganizations.find(
-    (organization) => organization.is_general,
-  );
-  const featuredUniversities = activeOrganizations
-    .filter((organization) => !organization.is_general)
-    .sort((a, b) => a.title.localeCompare(b.title, "id-ID"))
-    .slice(0, generalOrganization ? 3 : 4);
-  const featuredOrganizations = generalOrganization
-    ? [generalOrganization, ...featuredUniversities]
-    : featuredUniversities;
+  const [activeUniversities, courses, settings] = await Promise.all([
+    organizationService.getActiveUniversities(),
+    getPublicLandingCourses(),
+    getLandingPageSettings().catch((error) => {
+      console.error(error);
+      return null;
+    }),
+  ]);
+  const coursesById = new Map(courses.map((course) => [course.id, course]));
+  const featuredCourses = getFeaturedCourseIds(courses, settings?.course_ids ?? null)
+    .flatMap((id) => {
+      const course = coursesById.get(id);
+      return course ? [course] : [];
+    });
 
   return (
     <>
       <Navbar />
       <Hero />
-
-      <Stats
-        organizationCount={activeUniversities.length}
-      />
-
-      <Universities
-        organizations={featuredOrganizations}
-      />
-
-      <Mentors />
+      <Stats organizationCount={activeUniversities.length} />
+      <FeaturedCourses courses={featuredCourses} />
+      <Mentors mentors={settings?.mentors ?? defaultMentors} />
       <Footer />
     </>
   );

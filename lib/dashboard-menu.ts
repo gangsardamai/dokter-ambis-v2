@@ -37,6 +37,7 @@ export const dashboardMenus: Record<ProfileRole, DashboardMenuSection[]> = {
         { title: "Rekening Pembayaran", href: "/dashboard/admin/payment-account" },
         { title: "Kotak Pesan", href: "/dashboard/admin/messages" },
         { title: "Pengumuman", href: "/dashboard/admin/announcements" },
+        { title: "Landing Page", href: "/dashboard/admin/landing-page" },
         { title: "Promotion", href: "/dashboard/admin/promotion" },
         { title: "Enrollment", href: "/dashboard/admin/enrollment" },
       ],
