@@ -210,6 +210,10 @@ export async function GET(
     return errorResponse(400, "File ini bukan File Locked.");
   }
 
+  if (new URL(request.url).searchParams.has("download")) {
+    return errorResponse(403, "Unduhan File Locked dinonaktifkan.");
+  }
+
   if (file.file_type !== "pdf") {
     return errorResponse(
       400,
@@ -237,14 +241,13 @@ export async function GET(
     }
 
     const bytes = await watermarkPdf(drivePdf.bytes, profile.full_name || "Pengguna");
-    const download = new URL(request.url).searchParams.get("download") === "1";
     const filename = encodeURIComponent((file.title || "dokterambis-locked").replace(/\.pdf$/i, "") + ".pdf");
 
     return new Response(new Uint8Array(bytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `${download ? "attachment" : "inline"}; filename="dokterambis-locked.pdf"; filename*=UTF-8''${filename}`,
+        "Content-Disposition": `inline; filename="dokterambis-locked.pdf"; filename*=UTF-8''${filename}`,
         "Content-Length": String(bytes.byteLength),
         "Cache-Control": "private, no-store, max-age=0",
         "X-Content-Type-Options": "nosniff",
