@@ -240,10 +240,25 @@ export async function GET(
       );
     }
 
-    const bytes = await watermarkPdf(drivePdf.bytes, profile.full_name || "Pengguna");
+    // A password-protected PDF cannot be modified by pdf-lib. Preserve
+    // its original encryption so the browser can prompt for the password.
+    // Keep this fallback limited to encrypted PDF errors only; all other
+    // watermark failures must remain server errors rather than leaking originals.
+    let bytes: Uint8Array;
+    try {
+      bytes = new Uint8Array(
+        await watermarkPdf(drivePdf.bytes, profile.full_name || "Pengguna"),
+      );
+    } catch (watermarkError) {
+      const message =
+        watermarkError instanceof Error ? watermarkError.message : "";
+      if (!/encrypted|password/i.test(message)) throw watermarkError;
+      bytes = new Uint8Array(drivePdf.bytes);
+    }
+
     const filename = encodeURIComponent((file.title || "dokterambis-locked").replace(/\.pdf$/i, "") + ".pdf");
 
-    return new Response(new Uint8Array(bytes), {
+    return new Response(bytes, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
